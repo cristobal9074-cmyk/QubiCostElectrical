@@ -66,6 +66,7 @@ public sealed partial class CubicacionViewModel
     public ICommand SetZonaLibreModeCommand { get; private set; } = null!;
     public ICommand SetPorZonasModeCommand { get; private set; } = null!;
     public ICommand ManageZonasCommand { get; private set; } = null!;
+    public ICommand ManageTipologiasCommand { get; private set; } = null!;
     public ICommand OpenHojaCubicacionCommand { get; private set; } = null!;
 
     private void InitializeSectorMatrix()
@@ -75,6 +76,7 @@ public sealed partial class CubicacionViewModel
         SetZonaLibreModeCommand = new RelayCommand(() => SetCubicacionMode(true));
         SetPorZonasModeCommand = new RelayCommand(() => SetCubicacionMode(false));
         ManageZonasCommand = new RelayCommand(() => sectorService.ManageZonas(), () => !session.IsReadOnly);
+        ManageTipologiasCommand = new RelayCommand(() => sectorService.ManageTipologias(), () => !session.IsReadOnly);
         OpenHojaCubicacionCommand = new RelayCommand(() => sectorService.OpenHojaCubicacion());
 
         string defaultPref = preferencesStore?.Load()?.DefaultCubicacionMode ?? "Libre";

@@ -111,6 +111,21 @@ public sealed class CostoViewXamlSmokeTests
             string.Join(" | ", vm.Tabs.SubFamilies.Select(g => g.Titulo)));
     }
 
+    [Fact]
+    public void CostoView_FinancialRatio_SegmentationDirectosIndirectosMargen_HasValidDataAndRatio()
+    {
+        var vm = NuevoVm();
+        Assert.NotNull(vm.FinancialRatioDirectosPct);
+        Assert.NotNull(vm.FinancialRatioIndirectosPct);
+        Assert.NotNull(vm.FinancialRatioMargenPct);
+        Assert.NotNull(vm.FinancialRatioDirectosMonto);
+        Assert.NotNull(vm.FinancialRatioIndirectosMonto);
+        Assert.NotNull(vm.FinancialRatioMargenMonto);
+        Assert.True(vm.FinancialRatioDirectosStar.Value > 0);
+        Assert.True(vm.FinancialRatioIndirectosStar.Value > 0);
+        Assert.True(vm.FinancialRatioMargenStar.Value > 0);
+    }
+
     /// <summary>
     /// Materializa las cinco pestañas con el XAML real. Cualquier ruta de binding inexistente
     /// (p. ej. una propiedad renombrada en la VM) queda registrada en DataBindingSource y falla.

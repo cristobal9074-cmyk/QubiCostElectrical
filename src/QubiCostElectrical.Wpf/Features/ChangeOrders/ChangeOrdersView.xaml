@@ -3,22 +3,28 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls">
   <UserControl.Resources>
-    <Style x:Key="ChipCard" TargetType="Border">
-      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.SlateLight}"/>
+    <Style x:Key="MetricCard.Base" TargetType="Border">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
       <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="8"/>
-      <Setter Property="Padding" Value="12,8"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Padding" Value="14,10"/>
     </Style>
-    <Style x:Key="ChipNum" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="16"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/>
+    <Style x:Key="MetricCard.Value" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}"/>
+      <Setter Property="Margin" Value="0,3,0,1"/>
     </Style>
-    <Style x:Key="ChipLbl" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="10"/>
+    <Style x:Key="MetricCard.Label" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="9.5"/>
+      <Setter Property="FontWeight" Value="Bold"/>
       <Setter Property="Foreground" Value="{DynamicResource Brush.Slate}"/>
-      <Setter Property="Margin" Value="0,2,0,0"/>
+    </Style>
+    <Style x:Key="MetricCard.Sub" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="9"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/>
     </Style>
   </UserControl.Resources>
 
@@ -32,25 +38,41 @@
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
-    <!-- ─── Título ────────────────────────────────────────────────────────── -->
-    <DockPanel Grid.Row="0" Margin="0,0,0,12">
-      <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.AmberSoft}"
-              BorderBrush="{DynamicResource Brush.AmberBorder}" BorderThickness="1"
-              CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
-        <StackPanel Orientation="Horizontal">
-          <TextBlock Text="🔒 Respeto de Precios Unitarios:" FontSize="11" FontWeight="SemiBold"
-                     Foreground="{DynamicResource Brush.Amber}" Margin="0,0,6,0"/>
-          <TextBlock Text="Partidas de contrato mantienen P.U. congelado" FontSize="11"
-                     Foreground="{DynamicResource Brush.Ink2}"/>
+    <!-- ─── 1. HERO CABECERA EJECUTIVA ──────────────────────────────────────── -->
+    <Border Grid.Row="0" Margin="0,0,0,12" Background="{DynamicResource Brush.Surface}"
+            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Padding="16,11">
+      <DockPanel LastChildFill="True">
+        <!-- Badge Blindaje Contractual a la derecha -->
+        <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.AmberSoft}"
+                BorderBrush="{DynamicResource Brush.AmberBorder}" BorderThickness="1"
+                CornerRadius="8" Padding="12,6" VerticalAlignment="Center" Margin="16,0,0,0">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Path Data="{StaticResource Geo.Lock}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Amber}" Margin="0,0,8,0" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="BLINDAJE CONTRACTUAL" FontSize="9.5" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Amber}" Margin="0,0,0,1"/>
+              <TextBlock Text="Partidas de contrato con P.U. congelado" FontSize="11" FontWeight="Medium"
+                         Foreground="{DynamicResource Brush.Ink2}"/>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- Título y categoría a la izquierda -->
+        <StackPanel VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+            <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}"
+                    BorderThickness="1" CornerRadius="10" Padding="8,2" Margin="0,0,8,0" VerticalAlignment="Center">
+              <TextBlock Text="CONTROL CONTRACTUAL" FontSize="9.5" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Blue}"/>
+            </Border>
+            <TextBlock Text="Adicionales &amp; Obras Extraordinarias" FontSize="18" FontWeight="Bold"
+                       Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
+          </StackPanel>
+          <TextBlock Text="Gestión de órdenes de cambio (OC), modificaciones de contrato, trazabilidad ante ITO y balance financiero proyectado."
+                     FontSize="11.5" Foreground="{DynamicResource Brush.Muted}"/>
         </StackPanel>
-      </Border>
-      <StackPanel VerticalAlignment="Center">
-        <TextBlock Text="Adicionales de Obra (Aumentos de Contrato)"
-                   FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"/>
-        <TextBlock Text="Control de partidas adicionales, modificaciones y partidas extraordinarias en faena."
-                   FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0"/>
-      </StackPanel>
-    </DockPanel>
+      </DockPanel>
+    </Border>
 
     <!-- ─── Estado vacío — sin proyecto ────────────────────────────────────── -->
     <ctrl:EmptyStateControl Grid.Row="1" Grid.RowSpan="4"
@@ -59,109 +81,165 @@
                             Title="Sin proyecto abierto"
                             Description="Abre o crea un proyecto para gestionar adicionales y aumentos de obra." />
 
-    <!-- ─── Panel resumen ────────────────────────────────────────────────── -->
+    <!-- ─── 2. PANEL RESUMEN FINANCIERO (KPIS EJECUTIVOS) ────────────────── -->
     <UniformGrid Grid.Row="1" Rows="1" Margin="0,0,0,12"
                  Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0">
+      <!-- Contrato Original -->
+      <Border Style="{StaticResource MetricCard.Base}" Margin="0,0,7,0">
         <StackPanel>
-          <TextBlock Text="{Binding MontoContratoOriginalDisplay}" Style="{StaticResource ChipNum}" FontSize="13"/>
-          <TextBlock Text="Contrato Original" Style="{StaticResource ChipLbl}"/>
+          <TextBlock Text="CONTRATO ORIGINAL" Style="{StaticResource MetricCard.Label}"/>
+          <TextBlock Text="{Binding MontoContratoOriginalDisplay}" Style="{StaticResource MetricCard.Value}"/>
+          <TextBlock Text="Monto contractual base" Style="{StaticResource MetricCard.Sub}"/>
         </StackPanel>
       </Border>
-      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1.5">
+
+      <!-- Aprobados Mandante -->
+      <Border Style="{StaticResource MetricCard.Base}" Margin="0,0,7,0"
+              Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="1.5">
         <StackPanel>
           <DockPanel>
-            <TextBlock Text="{Binding PorcentajeAumentoAprobadoDisplay}" DockPanel.Dock="Right" FontSize="10" FontWeight="Bold"
-                       Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center"/>
-            <TextBlock Text="{Binding MontoAprobadoDisplay}"
-                       Style="{StaticResource ChipNum}" Foreground="{DynamicResource Brush.Success}" FontSize="13"/>
+            <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.SuccessBorder}"
+                    BorderThickness="1" CornerRadius="8" Padding="5,1" VerticalAlignment="Center">
+              <TextBlock Text="{Binding PorcentajeAumentoAprobadoDisplay}" FontSize="9.5" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Success}"/>
+            </Border>
+            <TextBlock Text="✓ APROBADOS MANDANTE" Style="{StaticResource MetricCard.Label}" Foreground="{DynamicResource Brush.Success}"/>
           </DockPanel>
-          <TextBlock Text="✓ Aprobados Mandante" Style="{StaticResource ChipLbl}" Foreground="{DynamicResource Brush.Success}"/>
+          <TextBlock Text="{Binding MontoAprobadoDisplay}" Style="{StaticResource MetricCard.Value}" Foreground="{DynamicResource Brush.Success}"/>
+          <TextBlock Text="Incorporado a contrato" Style="{StaticResource MetricCard.Sub}" Foreground="{DynamicResource Brush.SuccessDark}"/>
         </StackPanel>
       </Border>
-      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0" BorderBrush="{DynamicResource Brush.AmberBorder}" BorderThickness="1.5">
+
+      <!-- En trámite / ITO -->
+      <Border Style="{StaticResource MetricCard.Base}" Margin="0,0,7,0"
+              Background="{DynamicResource Brush.AmberSoft}" BorderBrush="{DynamicResource Brush.AmberBorder}" BorderThickness="1.5">
         <StackPanel>
-          <TextBlock Text="{Binding MontoPendienteDisplay}"
-                     Style="{StaticResource ChipNum}" FontSize="13" Foreground="{DynamicResource Brush.Amber}"/>
-          <TextBlock Text="⏳ En trámite / ITO" Style="{StaticResource ChipLbl}"/>
+          <TextBlock Text="EN TRÁMITE / ITO" Style="{StaticResource MetricCard.Label}" Foreground="{DynamicResource Brush.Amber}"/>
+          <TextBlock Text="{Binding MontoPendienteDisplay}" Style="{StaticResource MetricCard.Value}" Foreground="{DynamicResource Brush.Amber}"/>
+          <TextBlock Text="Pendiente de visto bueno" Style="{StaticResource MetricCard.Sub}"/>
         </StackPanel>
       </Border>
-      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0">
+
+      <!-- Total Proyectado Obra -->
+      <Border Style="{StaticResource MetricCard.Base}" Margin="0,0,7,0"
+              Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}" BorderThickness="1.5">
         <StackPanel>
-          <TextBlock Text="{Binding TotalProyectadoObraDisplay}"
-                     Style="{StaticResource ChipNum}" FontSize="13" Foreground="{DynamicResource Brush.Ink}"/>
-          <TextBlock Text="Total Obra Proyectado" Style="{StaticResource ChipLbl}"/>
+          <TextBlock Text="PROYECCIÓN TOTAL FAENA" Style="{StaticResource MetricCard.Label}" Foreground="{DynamicResource Brush.Blue}"/>
+          <TextBlock Text="{Binding TotalProyectadoObraDisplay}" Style="{StaticResource MetricCard.Value}" Foreground="{DynamicResource Brush.Blue}"/>
+          <TextBlock Text="Contrato + adicionales aprobados" Style="{StaticResource MetricCard.Sub}"/>
         </StackPanel>
       </Border>
-      <Border Style="{StaticResource ChipCard}" Margin="0,0,6,0">
+
+      <!-- Borrador -->
+      <Border Style="{StaticResource MetricCard.Base}" Margin="0,0,7,0">
         <StackPanel>
-          <TextBlock Text="{Binding TotalBorrador}" Style="{StaticResource ChipNum}"/>
-          <TextBlock Text="Borrador" Style="{StaticResource ChipLbl}"/>
+          <TextBlock Text="EN BORRADOR" Style="{StaticResource MetricCard.Label}"/>
+          <TextBlock Text="{Binding TotalBorrador}" Style="{StaticResource MetricCard.Value}" Foreground="{DynamicResource Brush.Ink2}"/>
+          <TextBlock Text="Órdenes en formulación" Style="{StaticResource MetricCard.Sub}"/>
         </StackPanel>
       </Border>
-      <Border Style="{StaticResource ChipCard}" Margin="0">
+
+      <!-- Total Adicionales -->
+      <Border Style="{StaticResource MetricCard.Base}" Margin="0">
         <StackPanel>
-          <TextBlock Text="{Binding TotalOrdenes}" Style="{StaticResource ChipNum}"/>
-          <TextBlock Text="Total Adicionales" Style="{StaticResource ChipLbl}"/>
+          <TextBlock Text="TOTAL REGISTROS" Style="{StaticResource MetricCard.Label}"/>
+          <TextBlock Text="{Binding TotalOrdenes}" Style="{StaticResource MetricCard.Value}" Foreground="{DynamicResource Brush.Ink2}"/>
+          <TextBlock Text="Órdenes registradas" Style="{StaticResource MetricCard.Sub}"/>
         </StackPanel>
       </Border>
     </UniformGrid>
 
-    <!-- ─── Barra de acciones ──────────────────────────────────────────────── -->
-    <DockPanel Grid.Row="2" Margin="0,0,0,10" LastChildFill="False"
-               Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-      <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-        <Button Style="{StaticResource Button.Primary}" Content="+ Nuevo Adicional"
-                Click="OnAddClick" Padding="14,0" Height="30"
-                ToolTip="Crear una nueva orden de cambio (Ctrl+N)"/>
-        <Button Style="{StaticResource Button.Secondary}" Content="Editar" Margin="6,0,0,0"
-                IsEnabled="{Binding CanEdit}" Click="OnEditClick" Padding="12,0" Height="30"
-                ToolTip="Editar partidas y cubicaciones (Enter)"/>
-        <Button Style="{StaticResource Button.Secondary}" Content="Duplicar" Margin="6,0,0,0"
-                IsEnabled="{Binding CanDuplicate}" Click="OnDuplicateClick" Padding="12,0" Height="30"
-                ToolTip="Duplicar orden seleccionada a un nuevo borrador (Ctrl+D)"/>
-        <Button Content="Eliminar" Margin="6,0,0,0" Padding="12,0" Height="30"
-                IsEnabled="{Binding CanDelete}" Click="OnDeleteClick"
-                Foreground="{DynamicResource Brush.Danger}" Background="Transparent" BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1"
-                ToolTip="Eliminar orden seleccionada (Del)"/>
-        <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,4"/>
-        <Button Style="{StaticResource Button.Secondary}" Content="→ En revisión" Margin="0,0,6,0"
-                IsEnabled="{Binding CanEnviarRevision}" Click="OnEnviarRevisionClick" Padding="10,0" Height="30"
-                ToolTip="Enviar orden a revisión de la ITO o Mandante"/>
-        <Button Style="{StaticResource Button.Secondary}" Content="✓ Aprobar" Margin="0,0,6,0"
-                IsEnabled="{Binding CanAprobar}" Click="OnAprobarClick" Padding="10,0" Height="30"
-                Foreground="{DynamicResource Brush.Success}"
-                ToolTip="Aprobar orden e incorporar al presupuesto proyectado"/>
-        <Button Style="{StaticResource Button.Secondary}" Content="✗ Rechazar" Margin="0,0,6,0"
-                IsEnabled="{Binding CanRechazar}" Click="OnRechazarClick" Padding="10,0" Height="30"
-                Foreground="{DynamicResource Brush.Danger}"
-                ToolTip="Rechazar orden de cambio"/>
-        <Button Style="{StaticResource Button.Secondary}" Content="↩ Reabrir" Margin="0,0,0,0"
-                IsEnabled="{Binding CanReabrir}" Click="OnReabrirClick" Padding="10,0" Height="30"
-                ToolTip="Reabrir orden rechazada y pasar a Borrador"/>
-      </StackPanel>
-      <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-        <TextBlock Text="Aumento neto acumulado: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
-        <TextBlock Text="{Binding ImpactoNetoDisplay}" FontSize="12" FontWeight="Bold"
-                   FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" Margin="0,0,12,0"/>
-        <Button Style="{StaticResource Button.Secondary}" Content="⟳ Refrescar" Height="28" Padding="10,0"
-                Click="OnRefreshClick" ToolTip="Refrescar lista y métricas (F5)"/>
-      </StackPanel>
-    </DockPanel>
+    <!-- ─── 3. BARRA DE ACCIONES Y PIPELINE ────────────────────────────────── -->
+    <Border Grid.Row="2" Margin="0,0,0,10" Background="{DynamicResource Brush.Surface}"
+            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10,6"
+            Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+      <DockPanel LastChildFill="False">
+        <!-- Acciones Principales y Flujo -->
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+          <Button Style="{StaticResource Button.Primary}" Content="+ Nuevo Adicional"
+                  Click="OnAddClick" Padding="14,0" Height="30"
+                  ToolTip="Crear una nueva orden de cambio (Ctrl+N)"/>
+          <Button Style="{StaticResource Button.Secondary}" Content="Editar" Margin="6,0,0,0"
+                  IsEnabled="{Binding CanEdit}" Click="OnEditClick" Padding="12,0" Height="30"
+                  ToolTip="Editar partidas y cubicaciones (Enter)"/>
+          <Button Style="{StaticResource Button.Secondary}" Content="Duplicar" Margin="6,0,0,0"
+                  IsEnabled="{Binding CanDuplicate}" Click="OnDuplicateClick" Padding="12,0" Height="30"
+                  ToolTip="Duplicar orden seleccionada a un nuevo borrador (Ctrl+D)"/>
+          <Button Content="Eliminar" Margin="6,0,0,0" Padding="12,0" Height="30"
+                  IsEnabled="{Binding CanDelete}" Click="OnDeleteClick"
+                  Foreground="{DynamicResource Brush.Danger}" Background="Transparent"
+                  BorderBrush="{DynamicResource Brush.DangerBorder}" BorderThickness="1"
+                  ToolTip="Eliminar orden seleccionada (Del)"/>
 
-    <!-- ─── Búsqueda y filtros rápidos ────────────────────────────────────── -->
+          <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,4"/>
+
+          <!-- Pipeline de Estados -->
+          <Button Style="{StaticResource Button.Secondary}" Content="→ En revisión" Margin="0,0,6,0"
+                  IsEnabled="{Binding CanEnviarRevision}" Click="OnEnviarRevisionClick" Padding="10,0" Height="30"
+                  ToolTip="Enviar orden a revisión de la ITO o Mandante"/>
+          <Button Style="{StaticResource Button.Secondary}" Content="✓ Aprobar" Margin="0,0,6,0"
+                  IsEnabled="{Binding CanAprobar}" Click="OnAprobarClick" Padding="10,0" Height="30"
+                  Foreground="{DynamicResource Brush.Success}"
+                  ToolTip="Aprobar orden e incorporar al presupuesto proyectado"/>
+          <Button Style="{StaticResource Button.Secondary}" Content="✗ Rechazar" Margin="0,0,6,0"
+                  IsEnabled="{Binding CanRechazar}" Click="OnRechazarClick" Padding="10,0" Height="30"
+                  Foreground="{DynamicResource Brush.Danger}"
+                  ToolTip="Rechazar orden de cambio"/>
+          <Button Style="{StaticResource Button.Secondary}" Content="↩ Reabrir" Margin="0,0,0,0"
+                  IsEnabled="{Binding CanReabrir}" Click="OnReabrirClick" Padding="10,0" Height="30"
+                  ToolTip="Reabrir orden rechazada y pasar a Borrador"/>
+
+          <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="8,4"/>
+
+          <!-- Exportaciones Consolidadas -->
+          <Button Style="{StaticResource Button.Secondary}" Margin="0,0,6,0" Padding="10,0" Height="30"
+                  Command="{Binding ExportAllPdfCommand}"
+                  ToolTip="Exportar planilla consolidada de todos los adicionales a PDF">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="📄" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Planilla PDF" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+          <Button Style="{StaticResource Button.Secondary}" Margin="0,0,0,0" Padding="10,0" Height="30"
+                  Command="{Binding ExportAllExcelCommand}"
+                  ToolTip="Exportar planilla consolidada de todos los adicionales a Excel">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="📊" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Planilla Excel" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+        </StackPanel>
+
+        <!-- Indicador de impacto neto y refresco a la derecha -->
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+          <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                  BorderThickness="1" CornerRadius="6" Padding="10,4" Margin="0,0,10,0" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="Aumento neto acumulado:" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}"
+                         VerticalAlignment="Center" Margin="0,0,8,0"/>
+              <TextBlock Text="{Binding ImpactoNetoDisplay}" FontSize="12.5" FontWeight="Bold"
+                         FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+          <Button Style="{StaticResource Button.Secondary}" Content="Refrescar" Height="28" Padding="10,0"
+                  Click="OnRefreshClick" ToolTip="Refrescar lista y métricas (F5)"/>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <!-- ─── 4. BÚSQUEDA Y FILTROS SEGMENTADOS ───────────────────────────────── -->
     <DockPanel Grid.Row="3" Margin="0,0,0,10"
                Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
       <!-- Buscador a la izquierda -->
       <Border DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.SlateLight}" BorderThickness="1" CornerRadius="6"
-              Background="{DynamicResource Brush.Surface}" Padding="8,0" Width="280" Height="30">
+              Background="{DynamicResource Brush.Surface}" Padding="8,0" Width="290" Height="30">
         <Grid VerticalAlignment="Center">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
           </Grid.ColumnDefinitions>
-          <TextBlock Grid.Column="0" Text="🔍" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+          <Path Grid.Column="0" Data="{StaticResource Geo.Search}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
           <TextBox Grid.Column="1" x:Name="SearchBox"
                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                    BorderThickness="0" FontSize="11.5" VerticalAlignment="Center" Background="Transparent"
@@ -259,7 +337,7 @@
       </StackPanel>
     </DockPanel>
 
-    <!-- ─── Tabla / Estado vacío ────────────────────────────────────────── -->
+    <!-- ─── 5. TABLA WORKSPACE / ESTADO VACÍO ──────────────────────────────── -->
     <Border Grid.Row="4" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10"
             Background="{DynamicResource Brush.Surface}"
             Visibility="{Binding HasNoProject, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
@@ -286,18 +364,22 @@
                   AutomationProperties.Name="Lista de órdenes de cambio">
           <DataGrid.Columns>
             <DataGridTextColumn Header="#" Binding="{Binding Seq}" Width="36"/>
-            <DataGridTextColumn Header="Número" Binding="{Binding Numero}" Width="95">
-              <DataGridTextColumn.ElementStyle>
-                <Style TargetType="TextBlock">
-                  <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
-                  <Setter Property="FontWeight" Value="Bold"/>
-                  <Setter Property="VerticalAlignment" Value="Center"/>
-                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}"/>
-                </Style>
-              </DataGridTextColumn.ElementStyle>
-            </DataGridTextColumn>
+            
+            <!-- Columna Número -->
+            <DataGridTemplateColumn Header="Número" Width="105" SortMemberPath="Numero">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                          BorderThickness="1" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Numero}" FontFamily="{StaticResource Font.Mono}"
+                               FontWeight="Bold" FontSize="11" Foreground="{DynamicResource Brush.Ink}"/>
+                  </Border>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
 
-            <DataGridTemplateColumn Header="Título" Width="*">
+            <!-- Columna Título -->
+            <DataGridTemplateColumn Header="Título / Descripción" Width="*">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate>
                   <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -314,6 +396,7 @@
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
 
+            <!-- Columna Estado -->
             <DataGridTemplateColumn Header="Estado" Width="120" SortMemberPath="Estado">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate>
@@ -362,6 +445,7 @@
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
 
+            <!-- Columna Partidas -->
             <DataGridTemplateColumn Header="Partidas" Width="95">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate>
@@ -374,6 +458,7 @@
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
 
+            <!-- Columna Fecha -->
             <DataGridTextColumn Header="Fecha" Binding="{Binding FechaDisplay}" Width="95">
               <DataGridTextColumn.ElementStyle>
                 <Style TargetType="TextBlock">
@@ -385,6 +470,7 @@
               </DataGridTextColumn.ElementStyle>
             </DataGridTextColumn>
 
+            <!-- Columna Creado por -->
             <DataGridTextColumn Header="Creada por" Binding="{Binding CreadoPor}" Width="110">
               <DataGridTextColumn.ElementStyle>
                 <Style TargetType="TextBlock">
@@ -394,7 +480,8 @@
               </DataGridTextColumn.ElementStyle>
             </DataGridTextColumn>
 
-            <DataGridTextColumn Header="Impacto Venta" Binding="{Binding DeltaDisplay}" Width="115">
+            <!-- Columna Impacto Venta -->
+            <DataGridTextColumn Header="Impacto Venta" Binding="{Binding DeltaDisplay}" Width="120">
               <DataGridTextColumn.ElementStyle>
                 <Style TargetType="TextBlock">
                   <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
@@ -414,6 +501,7 @@
               </DataGridTextColumn.ElementStyle>
             </DataGridTextColumn>
 
+            <!-- Columna Nota -->
             <DataGridTextColumn Header="Nota" Binding="{Binding Nota}" Width="140">
               <DataGridTextColumn.ElementStyle>
                 <Style TargetType="TextBlock">
@@ -423,6 +511,34 @@
                 </Style>
               </DataGridTextColumn.ElementStyle>
             </DataGridTextColumn>
+
+            <!-- Columna Exportar -->
+            <DataGridTemplateColumn Header="Exportar" Width="140" CanUserResize="False" CanUserSort="False">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Button Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" Margin="0,0,4,0" FontSize="10.5"
+                            ToolTip="Exportar este adicional a PDF formal para Mandante / ITO"
+                            Command="{Binding DataContext.ExportSinglePdfCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                            CommandParameter="{Binding}">
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="📄" FontSize="10" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="PDF" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                      </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource Button.Secondary}" Height="24" Padding="8,0" FontSize="10.5"
+                            ToolTip="Exportar este adicional a planilla Excel con fórmulas y cubicación"
+                            Command="{Binding DataContext.ExportSingleExcelCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                            CommandParameter="{Binding}">
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="📊" FontSize="10" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Excel" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                      </StackPanel>
+                    </Button>
+                  </StackPanel>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
           </DataGrid.Columns>
 
           <DataGrid.RowStyle>
@@ -434,96 +550,536 @@
       </Grid>
     </Border>
 
-    <!-- ─── Inspector Contextual de Adicional Seleccionado ──────────────────── -->
+    <!-- ─── 6. INSPECTOR CONTEXTUAL Y STEPPER DE FLUJO DE APROBACIÓN ──────────────── -->
     <Border Grid.Row="5" Margin="0,10,0,0"
             Background="{DynamicResource Brush.Surface}"
-            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8"
+            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10"
             Padding="14,10"
             Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
       <Grid>
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="2*"/>
-          <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition Width="3*"/>
-          <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <!-- Columna 1: Identificación y Estado -->
-        <StackPanel Grid.Column="0" VerticalAlignment="Center">
-          <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-            <TextBlock Text="{Binding Selected.Numero}" FontFamily="{StaticResource Font.Mono}"
-                       FontWeight="Bold" FontSize="13" Foreground="{DynamicResource Brush.Ink}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-            <Border CornerRadius="10" BorderThickness="1" Padding="6,1" VerticalAlignment="Center"
-                    Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}">
-              <TextBlock Text="{Binding Selected.EstadoDisplay}" FontSize="10" FontWeight="SemiBold"
-                         Foreground="{DynamicResource Brush.Ink2}"/>
-            </Border>
-            <Border CornerRadius="10" BorderThickness="1" Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center"
-                    Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}">
-              <TextBlock Text="{Binding Selected.PartidasBadgeText}" FontSize="10" FontWeight="SemiBold"
-                         Foreground="{DynamicResource Brush.Blue}"/>
-            </Border>
-          </StackPanel>
+        <!-- Fila 0: Stepper / Timeline horizontal de flujo de aprobación (Borrador → Solicitado → En Aprobación → Ejecutado) -->
+        <Border Grid.Row="0" Margin="0,0,0,10" Background="{DynamicResource Brush.Surface2}"
+                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="12,8">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-          <TextBlock Text="{Binding Selected.Titulo}" FontSize="12" FontWeight="SemiBold"
-                     Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis"/>
+            <!-- Cabecera del Stepper: Título y Botones de Acción de Avance Rápido -->
+            <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,8">
+              <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                <TextBlock Text="🔄 FLUJO DE APROBACIÓN CONTRACTUAL" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"/>
+                <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                        CornerRadius="10" Padding="8,1.5" Margin="8,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Selected.EstadoDisplay}" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"/>
+                </Border>
+                <TextBlock Text="· Trazabilidad formal ante ITO y Mandante" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+              </StackPanel>
 
-          <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-            <TextBlock Text="Creado por " FontSize="10.5" Foreground="{DynamicResource Brush.Muted}"/>
-            <TextBlock Text="{Binding Selected.CreadoPor}" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,10,0"/>
-            <TextBlock Text="Fecha: " FontSize="10.5" Foreground="{DynamicResource Brush.Muted}"/>
-            <TextBlock Text="{Binding Selected.FechaDisplay}" FontFamily="{StaticResource Font.Mono}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink2}"/>
-          </StackPanel>
-        </StackPanel>
+              <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                <!-- Botones contextuales de avance rápido según etapa activa -->
+                <Button Style="{StaticResource Button.Primary}" Height="25" Padding="10,0" Margin="0,0,6,0" FontSize="10.5" FontWeight="SemiBold"
+                        Content="📨 Presentar Solicitud ITO →"
+                        Visibility="{Binding Selected.IsStep1Current, Converter={StaticResource BoolToVisibility}}"
+                        Command="{Binding AvanzarASolicitadoCommand}"
+                        ToolTip="Presentar adicional formalmente a la ITO / Mandante (avanza a Solicitado)"/>
+                <Button Style="{StaticResource Button.Primary}" Height="25" Padding="10,0" Margin="0,0,6,0" FontSize="10.5" FontWeight="SemiBold"
+                        Content="⚖ Pasar a En Aprobación →"
+                        Visibility="{Binding Selected.IsStep2Current, Converter={StaticResource BoolToVisibility}}"
+                        Command="{Binding AvanzarAEnAprobacionCommand}"
+                        ToolTip="Pasar a visto bueno contractual y técnico del Mandante"/>
+                <Button Style="{StaticResource Button.Primary}" Height="25" Padding="10,0" Margin="0,0,6,0" FontSize="10.5" FontWeight="SemiBold"
+                        Background="{DynamicResource Brush.SuccessDark}" BorderBrush="{DynamicResource Brush.SuccessDark}"
+                        Content="✓ Aprobar y Ejecutar"
+                        Visibility="{Binding Selected.IsStep3Current, Converter={StaticResource BoolToVisibility}}"
+                        Click="OnAprobarClick"
+                        ToolTip="Aprobar e incorporar al contrato ejecutado en faena"/>
+                <Button Style="{StaticResource Button.Secondary}" Height="25" Padding="8,0" Margin="0,0,6,0" FontSize="10.5"
+                        Content="✗ Rechazar" Foreground="{DynamicResource Brush.Danger}"
+                        Visibility="{Binding CanRechazar, Converter={StaticResource BoolToVisibility}}"
+                        Click="OnRechazarClick"
+                        ToolTip="Rechazar orden de cambio"/>
+                <Button Style="{StaticResource Button.Secondary}" Height="25" Padding="10,0" Margin="0,0,6,0" FontSize="10.5"
+                        Content="↩ Reabrir a Borrador"
+                        Visibility="{Binding Selected.IsStepRejected, Converter={StaticResource BoolToVisibility}}"
+                        Click="OnReabrirClick"
+                        ToolTip="Reabrir orden rechazada para corregir partidas"/>
+              </StackPanel>
+            </DockPanel>
 
-        <Separator Grid.Column="1" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="14,2"/>
+            <!-- Timeline horizontal de 4 etapas -->
+            <Grid Grid.Row="1">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="32"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="32"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="32"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
 
-        <!-- Columna 2: Desglose Económico -->
-        <Grid Grid.Column="2" VerticalAlignment="Center">
+              <!-- ── 1. BORRADOR ── -->
+              <Border Grid.Column="0" CornerRadius="6" Padding="8,6" BorderThickness="1">
+                <Border.Style>
+                  <Style TargetType="Border">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding Selected.IsStep1Current}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding Selected.IsStep1Done}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <StackPanel>
+                  <DockPanel LastChildFill="True">
+                    <Border DockPanel.Dock="Left" Width="18" Height="18" CornerRadius="9" Margin="0,0,6,0" VerticalAlignment="Center">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding Selected.IsStep1Current}" Value="True">
+                              <Setter Property="Background" Value="{DynamicResource Brush.Blue}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Selected.IsStep1Done}" Value="True">
+                              <Setter Property="Background" Value="#059669"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock FontSize="9.5" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="1"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding Selected.IsStep1Current}" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding Selected.IsStep1Done}" Value="True">
+                                <Setter Property="Text" Value="✓"/>
+                                <Setter Property="Foreground" Value="White"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Border>
+                    <TextBlock Text="1. Borrador" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink}"/>
+                  </DockPanel>
+                  <TextBlock Text="Formulación técnica" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}" Margin="24,2,0,0"/>
+                  <Border CornerRadius="3" Padding="4,1" Margin="24,3,0,0" HorizontalAlignment="Left" Background="{DynamicResource Brush.Surface}">
+                    <TextBlock Text="{Binding Selected.Step1Badge}" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}"/>
+                  </Border>
+                </StackPanel>
+              </Border>
+
+              <!-- Conector 1 → 2 -->
+              <Grid Grid.Column="1" VerticalAlignment="Center">
+                <Rectangle Height="2" RadiusX="1" RadiusY="1">
+                  <Rectangle.Style>
+                    <Style TargetType="Rectangle">
+                      <Setter Property="Fill" Value="{DynamicResource Brush.Line}"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Selected.IsStep1Done}" Value="True">
+                          <Setter Property="Fill" Value="#059669"/>
+                          <Setter Property="Height" Value="3"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Rectangle.Style>
+                </Rectangle>
+                <TextBlock Text="▶" FontSize="8" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.Line}"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Selected.IsStep1Done}" Value="True">
+                          <Setter Property="Foreground" Value="#059669"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+              </Grid>
+
+              <!-- ── 2. SOLICITADO ── -->
+              <Border Grid.Column="2" CornerRadius="6" Padding="8,6" BorderThickness="1">
+                <Border.Style>
+                  <Style TargetType="Border">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding Selected.IsStep2Current}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding Selected.IsStep2Done}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <StackPanel>
+                  <DockPanel LastChildFill="True">
+                    <Border DockPanel.Dock="Left" Width="18" Height="18" CornerRadius="9" Margin="0,0,6,0" VerticalAlignment="Center">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding Selected.IsStep2Current}" Value="True">
+                              <Setter Property="Background" Value="{DynamicResource Brush.Blue}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Selected.IsStep2Done}" Value="True">
+                              <Setter Property="Background" Value="#059669"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock FontSize="9.5" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="2"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding Selected.IsStep2Current}" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding Selected.IsStep2Done}" Value="True">
+                                <Setter Property="Text" Value="✓"/>
+                                <Setter Property="Foreground" Value="White"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Border>
+                    <TextBlock Text="2. Solicitado" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink}"/>
+                  </DockPanel>
+                  <TextBlock Text="Presentado a ITO" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}" Margin="24,2,0,0"/>
+                  <Border CornerRadius="3" Padding="4,1" Margin="24,3,0,0" HorizontalAlignment="Left" Background="{DynamicResource Brush.Surface}">
+                    <TextBlock Text="{Binding Selected.Step2Badge}" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}"/>
+                  </Border>
+                </StackPanel>
+              </Border>
+
+              <!-- Conector 2 → 3 -->
+              <Grid Grid.Column="3" VerticalAlignment="Center">
+                <Rectangle Height="2" RadiusX="1" RadiusY="1">
+                  <Rectangle.Style>
+                    <Style TargetType="Rectangle">
+                      <Setter Property="Fill" Value="{DynamicResource Brush.Line}"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Selected.IsStep2Done}" Value="True">
+                          <Setter Property="Fill" Value="#059669"/>
+                          <Setter Property="Height" Value="3"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Rectangle.Style>
+                </Rectangle>
+                <TextBlock Text="▶" FontSize="8" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.Line}"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Selected.IsStep2Done}" Value="True">
+                          <Setter Property="Foreground" Value="#059669"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+              </Grid>
+
+              <!-- ── 3. EN APROBACIÓN ── -->
+              <Border Grid.Column="4" CornerRadius="6" Padding="8,6" BorderThickness="1">
+                <Border.Style>
+                  <Style TargetType="Border">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding Selected.IsStep3Current}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.AmberBorder}"/>
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding Selected.IsStep3Done}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}"/>
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding Selected.IsStepRejected}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerBorder}"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <StackPanel>
+                  <DockPanel LastChildFill="True">
+                    <Border DockPanel.Dock="Left" Width="18" Height="18" CornerRadius="9" Margin="0,0,6,0" VerticalAlignment="Center">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding Selected.IsStep3Current}" Value="True">
+                              <Setter Property="Background" Value="{DynamicResource Brush.AmberRisk}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Selected.IsStep3Done}" Value="True">
+                              <Setter Property="Background" Value="#059669"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Selected.IsStepRejected}" Value="True">
+                              <Setter Property="Background" Value="#DC2626"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock FontSize="9.5" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="3"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding Selected.IsStep3Current}" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding Selected.IsStep3Done}" Value="True">
+                                <Setter Property="Text" Value="✓"/>
+                                <Setter Property="Foreground" Value="White"/>
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding Selected.IsStepRejected}" Value="True">
+                                <Setter Property="Text" Value="✕"/>
+                                <Setter Property="Foreground" Value="White"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Border>
+                    <TextBlock Text="3. En Aprobación" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink}"/>
+                  </DockPanel>
+                  <TextBlock Text="Revisión Mandante" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}" Margin="24,2,0,0"/>
+                  <Border CornerRadius="3" Padding="4,1" Margin="24,3,0,0" HorizontalAlignment="Left" Background="{DynamicResource Brush.Surface}">
+                    <TextBlock Text="{Binding Selected.Step3Badge}" FontSize="9" FontWeight="SemiBold">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding Selected.IsStepRejected}" Value="True">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Selected.IsStep3Current}" Value="True">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                  </Border>
+                </StackPanel>
+              </Border>
+
+              <!-- Conector 3 → 4 -->
+              <Grid Grid.Column="5" VerticalAlignment="Center">
+                <Rectangle Height="2" RadiusX="1" RadiusY="1">
+                  <Rectangle.Style>
+                    <Style TargetType="Rectangle">
+                      <Setter Property="Fill" Value="{DynamicResource Brush.Line}"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Selected.IsStep3Done}" Value="True">
+                          <Setter Property="Fill" Value="#059669"/>
+                          <Setter Property="Height" Value="3"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Rectangle.Style>
+                </Rectangle>
+                <TextBlock Text="▶" FontSize="8" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.Line}"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Selected.IsStep3Done}" Value="True">
+                          <Setter Property="Foreground" Value="#059669"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+              </Grid>
+
+              <!-- ── 4. EJECUTADO ── -->
+              <Border Grid.Column="6" CornerRadius="6" Padding="8,6" BorderThickness="1">
+                <Border.Style>
+                  <Style TargetType="Border">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding Selected.IsStep4Done}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <StackPanel>
+                  <DockPanel LastChildFill="True">
+                    <Border DockPanel.Dock="Left" Width="18" Height="18" CornerRadius="9" Margin="0,0,6,0" VerticalAlignment="Center">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="{DynamicResource Brush.Surface2}"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding Selected.IsStep4Done}" Value="True">
+                              <Setter Property="Background" Value="#059669"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock FontSize="9.5" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="4"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding Selected.IsStep4Done}" Value="True">
+                                <Setter Property="Text" Value="✓"/>
+                                <Setter Property="Foreground" Value="White"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Border>
+                    <TextBlock Text="4. Ejecutado" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource Brush.Ink}"/>
+                  </DockPanel>
+                  <TextBlock Text="Incorporado a Faena" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}" Margin="24,2,0,0"/>
+                  <Border CornerRadius="3" Padding="4,1" Margin="24,3,0,0" HorizontalAlignment="Left" Background="{DynamicResource Brush.Surface}">
+                    <TextBlock Text="{Binding Selected.Step4Badge}" FontSize="9" FontWeight="SemiBold">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink2}"/>
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding Selected.IsStep4Done}" Value="True">
+                              <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                  </Border>
+                </StackPanel>
+              </Border>
+            </Grid>
+          </Grid>
+        </Border>
+
+        <Separator Grid.Row="1" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="0,0,0,10"/>
+
+        <!-- Fila 2: Identificación, Desglose Económico y Acciones Rápidas -->
+        <Grid Grid.Row="2">
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="1.2*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
           </Grid.ColumnDefinitions>
 
-          <Border Grid.Column="0" Style="{StaticResource ChipCard}" Margin="0,0,6,0" Padding="8,5">
-            <StackPanel>
-              <TextBlock Text="{Binding Selected.DeltaCostoDisplay}" FontFamily="{StaticResource Font.Mono}"
-                         FontWeight="SemiBold" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}"/>
-              <TextBlock Text="Costo Directo" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}"/>
+          <!-- Columna 1: Identificación y Estado -->
+          <StackPanel Grid.Column="0" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+              <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Selected.Numero}" FontFamily="{StaticResource Font.Mono}"
+                           FontWeight="Bold" FontSize="12.5" Foreground="{DynamicResource Brush.Ink}"/>
+              </Border>
+              <Border CornerRadius="10" BorderThickness="1" Padding="7,1.5" VerticalAlignment="Center"
+                      Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}">
+                <TextBlock Text="{Binding Selected.EstadoDisplay}" FontSize="10" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Ink2}"/>
+              </Border>
+              <Border CornerRadius="10" BorderThickness="1" Padding="7,1.5" Margin="6,0,0,0" VerticalAlignment="Center"
+                      Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}">
+                <TextBlock Text="{Binding Selected.PartidasBadgeText}" FontSize="10" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Blue}"/>
+              </Border>
             </StackPanel>
-          </Border>
 
-          <Border Grid.Column="1" Style="{StaticResource ChipCard}" Margin="0,0,6,0" Padding="8,5">
-            <StackPanel>
-              <TextBlock FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold" FontSize="11.5" Foreground="{DynamicResource Brush.Ink2}">
-                <Run Text="{Binding Selected.GastosGeneralesPct, StringFormat={}{0:N0}%}"/>
-                <Run Text=" / "/>
-                <Run Text="{Binding Selected.UtilidadPct, StringFormat={}{0:N0}%}"/>
-              </TextBlock>
-              <TextBlock Text="GG% / Utilidad%" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}"/>
-            </StackPanel>
-          </Border>
+            <TextBlock Text="{Binding Selected.Titulo}" FontSize="12.5" FontWeight="Bold"
+                       Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis"/>
 
-          <Border Grid.Column="2" Style="{StaticResource ChipCard}" Padding="8,5" BorderBrush="{DynamicResource Brush.Accent}">
-            <StackPanel>
-              <TextBlock Text="{Binding Selected.DeltaDisplay}" FontFamily="{StaticResource Font.Mono}"
-                         FontWeight="Bold" FontSize="12.5" Foreground="{DynamicResource Brush.Accent}"/>
-              <TextBlock Text="Venta Neta Adicional" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+              <TextBlock Text="Creado por " FontSize="10.5" Foreground="{DynamicResource Brush.Muted}"/>
+              <TextBlock Text="{Binding Selected.CreadoPor}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink2}" Margin="0,0,10,0"/>
+              <TextBlock Text="Fecha: " FontSize="10.5" Foreground="{DynamicResource Brush.Muted}"/>
+              <TextBlock Text="{Binding Selected.FechaDisplay}" FontFamily="{StaticResource Font.Mono}" FontSize="10.5" Foreground="{DynamicResource Brush.Ink2}"/>
             </StackPanel>
-          </Border>
+          </StackPanel>
+
+          <Separator Grid.Column="1" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="14,2"/>
+
+          <!-- Columna 2: Desglose Económico -->
+          <Grid Grid.Column="2" VerticalAlignment="Center">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="1.2*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                    BorderThickness="1" CornerRadius="8" Margin="0,0,6,0" Padding="10,6">
+              <StackPanel>
+                <TextBlock Text="{Binding Selected.DeltaCostoDisplay}" FontFamily="{StaticResource Font.Mono}"
+                           FontWeight="Bold" FontSize="12" Foreground="{DynamicResource Brush.Ink2}"/>
+                <TextBlock Text="Costo Directo" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0"/>
+              </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                    BorderThickness="1" CornerRadius="8" Margin="0,0,6,0" Padding="10,6">
+              <StackPanel>
+                <TextBlock FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource Brush.Ink2}">
+                  <Run Text="{Binding Selected.GastosGeneralesPct, Mode=OneWay, StringFormat={}{0:N0}%}"/>
+                  <Run Text=" / "/>
+                  <Run Text="{Binding Selected.UtilidadPct, Mode=OneWay, StringFormat={}{0:N0}%}"/>
+                </TextBlock>
+                <TextBlock Text="GG% / Utilidad%" FontSize="9.5" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0"/>
+              </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}"
+                    BorderThickness="1.5" CornerRadius="8" Padding="10,6">
+              <StackPanel>
+                <TextBlock Text="{Binding Selected.DeltaDisplay}" FontFamily="{StaticResource Font.Mono}"
+                           FontWeight="Bold" FontSize="13" Foreground="{DynamicResource Brush.Blue}"/>
+                <TextBlock Text="Venta Neta Adicional" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,2,0,0"/>
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <Separator Grid.Column="3" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="14,2"/>
+
+          <!-- Columna 3: Acciones Rápidas -->
+          <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button Style="{StaticResource Button.Secondary}" Content="Editar (Enter)" Height="30" Padding="12,0"
+                    IsEnabled="{Binding CanEdit}" Click="OnEditClick" Margin="0,0,6,0" ToolTip="Editar líneas y cubicaciones del adicional" />
+            <Button Style="{StaticResource Button.Secondary}" Content="Duplicar (Ctrl+D)" Height="30" Padding="12,0"
+                    IsEnabled="{Binding CanDuplicate}" Click="OnDuplicateClick" ToolTip="Clonar orden a nuevo borrador" />
+          </StackPanel>
         </Grid>
-
-        <Separator Grid.Column="3" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="14,2"/>
-
-        <!-- Columna 3: Acciones Rápidas -->
-        <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
-          <Button Style="{StaticResource Button.Secondary}" Content="Editar (Enter)" Height="28" Padding="10,0"
-                  IsEnabled="{Binding CanEdit}" Click="OnEditClick" Margin="0,0,6,0" ToolTip="Editar líneas y cubicaciones del adicional" />
-          <Button Style="{StaticResource Button.Secondary}" Content="Duplicar (Ctrl+D)" Height="28" Padding="10,0"
-                  IsEnabled="{Binding CanDuplicate}" Click="OnDuplicateClick" ToolTip="Clonar orden a nuevo borrador" />
-        </StackPanel>
       </Grid>
     </Border>
   </Grid>

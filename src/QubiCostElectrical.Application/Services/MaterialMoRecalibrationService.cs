@@ -19,7 +19,7 @@ public sealed record IndiceMoFaAplicado(
 /// <summary>
 /// Recalibra la M.O. guardada del catálogo (MaterialRow.MoClp) al FA vigente del proyecto.
 ///
-/// En la planilla original (PEL039A2026, COSTOS!E192 = 62,80) el factor era un número tecleado a
+/// En planillas de referencia estándar de costos el factor era un número tecleado a
 /// mano que multiplicaba la M.O. de cada línea del DETALLE; al moverlo, todas las líneas se
 /// recalculaban solas. En la app el motor ya resuelve la M.O. en vivo
 /// (<see cref="MaterialMoResolver.MoClpEfectiva"/>), pero los catálogos guardan además un snapshot

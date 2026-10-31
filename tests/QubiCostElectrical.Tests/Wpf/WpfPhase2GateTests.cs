@@ -13,7 +13,19 @@ namespace QubiCostElectrical.Tests.Wpf;
 public sealed class WpfPhase2GateTests
 {
     private static string WpfSourceRoot =>
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "QubiCostElectrical.Wpf"));
+        FindWpfSourceRoot();
+
+    private static string FindWpfSourceRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "QubiCostElectrical.Wpf.sln")))
+                return Path.Combine(dir.FullName, "src", "QubiCostElectrical.Wpf");
+            dir = dir.Parent;
+        }
+        throw new DirectoryNotFoundException("Repo root not found from " + AppContext.BaseDirectory);
+    }
 
     private static string ReadSource(string relativePath) =>
         File.ReadAllText(Path.Combine(WpfSourceRoot, relativePath.Replace('/', Path.DirectorySeparatorChar)));

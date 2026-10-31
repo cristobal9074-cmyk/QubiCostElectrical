@@ -431,6 +431,12 @@ public partial class ShellWindow : Window
     {
         try
         {
+            if (Keyboard.FocusedElement is TextBox tb)
+            {
+                tb.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();
+                Keyboard.ClearFocus();
+            }
+
             var grid = FindVisualChild<System.Windows.Controls.DataGrid>(this);
             if (grid != null)
             {
@@ -479,10 +485,10 @@ public partial class ShellWindow : Window
                         : grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible && !c.IsReadOnly)
                           ?? grid.Columns.FirstOrDefault(c => c.Visibility == Visibility.Visible);
 
-                    if (selectedItem != null && selectedColumn != null)
+                    if (selectedItem != null && selectedColumn != null && grid.Columns.IndexOf(selectedColumn) >= 0)
                     {
                         grid.CurrentCell = new DataGridCellInfo(selectedItem, selectedColumn);
-                        grid.ScrollIntoView(selectedItem, selectedColumn);
+                        try { grid.ScrollIntoView(selectedItem, selectedColumn); } catch { }
                         grid.UpdateLayout();
 
                         if (grid.ItemContainerGenerator.ContainerFromItem(selectedItem) is System.Windows.Controls.DataGridRow row)
@@ -525,7 +531,7 @@ public partial class ShellWindow : Window
     {
         if (e.StagingItem.Input is not KeyEventArgs key)
             return;
-        if (key.RoutedEvent != Keyboard.PreviewKeyDownEvent && key.RoutedEvent != Keyboard.KeyDownEvent)
+        if (key.RoutedEvent != Keyboard.PreviewKeyDownEvent)
             return;
         if (!FocusIsInThisWindow())
             return;
@@ -533,21 +539,35 @@ public partial class ShellWindow : Window
         var kind = UndoShortcutKeys.Match(key);
         if (kind == UndoShortcutKeys.Kind.None)
             return;
-        if (!_undoShortcutBusy)
+
+        // Comportamiento estandar tipo Excel:
+        // Si hay una celda o caja de texto con edicion sin confirmar (el usuario escribio un numero y no ha salido):
+        // La 1ra pulsacion de Ctrl+Z descarta de inmediato el texto escrito en esa celda.
+        if (kind == UndoShortcutKeys.Kind.Undo && Keyboard.FocusedElement is System.Windows.Controls.TextBox activeBox && activeBox.IsLoaded)
         {
-            if (kind == UndoShortcutKeys.Kind.Undo && !_viewModel.CanUndo)
-                return;
-            if (kind == UndoShortcutKeys.Kind.Redo && !_viewModel.CanRedo)
-                return;
+            var binding = activeBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty);
+            if (binding != null)
+            {
+                string currentText = activeBox.Text ?? string.Empty;
+                binding.UpdateTarget();
+                string restoredText = activeBox.Text ?? string.Empty;
+                if (!string.Equals(currentText.Trim(), restoredText.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    activeBox.SelectAll();
+                    e.Cancel();
+                    key.Handled = true;
+                    return;
+                }
+            }
         }
+
+        if (kind == UndoShortcutKeys.Kind.Undo && !_viewModel.CanUndo)
+            return;
+        if (kind == UndoShortcutKeys.Kind.Redo && !_viewModel.CanRedo)
+            return;
 
         e.Cancel();
         key.Handled = true;
-        // PreviewKeyDown y KeyDown llegan separados. Una sola pulsación deshace una vez.
-        if (_undoShortcutBusy)
-            return;
-        _undoShortcutBusy = true;
-        Dispatcher.BeginInvoke(() => _undoShortcutBusy = false, System.Windows.Threading.DispatcherPriority.Input);
         CancelActiveDataGridEdit();
         if (kind == UndoShortcutKeys.Kind.Undo) _viewModel.Undo();
         else _viewModel.Redo();
@@ -556,8 +576,9 @@ public partial class ShellWindow : Window
 
     private bool FocusIsInThisWindow()
     {
-        if (!IsActive) return false;
-        return Keyboard.FocusedElement is not DependencyObject focused || Window.GetWindow(focused) == this;
+        if (Keyboard.FocusedElement is DependencyObject focused)
+            return Window.GetWindow(focused) == this;
+        return IsActive;
     }
 
     private void OnWindowKeyDown(object sender, KeyEventArgs e)
@@ -567,7 +588,6 @@ public partial class ShellWindow : Window
         var shortcut = UndoShortcutKeys.Match(e);
         if (shortcut == UndoShortcutKeys.Kind.Undo && _viewModel.CanUndo)
         {
-            if (_undoShortcutBusy) { e.Handled = true; return; }
             CancelActiveDataGridEdit();
             _viewModel.Undo();
             RestoreDataGridFocus();
@@ -577,45 +597,10 @@ public partial class ShellWindow : Window
 
         if (shortcut == UndoShortcutKeys.Kind.Redo && _viewModel.CanRedo)
         {
-            if (_undoShortcutBusy) { e.Handled = true; return; }
             CancelActiveDataGridEdit();
             _viewModel.Redo();
             RestoreDataGridFocus();
             e.Handled = true;
-            return;
-        }
-
-        if (shortcut == UndoShortcutKeys.Kind.Undo)
-        {
-            if (Keyboard.FocusedElement is System.Windows.Controls.TextBox tb && tb.CanUndo)
-            {
-                tb.Undo();
-                e.Handled = true;
-                return;
-            }
-            if (Keyboard.FocusedElement is System.Windows.Controls.RichTextBox rtb && rtb.CanUndo)
-            {
-                rtb.Undo();
-                e.Handled = true;
-                return;
-            }
-            return;
-        }
-
-        if (shortcut == UndoShortcutKeys.Kind.Redo)
-        {
-            if (Keyboard.FocusedElement is System.Windows.Controls.TextBox tb && tb.CanRedo)
-            {
-                tb.Redo();
-                e.Handled = true;
-                return;
-            }
-            if (Keyboard.FocusedElement is System.Windows.Controls.RichTextBox rtb && rtb.CanRedo)
-            {
-                rtb.Redo();
-                e.Handled = true;
-                return;
-            }
             return;
         }
 

@@ -64,7 +64,7 @@ public sealed class DeliveryDocumentSelectorVm
         AddDoc(new DeliveryDocumentItemVm(
             "ResumenExcel",
             "Resumen presupuesto Excel",
-            "Hoja de resumen para el mandante formato Ingelsam con logo, datos clientes, partidas, fórmulas vivas e IVA.",
+            "Hoja de resumen ejecutivo para el mandante con membrete, datos del cliente, partidas, fórmulas vivas e IVA.",
             "XLSX",
             isPrimary: true,
             isDefaultSelected: true));

@@ -11,7 +11,14 @@ public sealed record EstadoPagoExportFila(
     decimal AvanceAnterior,
     decimal AvanceMes,
     decimal MontoMes,
-    decimal AcumPct);
+    decimal AcumPct,
+    string Unidad = Unidades.GL,
+    decimal Cantidad = 1m,
+    decimal PrecioUnitario = 0m,
+    decimal CantidadMes = 0m,
+    decimal CantidadAcum = 0m,
+    decimal SaldoCantidad = 0m,
+    decimal SaldoMonto = 0m);
 
 /// <summary>Capítulo del Itemizado con sus partidas (fila agrupadora de la tabla).</summary>
 public sealed record EstadoPagoExportSeccion(
@@ -38,7 +45,8 @@ public sealed record EstadoPagoExportCronogramaMes(
     string Folio,
     string Estado,
     string EstadoLabel,
-    decimal? Total);
+    decimal? Total,
+    int Anio = 0);
 
 /// <summary>Modelo de exportación: estado del mes + cronograma anual.</summary>
 public sealed record EstadoPagoExportRequest(

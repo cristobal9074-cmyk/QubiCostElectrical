@@ -465,6 +465,7 @@ public sealed partial class EppViewModel : SessionAwareViewModelBase, IRefreshab
         OnPropertyChanged(nameof(IndumentariaTotalLabel));
         OnPropertyChanged(nameof(ItemsCountLabel));
         OnPropertyChanged(nameof(FooterText));
+        RebuildGroupedBreakdowns();
 
         foreach (var s in MoDirectaSecciones.Concat(MoIndirectaSecciones).Concat(AccOpcionalesSecciones))
             s.RefreshLabels();

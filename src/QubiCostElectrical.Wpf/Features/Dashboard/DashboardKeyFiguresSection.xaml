@@ -31,12 +31,12 @@
         </DockPanel>
       </Border>
 
-      <!-- Cifras: separadas por una línea fina de 1 px, sin tarjetas propias -->
+      <!-- Cifras: tarjetas estables con micro-elevación sin layout shift -->
       <Grid Grid.Row="1" Background="{DynamicResource Brush.Line}">
         <ItemsControl ItemsSource="{Binding KeyFigures}" HorizontalContentAlignment="Stretch">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-              <UniformGrid Rows="1" />
+              <UniformGrid Rows="1" Margin="2,2" />
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
@@ -56,6 +56,26 @@
                       </Style>
                     </TextBlock.Style>
                   </TextBlock>
+
+                  <!-- Mini-gráfico sparkline de tendencia de costo -->
+                  <Grid Height="20" Margin="0,6,0,2"
+                        Visibility="{Binding HasSparkline, Converter={StaticResource BoolToVisibility}}"
+                        ClipToBounds="False">
+                    <Path Data="{Binding SparklineAreaData}"
+                          Fill="{Binding SparklineAreaFill}"
+                          Opacity="0.15" Stretch="Fill" />
+                    <Path Data="{Binding SparklineLineData}"
+                          Stroke="{Binding SparklineStroke}"
+                          StrokeThickness="1.8"
+                          StrokeLineJoin="Round"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round" Stretch="Fill" />
+                    <Ellipse Width="5" Height="5"
+                             Fill="{Binding SparklineStroke}"
+                             HorizontalAlignment="Left"
+                             VerticalAlignment="Top"
+                             Margin="{Binding SparklineDotMargin}" />
+                  </Grid>
 
                   <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
                               Visibility="{Binding DeltaText, Converter={StaticResource StringToVisibility}}">

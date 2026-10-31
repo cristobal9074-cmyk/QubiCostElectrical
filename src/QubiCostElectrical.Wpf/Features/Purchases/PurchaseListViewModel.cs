@@ -18,6 +18,10 @@ namespace QubiCostElectrical.Wpf.Features.Purchases;
 
 public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefreshablePage
 {
+    public const string GroupingByProvider = "Por proveedor";
+    public const string GroupingByFamily = "Por familia / categoría";
+    public const string GroupingNone = "Sin agrupar";
+
     private readonly IShellNavigationHost shell;
     private readonly BudgetProjectSession session;
     private readonly IProjectWorkspaceService workspace;
@@ -32,11 +36,15 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     private readonly RelayCommand refreshCommand;
     private readonly RelayCommand exportExcelCommand;
     private readonly RelayCommand exportRfqCommand;
+    private readonly RelayCommand exportPurchaseOrderCommand;
+    private readonly RelayCommand<object> exportGroupPurchaseOrderCommand;
     private readonly RelayCommand clearFiltersCommand;
     private readonly RelayCommand clearSearchCommand;
     private readonly RelayCommand goToOriginCommand;
     private readonly RelayCommand goToUsageCommand;
     private readonly RelayCommand groupByProviderCommand;
+    private readonly RelayCommand groupByFamilyCommand;
+    private readonly RelayCommand clearGroupingCommand;
     private readonly System.Windows.Threading.DispatcherTimer searchDebounceTimer;
 
     private string searchText = "";
@@ -48,6 +56,8 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     private bool showEmptyState = true;
     private bool hasNoFilterResults;
     private bool isGroupedByProvider;
+    private bool isGroupedByFamily;
+    private string selectedGroupingOption = GroupingByProvider;
     private CompraMaterialViewModel? selectedRow;
     private MaterialUsageBreakdown? selectedUsage;
     private int activeTab;
@@ -61,6 +71,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     private readonly Dictionary<string, decimal> customTolerances = new(StringComparer.OrdinalIgnoreCase);
     private string selectedTolerancePreset = "Por categoría (Recomendado)";
     public ObservableCollection<string> TolerancePresetOptions { get; } = new() { "Por categoría (Recomendado)", "Personalizado por categoría", "Plana 5 %", "Plana 10 %", "Sin tolerancia (0 %)" };
+    public ObservableCollection<string> GroupingOptions { get; } = new() { GroupingByProvider, GroupingByFamily, GroupingNone };
 
     public PurchaseListViewModel(IShellNavigationHost shell, WpfAppHost host)
         : this(shell, host.Session, host.ProjectWorkspace, host.Permissions, host.MaterialSearch, host.PurchaseList, host.PurchaseListExcel) { }
@@ -79,11 +90,15 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         refreshCommand = new RelayCommand(Refresh);
         exportExcelCommand = new RelayCommand(ExportExcel, CanExportExcel);
         exportRfqCommand = new RelayCommand(ExportRfq, CanExportExcel);
+        exportPurchaseOrderCommand = new RelayCommand(ExportPurchaseOrder, CanExportExcel);
+        exportGroupPurchaseOrderCommand = new RelayCommand<object>(ExportGroupPurchaseOrder, _ => CanExportExcel());
         clearFiltersCommand = new RelayCommand(ClearFilters);
         clearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => HasSearchText);
         goToOriginCommand = new RelayCommand(GoToOrigin, () => selectedRow != null);
         goToUsageCommand = new RelayCommand(GoToSelectedUsage, () => SelectedUsage != null || selectedRow != null);
         groupByProviderCommand = new RelayCommand(ToggleGroupByProvider);
+        groupByFamilyCommand = new RelayCommand(() => SelectedGroupingOption = GroupingByFamily);
+        clearGroupingCommand = new RelayCommand(() => SelectedGroupingOption = GroupingNone);
         viewTraceabilityCommand = new RelayCommand(OpenTraceabilityTab, () => selectedRow != null);
         ToggleCategoryEditorCommand = new RelayCommand(() => IsCustomCategoryEditorVisible = !IsCustomCategoryEditorVisible);
         ResetCategoryTolerancesCommand = new RelayCommand(ResetCategoryTolerances);
@@ -107,6 +122,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         };
 
         Refresh();
+        ApplyGrouping(selectedGroupingOption);
     }
 
     protected override void OnSessionChanged(object? sender, ProjectSessionChangedEventArgs e) =>
@@ -173,6 +189,17 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
             OnPropertyChanged(nameof(HasActiveFilters));
             rowsView.Refresh();
             UpdateSummary();
+        }
+    }
+
+    public string SelectedGroupingOption
+    {
+        get => selectedGroupingOption;
+        set
+        {
+            if (!SetProperty(ref selectedGroupingOption, value))
+                return;
+            ApplyGrouping(value);
         }
     }
 
@@ -256,6 +283,14 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         private set => SetProperty(ref isGroupedByProvider, value);
     }
 
+    public bool IsGroupedByFamily
+    {
+        get => isGroupedByFamily;
+        private set => SetProperty(ref isGroupedByFamily, value);
+    }
+
+    public bool IsGrouped => isGroupedByProvider || isGroupedByFamily;
+
     public ObservableCollection<MaterialUsageBreakdown> MaterialUsages => materialUsages;
 
     public MaterialUsageBreakdown? SelectedUsage
@@ -283,6 +318,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
             goToOriginCommand.RaiseCanExecuteChanged();
             viewTraceabilityCommand.RaiseCanExecuteChanged();
             goToUsageCommand.RaiseCanExecuteChanged();
+            exportPurchaseOrderCommand.RaiseCanExecuteChanged();
             UpdateMaterialUsages();
         }
     }
@@ -290,11 +326,15 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
     public ICommand RefreshCommand => refreshCommand;
     public ICommand ExportExcelCommand => exportExcelCommand;
     public ICommand ExportRfqCommand => exportRfqCommand;
+    public ICommand ExportPurchaseOrderCommand => exportPurchaseOrderCommand;
+    public ICommand ExportGroupPurchaseOrderCommand => exportGroupPurchaseOrderCommand;
     public ICommand ClearFiltersCommand => clearFiltersCommand;
     public ICommand ClearSearchCommand => clearSearchCommand;
     public ICommand GoToOriginCommand => goToOriginCommand;
     public ICommand GoToUsageCommand => goToUsageCommand;
     public ICommand GroupByProviderCommand => groupByProviderCommand;
+    public ICommand GroupByFamilyCommand => groupByFamilyCommand;
+    public ICommand ClearGroupingCommand => clearGroupingCommand;
     public ICommand ViewTraceabilityCommand => viewTraceabilityCommand;
     public ICommand OpenProjectCommand { get; }
 
@@ -373,6 +413,7 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         }
 
         BuildCategoryOptions();
+        ApplyGrouping(selectedGroupingOption);
         rowsView.Refresh();
         UpdateSummary();
         UpdateProjectSummary();
@@ -386,6 +427,8 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
                 : $"Lista consolidada con {rows.Count:N0} materiales.";
         exportExcelCommand.RaiseCanExecuteChanged();
         exportRfqCommand.RaiseCanExecuteChanged();
+        exportPurchaseOrderCommand.RaiseCanExecuteChanged();
+        exportGroupPurchaseOrderCommand.RaiseCanExecuteChanged();
     }
 
     private void OnRowToleranceChanged(object? sender, EventArgs e)
@@ -449,6 +492,8 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
             StatusMessage = "Abre o crea un proyecto para consolidar la lista de compra.";
             exportExcelCommand.RaiseCanExecuteChanged();
             exportRfqCommand.RaiseCanExecuteChanged();
+            exportPurchaseOrderCommand.RaiseCanExecuteChanged();
+            exportGroupPurchaseOrderCommand.RaiseCanExecuteChanged();
             return;
         }
 
@@ -470,6 +515,8 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
                 : $"Lista consolidada: $ {totalNetoClp:N0} neto · $ {totalCompraClp:N0} compra.";
         exportExcelCommand.RaiseCanExecuteChanged();
         exportRfqCommand.RaiseCanExecuteChanged();
+        exportPurchaseOrderCommand.RaiseCanExecuteChanged();
+        exportGroupPurchaseOrderCommand.RaiseCanExecuteChanged();
     }
 
     private void UpdateProjectSummary()
@@ -559,6 +606,102 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
         }
     }
 
+    public void ExportGroupPurchaseOrder(object? parameter)
+    {
+        if (parameter is CollectionViewGroup group)
+        {
+            ExportPurchaseOrderForGroup(group);
+            return;
+        }
+
+        ExportPurchaseOrder();
+    }
+
+    public void ExportPurchaseOrderForGroup(CollectionViewGroup group)
+    {
+        if (!CanExportExcel())
+            return;
+
+        var items = group.Items.OfType<CompraMaterialViewModel>().ToList();
+        if (items.Count == 0)
+            return;
+
+        string groupName = group.Name?.ToString() ?? "Proveedor";
+        ExportPurchaseOrderInternal(items, groupName);
+    }
+
+    public void ExportPurchaseOrder()
+    {
+        if (!CanExportExcel())
+            return;
+
+        if (selectedRow != null && !string.IsNullOrWhiteSpace(selectedRow.Proveedor))
+        {
+            string prov = selectedRow.Proveedor.Trim();
+            var provItems = rows.Where(r => string.Equals(r.Proveedor, prov, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (provItems.Count > 0)
+            {
+                ExportPurchaseOrderInternal(provItems, prov);
+                return;
+            }
+        }
+
+        var visibleItems = rowsView.Cast<CompraMaterialViewModel>().ToList();
+        ExportPurchaseOrderInternal(visibleItems, "General");
+    }
+
+    private void ExportPurchaseOrderInternal(IReadOnlyList<CompraMaterialViewModel> items, string targetName)
+    {
+        try
+        {
+            string cleanTarget = SanitizeFilename(targetName);
+            string cleanProject = string.IsNullOrWhiteSpace(session.ProjectInfo.Nombre)
+                ? "Proyecto"
+                : SanitizeFilename(session.ProjectInfo.Nombre);
+
+            string defaultName = $"OC_{cleanProject}_{cleanTarget}.xlsx";
+
+            var dialog = new SaveFileDialog
+            {
+                Title = $"Exportar Orden de Compra (OC) — {targetName}",
+                Filter = "Excel (*.xlsx)|*.xlsx",
+                FileName = defaultName,
+                OverwritePrompt = true
+            };
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            string company = !string.IsNullOrWhiteSpace(session.ProjectInfo.OfertaPdf?.CompanyName)
+                ? session.ProjectInfo.OfertaPdf.CompanyName
+                : (!string.IsNullOrWhiteSpace(session.ProjectInfo.Cliente)
+                    ? session.ProjectInfo.Cliente
+                    : session.ProjectInfo.Nombre);
+
+            string numeroOc = $"OC-{cleanProject}-{cleanTarget}-{AppClock.Now:yyyyMMdd}";
+
+            purchaseListExcel.ExportPurchaseOrder(dialog.FileName, new PurchaseOrderExcelRequest(
+                session.ProjectInfo.Nombre,
+                targetName,
+                company,
+                ToleranciaPct,
+                items,
+                MuestraUf,
+                session.ValorUfClp,
+                numeroOc));
+
+            StatusMessage = $"Orden de Compra exportada: {Path.GetFileName(dialog.FileName)}";
+            WpfDialogService.Info("Orden de Compra (OC)", $"La Orden de Compra para '{targetName}' con {items.Count:N0} materiales se exportó correctamente en Excel.");
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Purchases", "Falló exportar orden de compra", ex);
+            var userMessage = OperationFailureMessages.ToUserMessage(ex);
+            StatusMessage = userMessage;
+            WpfDialogService.Error("Exportar Orden de Compra", userMessage);
+        }
+    }
+
     private static string SanitizeFilename(string name)
     {
         var invalid = Path.GetInvalidFileNameChars();
@@ -582,14 +725,36 @@ public sealed class PurchaseListViewModel : SessionAwareViewModelBase, IRefresha
 
     private void ToggleGroupByProvider()
     {
-        IsGroupedByProvider = !IsGroupedByProvider;
+        SelectedGroupingOption = SelectedGroupingOption == GroupingByProvider
+            ? GroupingNone
+            : GroupingByProvider;
+    }
+
+    private void ApplyGrouping(string option)
+    {
         rowsView.GroupDescriptions.Clear();
-        if (IsGroupedByProvider)
+        if (string.Equals(option, GroupingByProvider, StringComparison.OrdinalIgnoreCase))
         {
             rowsView.GroupDescriptions.Add(
                 new PropertyGroupDescription(nameof(CompraMaterialViewModel.GrupoProveedor)));
+            IsGroupedByProvider = true;
+            IsGroupedByFamily = false;
+        }
+        else if (string.Equals(option, GroupingByFamily, StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(option, "Familia", StringComparison.OrdinalIgnoreCase))
+        {
+            rowsView.GroupDescriptions.Add(
+                new PropertyGroupDescription(nameof(CompraMaterialViewModel.GrupoFamilia)));
+            IsGroupedByProvider = false;
+            IsGroupedByFamily = true;
+        }
+        else
+        {
+            IsGroupedByProvider = false;
+            IsGroupedByFamily = false;
         }
 
+        OnPropertyChanged(nameof(IsGrouped));
         rowsView.Refresh();
     }
 

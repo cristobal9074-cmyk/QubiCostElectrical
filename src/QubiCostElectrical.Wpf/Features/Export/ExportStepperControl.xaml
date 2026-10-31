@@ -85,7 +85,7 @@
                 <TextBlock Text="Listo" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
               </Border>
             </StackPanel>
-            <TextBlock Text="Documentos, contenido y membrete" FontSize="10.5"
+            <TextBlock Text="Documentos y membrete" FontSize="10.5"
                        Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
                        TextTrimming="CharacterEllipsis" />
           </StackPanel>
@@ -177,7 +177,7 @@
                 <TextBlock Text="Listo" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
               </Border>
             </StackPanel>
-            <TextBlock Text="Revisa la carta y la oferta antes de exportar" FontSize="10.5"
+            <TextBlock Text="Revisión de documentos" FontSize="10.5"
                        Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
                        TextTrimming="CharacterEllipsis" />
           </StackPanel>
@@ -254,7 +254,7 @@
                 <TextBlock Text="Actual" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
               </Border>
             </StackPanel>
-            <TextBlock Text="Alcance, paquetes y generación final" FontSize="10.5"
+            <TextBlock Text="Generación y entrega" FontSize="10.5"
                        Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0"
                        TextTrimming="CharacterEllipsis" />
           </StackPanel>

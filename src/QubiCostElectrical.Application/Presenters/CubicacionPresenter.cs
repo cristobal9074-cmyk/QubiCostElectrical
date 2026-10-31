@@ -9,7 +9,9 @@ public sealed record CubicacionPartidaTotals(
     decimal ManoObra,
     decimal CostoDirecto,
     decimal PrecioUnitario,
-    decimal TotalPartida);
+    decimal TotalPartida,
+    decimal PrecioVentaUnitario = 0m,
+    decimal TotalVenta = 0m);
 
 public sealed record CubicacionRowValidation(
     string? CodigoError,
@@ -48,7 +50,7 @@ public sealed class CubicacionPresenter
     {
         var validRows = rows.Where(r => !string.IsNullOrWhiteSpace(r.Codigo) || !string.IsNullOrWhiteSpace(r.Descripcion) || r.Cantidad != 0m || r.MatClp != 0m || r.MoClp != 0m || r.MatUf != 0m || r.MoUf != 0m).ToList();
         if (validRows.Count == 0)
-            return new CubicacionPartidaTotals(0, 0, 0, 0, 0);
+            return new CubicacionPartidaTotals(0, 0, 0, 0, 0, 0, 0);
 
         var cost = _services.BudgetCalculation.CalculateBudget(
             validRows,
@@ -59,12 +61,48 @@ public sealed class CubicacionPresenter
         decimal qty = item?.Cantidad ?? 1m;
         decimal precioUnitario = qty != 0 ? cost.CostoDirectoUf / qty : 0m;
 
+        decimal precioVentaUnitario = 0m;
+        decimal totalVenta = 0m;
+
+        try
+        {
+            var projectCost = _services.BudgetCalculation.CalculateBudget(
+                _session.Cubicacion,
+                BudgetSettings.FromProject(_session.ProjectInfo),
+                _session.Apus,
+                _session.Itemizado);
+
+            decimal targetAmount = projectCost.TotalVentaNetoUf > 0m ? projectCost.TotalVentaNetoUf : projectCost.TotalVentaUf;
+            var offerRows = OfferClienteRowBuilder.Build(_session.Itemizado, projectCost, targetAmount, _session.ProjectInfo?.Nombre ?? "Proyecto");
+            var offerRow = offerRows.FirstOrDefault(r => !r.EsTitulo && (
+                string.Equals(r.Id, partidaId, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r.Item, item?.Item, StringComparison.OrdinalIgnoreCase)));
+
+            if (offerRow != null)
+            {
+                totalVenta = offerRow.TotalUf;
+                precioVentaUnitario = qty > 0m ? Money.Round(totalVenta / qty) : 0m;
+            }
+        }
+        catch
+        {
+            // Fallback si no hay itemizado o falla el cálculo global: aplicar factor de partida
+            if (cost.CostoDirectoUf > 0m && cost.TotalVentaUf > 0m)
+            {
+                decimal factor = cost.TotalVentaUf / cost.CostoDirectoUf;
+                totalVenta = Money.Round(cost.CostoDirectoUf * factor);
+                precioVentaUnitario = qty > 0m ? Money.Round(totalVenta / qty) : 0m;
+            }
+        }
+
         return new CubicacionPartidaTotals(
             cost.MaterialesUf,
             cost.ManoObraUf,
             cost.CostoDirectoUf,
             precioUnitario,
-            cost.CostoDirectoUf);
+            cost.CostoDirectoUf,
+            precioVentaUnitario,
+            totalVenta);
     }
 
     // Un catálogo corporativo real crece con los años (miles de materiales). ValidateRow se

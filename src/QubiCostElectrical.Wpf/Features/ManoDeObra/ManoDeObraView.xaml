@@ -6,8 +6,8 @@
 
   <UserControl.Resources>
     <Style x:Key="Mo.SegBtn" TargetType="Button">
-      <Setter Property="Height" Value="26" />
-      <Setter Property="Padding" Value="10,0" />
+      <Setter Property="Height" Value="24" />
+      <Setter Property="Padding" Value="8,0" />
       <Setter Property="FontSize" Value="{StaticResource Font.Size.sm}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
@@ -17,7 +17,7 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
           </ControlTemplate>
@@ -25,7 +25,7 @@
       </Setter>
     </Style>
 
-    <Style x:Key="Mo.SalaryInput" TargetType="TextBox">
+    <Style x:Key="Mo.SalaryInput" TargetType="TextBox" BasedOn="{StaticResource Form.TextBox}">
       <Setter Property="Width" Value="110" />
       <Setter Property="Height" Value="30" />
       <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
@@ -34,12 +34,9 @@
       <Setter Property="TextAlignment" Value="Right" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="Padding" Value="6,0" />
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
     </Style>
 
-    <Style x:Key="Mo.FraccionInput" TargetType="TextBox">
+    <Style x:Key="Mo.FraccionInput" TargetType="TextBox" BasedOn="{StaticResource Form.TextBox}">
       <Setter Property="Width" Value="62" />
       <Setter Property="Height" Value="30" />
       <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
@@ -48,542 +45,722 @@
       <Setter Property="TextAlignment" Value="Right" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="Padding" Value="6,0" />
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
     </Style>
   </UserControl.Resources>
 
-  <Grid>
+  <Grid Background="{DynamicResource Brush.Canvas}">
     <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-      <StackPanel Margin="0,0,24,24">
+      <StackPanel Margin="0,0,0,24">
 
-        <!-- Header -->
-        <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="20,12" Background="{DynamicResource Brush.Surface}">
-          <DockPanel LastChildFill="False">
-            <StackPanel>
-              <TextBlock Text="Mano de obra" Style="{StaticResource Text.PageTitle}" />
-            </StackPanel>
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-              <Border Padding="10,4" CornerRadius="12" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Margin="0,0,8,0">
-                <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="Duración " Style="{StaticResource Text.Helper}" VerticalAlignment="Center" />
-                  <TextBlock Text="{Binding ChipMeses}" Style="{StaticResource Text.KpiInline}" VerticalAlignment="Center" />
-                </StackPanel>
-              </Border>
-              <Border Padding="10,4" CornerRadius="12" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" Margin="0,0,8,0"
-                      Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}">
-                <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="UF " FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                  <TextBlock Text="{Binding ChipUf}" FontSize="{StaticResource Font.Size.sm}" FontWeight="SemiBold" FontFamily="{StaticResource Font.Mono}" VerticalAlignment="Center" />
-                </StackPanel>
-              </Border>
-              <Border Padding="2" CornerRadius="7" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                      Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}">
-                <StackPanel Orientation="Horizontal">
-                  <Button Content="CLP" Command="{Binding SetCurrencyClpCommand}">
-                    <Button.Style>
-                      <Style TargetType="Button" BasedOn="{StaticResource Mo.SegBtn}">
-                        <Style.Triggers>
-                          <DataTrigger Binding="{Binding IsClp}" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                          </DataTrigger>
-                        </Style.Triggers>
-                      </Style>
-                    </Button.Style>
-                  </Button>
-                  <Button Content="UF" Command="{Binding SetCurrencyUfCommand}">
-                    <Button.Style>
-                      <Style TargetType="Button" BasedOn="{StaticResource Mo.SegBtn}">
-                        <Style.Triggers>
-                          <DataTrigger Binding="{Binding IsUf}" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                          </DataTrigger>
-                        </Style.Triggers>
-                      </Style>
-                    </Button.Style>
-                  </Button>
-                </StackPanel>
-              </Border>
-            </StackPanel>
-          </DockPanel>
-        </Border>
-
-        <!-- Config bar -->
-        <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                CornerRadius="10" Padding="8,8" Margin="20,14,20,0">
-          <DockPanel LastChildFill="False">
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center"
-                        IsEnabled="{Binding CanEdit}">
-              <StackPanel Orientation="Horizontal" Margin="6,0,10,0" VerticalAlignment="Center">
-                <TextBlock Text="DURACIÓN" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                <TextBox Text="{Binding TotalMeses, UpdateSourceTrigger=LostFocus}" Width="56" Height="30" Margin="8,0,4,0"
-                         TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.kpi}" FontWeight="Bold"
-                         Foreground="{DynamicResource Brush.Blue}" VerticalContentAlignment="Center"
-                         ToolTip="Pulsa Enter o sal del campo para aplicar (ej. 12, 15, 20)"
-                         KeyDown="OnParamKeyDown" />
-                <TextBlock Text="meses" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-              </StackPanel>
-              <Border Width="1" Height="28" Background="{DynamicResource Brush.Line}" Margin="4,0" />
-              <StackPanel Orientation="Horizontal" Margin="10,0" VerticalAlignment="Center"
-                          Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="VALOR UF" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding ChipUf}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.kpi}" FontWeight="Bold"
-                           Foreground="{DynamicResource Brush.Blue}" Margin="8,0,0,0" VerticalAlignment="Center" />
-              </StackPanel>
-              <Border Width="1" Height="28" Background="{DynamicResource Brush.Line}" Margin="4,0" />
-              <StackPanel Orientation="Horizontal" Margin="10,0" VerticalAlignment="Center">
-                <TextBlock Text="LEYES SOCIALES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                <TextBox Text="{Binding LeyesSocialesPct, UpdateSourceTrigger=LostFocus}" Width="48" Height="30" Margin="8,0,4,0"
-                         TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.kpi}" FontWeight="Bold"
-                         Foreground="{DynamicResource Brush.Blue}" VerticalContentAlignment="Center"
-                         KeyDown="OnParamKeyDown" />
-                <TextBlock Text="%" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-              </StackPanel>
-              <Border Width="1" Height="28" Background="{DynamicResource Brush.Line}" Margin="4,0" />
-              <StackPanel Orientation="Horizontal" Margin="10,0" VerticalAlignment="Center">
-                <TextBlock Text="CURVA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                <ComboBox Width="200" Height="30" SelectedValue="{Binding CurvePreset}" SelectedValuePath="Tag">
-                  <ComboBoxItem Tag="bell" Content="Campana (subida → pico → cierre)" IsSelected="True" />
-                  <ComboBoxItem Tag="flat" Content="Plana (dotación fija)" />
-                </ComboBox>
-              </StackPanel>
-              <Border Width="1" Height="28" Background="{DynamicResource Brush.Line}" Margin="4,0" />
-              <StackPanel Orientation="Horizontal" Margin="10,0" VerticalAlignment="Center">
-                <TextBlock Text="PICO DIRECTA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                <TextBox Text="{Binding PeakHeadcount, UpdateSourceTrigger=LostFocus}" Width="52" Height="30" Margin="8,0,4,0"
-                         TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.kpi}" FontWeight="Bold"
-                         Foreground="{DynamicResource Brush.Blue}" VerticalContentAlignment="Center"
-                         ToolTip="Pulsa Enter o sal del campo para aplicar. 0 = sin dotación (proyecto limpio)"
-                         KeyDown="OnParamKeyDown" />
-                <TextBlock Text="pers." FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-              </StackPanel>
-              <Border Width="1" Height="28" Background="{DynamicResource Brush.Line}" Margin="4,0" />
-              <Border Padding="10,4" CornerRadius="12" Background="{DynamicResource Brush.GreenSoft}" Margin="10,0,0,0" VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal">
-                  <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Green}" Margin="0,0,6,0" VerticalAlignment="Center" />
-                  <TextBlock Text="{Binding PeakLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
-                             Foreground="{DynamicResource Brush.Green}" VerticalAlignment="Center" />
-                </StackPanel>
-              </Border>
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,4,0">
-              <Button Content="Restablecer" Style="{StaticResource Button.Secondary}" Command="{Binding ResetParamsCommand}" Margin="0,0,8,0" MinWidth="100" />
-              <Button Content="Aplicar" Style="{StaticResource Button.Primary}" Command="{Binding ApplyCommand}" MinWidth="90" />
-            </StackPanel>
-          </DockPanel>
-        </Border>
-
-        <!-- Resumen compacto -->
-        <Border Style="{StaticResource Card.Summary}" Margin="20,10,20,0" Padding="12,6">
-          <DockPanel LastChildFill="False">
-            <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
-              <TextBlock Text="Total MO" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding KpiTotalMo}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
-              <TextBlock Text="Sueldos" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding KpiBase}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
-              <TextBlock Text="Leyes" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding KpiLeyes}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Purple}" VerticalAlignment="Center" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
-              <TextBlock Text="MO dir." FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding KpiDirecta}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" VerticalAlignment="Center" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <TextBlock Text="MO ind." FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding KpiIndirecta}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" VerticalAlignment="Center" />
-            </StackPanel>
-          </DockPanel>
-        </Border>
-
-        <!-- Chart + insights -->
-        <Grid Margin="20,14,20,0">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1.4*" />
-            <ColumnDefinition Width="10" />
-            <ColumnDefinition Width="*" />
-          </Grid.ColumnDefinitions>
-
-          <Border Grid.Column="0" Style="{StaticResource Card.Section}" Padding="0">
-            <DockPanel>
-              <Border DockPanel.Dock="Top" Padding="14,12" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1">
-                <DockPanel>
-                  <TextBlock Text="Curva de dotación" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
-                  <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
-                      <Border Width="8" Height="8" Background="{DynamicResource Brush.Blue2}" CornerRadius="2" VerticalAlignment="Center" Margin="0,0,5,0" />
-                      <TextBlock Text="Directa" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                      <Border Width="8" Height="8" Background="{DynamicResource Brush.AmberRisk}" CornerRadius="2" VerticalAlignment="Center" Margin="0,0,5,0" />
-                      <TextBlock Text="Indirecta" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" />
-                    </StackPanel>
-                  </StackPanel>
-                </DockPanel>
-              </Border>
-              <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="12,10">
-                <Border x:Name="ChartWheelZone" Background="Transparent">
-                  <ItemsControl ItemsSource="{Binding ChartBars}">
-                    <ItemsControl.ItemsPanel>
-                      <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
-                      </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate>
-                        <StackPanel Width="28" Margin="1,0" ToolTip="{Binding Tip}">
-                          <Border Height="120" VerticalAlignment="Bottom">
-                            <DockPanel LastChildFill="False" VerticalAlignment="Bottom">
-                              <Border DockPanel.Dock="Bottom" Height="{Binding DirPct}" MinHeight="1"
-                                      Background="{DynamicResource Brush.Blue2}" CornerRadius="2,2,0,0" Opacity="0.9" />
-                              <Border DockPanel.Dock="Bottom" Height="{Binding IndPct}" MinHeight="0"
-                                      Background="{DynamicResource Brush.AmberRisk}" CornerRadius="2,2,0,0" Opacity="0.85" Margin="0,0,0,0" />
-                            </DockPanel>
-                          </Border>
-                          <TextBlock Text="{Binding Label}" FontSize="{StaticResource Font.Size.micro}" FontFamily="{StaticResource Font.Mono}"
-                                     Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,4,0,0" />
-                        </StackPanel>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </Border>
-              </ScrollViewer>
-            </DockPanel>
-          </Border>
-
-          <StackPanel Grid.Column="2">
-            <Border CornerRadius="10" Padding="14,12" BorderThickness="1" BorderBrush="{DynamicResource Brush.SuccessBorder}" Background="{DynamicResource Brush.GreenSoft}" Margin="0,0,0,10">
-              <StackPanel>
-                <TextBlock Text="MO Directa" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
-                <TextBlock TextWrapping="Wrap" Margin="0,4,0,0" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" LineHeight="16">
-                  Trabajadores que ejecutan la obra. Su cantidad <Run FontWeight="SemiBold">varía según la etapa</Run>:
-                  pocos al inicio, máximo en el pico y baja al cierre.
-                </TextBlock>
-                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                  <StackPanel Margin="0,0,16,0">
-                    <TextBlock Text="PICO" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExDirPico}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
-                  </StackPanel>
-                  <StackPanel Margin="0,0,16,0">
-                    <TextBlock Text="SUELDO BASE" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExDirSueldoProm}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
-                  </StackPanel>
-                  <StackPanel>
-                    <TextBlock Text="+ LEYES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExDirLeyVal}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
-                  </StackPanel>
-                </StackPanel>
-              </StackPanel>
-            </Border>
-            <Border CornerRadius="10" Padding="14,12" BorderThickness="1" BorderBrush="{DynamicResource Brush.Amber2}" Background="{DynamicResource Brush.AmberSoft}">
-              <StackPanel>
-                <TextBlock Text="MO Indirecta" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
-                <TextBlock TextWrapping="Wrap" Margin="0,4,0,0" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" LineHeight="16">
-                  Supervisores y profesionales que <Run FontWeight="SemiBold">gestionan</Run> la obra.
-                  Están <Run FontWeight="SemiBold">todos los meses</Run>. Dotación fija.
-                </TextBlock>
-                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                  <StackPanel Margin="0,0,16,0">
-                    <TextBlock Text="DURACIÓN" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExIndDur}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
-                  </StackPanel>
-                  <StackPanel Margin="0,0,16,0">
-                    <TextBlock Text="ROLES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExIndRoles}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
-                  </StackPanel>
-                  <StackPanel>
-                    <TextBlock Text="SUELDO BASE" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
-                    <TextBlock Text="{Binding ExIndSueldoProm}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
-                  </StackPanel>
-                </StackPanel>
-              </StackPanel>
-            </Border>
-          </StackPanel>
-        </Grid>
-
-        <!-- Salary editors -->
-        <Border Style="{StaticResource Card.Section}" Padding="0" Margin="20,14,20,0">
-          <DockPanel>
-            <Border DockPanel.Dock="Top" Padding="14,12" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Background="{DynamicResource Brush.Surface2}">
-              <DockPanel>
-                <StackPanel>
-                  <TextBlock Text="Sueldos base por cargo" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" />
-                  <TextBlock Text="Edita por categoría y rol · se recalcula al instante" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
-                </StackPanel>
-                <Button DockPanel.Dock="Right" Content="Restablecer sueldos" Style="{StaticResource Button.Secondary}"
-                        Command="{Binding ResetSueldosCommand}" HorizontalAlignment="Right" MinWidth="140" />
-              </DockPanel>
-            </Border>
-            <UniformGrid Columns="2" Margin="0" IsEnabled="{Binding CanEdit}">
-              <!-- Directa -->
-              <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,1,0">
-                <DockPanel>
-                  <Border DockPanel.Dock="Top" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="0,0,0,1">
-                    <DockPanel LastChildFill="True">
-                      <Button DockPanel.Dock="Right" Content="+ Agregar puesto" Style="{StaticResource Button.Secondary}"
-                              Command="{Binding AddDirectaCargoCommand}" VerticalAlignment="Center" Padding="10,4" />
-                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="MO Directa" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
-                        <Border Margin="8,0,0,0" Padding="8,2" CornerRadius="10" Background="{DynamicResource Brush.GreenSoft}" VerticalAlignment="Center">
-                          <TextBlock Text="VARIABLE" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
-                        </Border>
-                      </StackPanel>
-                    </DockPanel>
-                  </Border>
-                  <Border DockPanel.Dock="Bottom" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0">
-                    <DockPanel>
-                      <TextBlock Text="Promedio base · c/leyes" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                      <TextBlock Text="{Binding FootDir}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
-                                 HorizontalAlignment="Right" VerticalAlignment="Center" />
-                    </DockPanel>
-                  </Border>
-                  <ItemsControl ItemsSource="{Binding DirectaEditors}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate DataType="{x:Type mo:MoCargoEditorVm}">
-                        <Border BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Padding="14,10"
-                                Background="{DynamicResource Brush.Surface}">
-                          <Grid>
-                            <Grid.ColumnDefinitions>
-                              <ColumnDefinition Width="40" />
-                              <ColumnDefinition Width="*" />
-                              <ColumnDefinition Width="Auto" />
-                              <ColumnDefinition Width="100" />
-                              <ColumnDefinition Width="30" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" CornerRadius="4" Padding="4,2" Background="{DynamicResource Brush.GreenSoft}"
-                                    HorizontalAlignment="Left" VerticalAlignment="Center">
-                              <TextBlock Text="{Binding Tag}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
-                                         Foreground="{DynamicResource Brush.Green}" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
-                              <TextBox Text="{Binding Nombre, UpdateSourceTrigger=LostFocus}"
-                                       FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
-                                       Background="Transparent" BorderThickness="0" Padding="0,2"
-                                       Foreground="{DynamicResource Brush.Ink}"
-                                       ToolTip="Haga clic para editar el nombre del puesto" />
-                              <TextBlock Text="{Binding Hint}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                              <TextBlock Text="$" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Muted}"
-                                         VerticalAlignment="Center" Margin="0,0,4,0" />
-                              <TextBox Style="{StaticResource Mo.SalaryInput}"
-                                       Text="{Binding SueldoEditText, UpdateSourceTrigger=LostFocus}"
-                                       LostFocus="OnSalaryLostFocus" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
-                              <TextBlock Text="c/ leyes" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
-                              <TextBlock Text="{Binding ConLeyesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
-                                         Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Right" />
-                            </StackPanel>
-                            <Button Grid.Column="4" Style="{StaticResource Button.Ghost}"
-                                    Command="{Binding DeleteCommand}"
-                                    ToolTip="Eliminar este puesto"
-                                    Width="24" Height="24" Padding="0" Margin="4,0,0,0"
-                                    VerticalAlignment="Center">
-                              <TextBlock Text="✕" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" FontWeight="Bold" />
-                            </Button>
-                          </Grid>
-                        </Border>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </DockPanel>
-              </Border>
-
-              <!-- Indirecta -->
-              <Border>
-                <DockPanel>
-                  <Border DockPanel.Dock="Top" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Amber2}" BorderThickness="0,0,0,1">
-                    <DockPanel LastChildFill="True">
-                      <Button DockPanel.Dock="Right" Content="+ Agregar puesto" Style="{StaticResource Button.Secondary}"
-                              Command="{Binding AddIndirectaCargoCommand}" VerticalAlignment="Center" Padding="10,4" />
-                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="MO Indirecta" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
-                        <Border Margin="8,0,0,0" Padding="8,2" CornerRadius="10" Background="{DynamicResource Brush.AmberSoft}" VerticalAlignment="Center">
-                          <TextBlock Text="FIJA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
-                        </Border>
-                      </StackPanel>
-                    </DockPanel>
-                  </Border>
-                  <Border DockPanel.Dock="Bottom" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0">
-                    <DockPanel>
-                      <TextBlock Text="Promedio base · c/leyes" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-                      <TextBlock Text="{Binding FootInd}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
-                                 HorizontalAlignment="Right" VerticalAlignment="Center" />
-                    </DockPanel>
-                  </Border>
-                  <ItemsControl ItemsSource="{Binding IndirectaEditors}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate DataType="{x:Type mo:MoCargoEditorVm}">
-                        <Border BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Padding="14,10"
-                                Background="{DynamicResource Brush.Surface}">
-                          <Grid>
-                            <Grid.ColumnDefinitions>
-                              <ColumnDefinition Width="40" />
-                              <ColumnDefinition Width="*" />
-                              <ColumnDefinition Width="Auto" />
-                              <ColumnDefinition Width="Auto" />
-                              <ColumnDefinition Width="100" />
-                              <ColumnDefinition Width="30" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" CornerRadius="4" Padding="4,2" Background="{DynamicResource Brush.AmberSoft}"
-                                    HorizontalAlignment="Left" VerticalAlignment="Center">
-                              <TextBlock Text="{Binding Tag}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
-                                         Foreground="{DynamicResource Brush.Amber}" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
-                              <TextBox Text="{Binding Nombre, UpdateSourceTrigger=LostFocus}"
-                                       FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
-                                       Background="Transparent" BorderThickness="0" Padding="0,2"
-                                       Foreground="{DynamicResource Brush.Ink}"
-                                       ToolTip="Haga clic para editar el nombre del puesto" />
-                              <TextBlock Text="{Binding Hint}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                              <TextBlock Text="$" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Muted}"
-                                         VerticalAlignment="Center" Margin="0,0,4,0" />
-                              <TextBox Style="{StaticResource Mo.SalaryInput}"
-                                       Text="{Binding SueldoEditText, UpdateSourceTrigger=LostFocus}"
-                                       LostFocus="OnSalaryLostFocus" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0"
-                                        ToolTip="Fracción del sueldo cobrada en esta obra (0 a 1). Ej.: 0,30 = 30% del sueldo">
-                              <StackPanel Margin="0,0,6,0" VerticalAlignment="Center">
-                                <TextBlock Text="FRACCIÓN" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" />
-                                <TextBlock Text="obra" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" />
-                              </StackPanel>
-                              <TextBox Style="{StaticResource Mo.FraccionInput}"
-                                       Text="{Binding FraccionEditText, UpdateSourceTrigger=LostFocus}"
-                                       LostFocus="OnSalaryLostFocus" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right">
-                              <TextBlock Text="c/ leyes" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
-                              <TextBlock Text="{Binding ConLeyesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
-                                         Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Right" />
-                            </StackPanel>
-                            <Button Grid.Column="5" Style="{StaticResource Button.Ghost}"
-                                    Command="{Binding DeleteCommand}"
-                                    ToolTip="Eliminar este puesto"
-                                    Width="24" Height="24" Padding="0" Margin="4,0,0,0"
-                                    VerticalAlignment="Center">
-                              <TextBlock Text="✕" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" FontWeight="Bold" />
-                            </Button>
-                          </Grid>
-                        </Border>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </DockPanel>
-              </Border>
-            </UniformGrid>
-          </DockPanel>
-        </Border>
-
-        <!-- Dotación table -->
-        <Border Style="{StaticResource Card.Section}" Padding="0" Margin="20,14,20,0">
-          <StackPanel>
-            <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="16,12" Background="{DynamicResource Brush.Surface2}">
-              <DockPanel LastChildFill="True">
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                  <TextBlock Text="Celdas con color = carga relativa al pico · flechas/Tab mueven · vacío vuelve a la curva"
-                             FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
-                             VerticalAlignment="Center" Margin="0,0,12,0" />
-                  <Button Content="Tomar proyección MO" Style="{StaticResource Button.Secondary}"
-                          Command="{Binding ApplyAverageProjectionCommand}" MinWidth="150" Margin="0,0,8,0"
-                          ToolTip="Aplica el promedio mensual redondeado de la Proyección MO (fórmula Excel =REDONDEAR.MAS(PROMEDIO(...);0)) a la dotación directa y recalcula costos" />
-                  <Button Name="ProjectionButton" Content="Proyección MO" Style="{StaticResource Button.Secondary}"
-                          Click="OnOpenProjection" MinWidth="120" />
-                </StackPanel>
-                <TextBlock Text="Dotación mensual por cargo" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
-              </DockPanel>
-            </Border>
-            <ScrollViewer x:Name="CargoTableScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
-              <Border x:Name="CargoWheelZone" Background="Transparent">
-                <Grid x:Name="CargoTableGrid" />
-              </Border>
-            </ScrollViewer>
-          </StackPanel>
-        </Border>
-
-        <!-- Cost table -->
-        <Border Style="{StaticResource Card.Section}" Padding="0" Margin="20,14,20,0">
-          <StackPanel>
-            <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="16,12" Background="{DynamicResource Brush.Surface2}">
-              <DockPanel>
-                <TextBlock Text="Costo mensual · Sueldo base + Leyes sociales" Style="{StaticResource Text.SectionTitle}" />
-                <TextBlock DockPanel.Dock="Right" Text="{Binding CostHint}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
-                           HorizontalAlignment="Right" VerticalAlignment="Center" />
-              </DockPanel>
-            </Border>
-            <ScrollViewer x:Name="CostTableScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
-              <Border x:Name="CostWheelZone" Background="Transparent">
-                <Grid x:Name="CostTableGrid" />
-              </Border>
-            </ScrollViewer>
-          </StackPanel>
-        </Border>
-
-        <!-- Total bar -->
-        <Border Background="{DynamicResource Brush.Navy}" Padding="18,16" Margin="20,10,20,0" CornerRadius="10">
+        <!-- Executive Hero Card & KPI Metrics Bar -->
+        <Border Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource Radius.Lg}"
+                Padding="20,18"
+                Margin="20,16,20,14">
           <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-              <TextBlock Text="{Binding TotalBarLabel}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.White}" />
-              <TextBlock Text="{Binding TotalBarSub}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.HeaderLabel}" Margin="0,3,0,0" TextWrapping="Wrap" />
-            </StackPanel>
-            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20,0,0,0">
-              <TextBlock Text="{Binding TotalBarValue}" FontSize="{StaticResource Font.Size.2xl}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}" TextAlignment="Right" />
-              <TextBlock Text="{Binding TotalBarUf}" FontSize="{StaticResource Font.Size.md}" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.BrandStroke}" TextAlignment="Right" Margin="0,2,0,0"
-                         Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
-            </StackPanel>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Top Row: Scope Badges, Title & Action Toolbar -->
+            <DockPanel Grid.Row="0" LastChildFill="True">
+              <!-- Right: Action Buttons Toolbar -->
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,0,0,0">
+                <Button Name="ProjectionButton"
+                        Style="{StaticResource Button.Secondary}"
+                        Content="📈 Proyección MO"
+                        Click="OnOpenProjection"
+                        Margin="0,0,8,0"
+                        ToolTip="Abrir ventana interactiva de proyección de cuadrillas y histograma" />
+                <Button Style="{StaticResource Button.Secondary}"
+                        Content="⚡ Tomar proyección"
+                        Command="{Binding ApplyAverageProjectionCommand}"
+                        Margin="0,0,8,0"
+                        ToolTip="Aplica el promedio mensual redondeado de la Proyección MO a la dotación directa" />
+                <Button Style="{StaticResource Button.Secondary}"
+                        Content="↻ Restablecer"
+                        Command="{Binding ResetParamsCommand}"
+                        Margin="0,0,8,0"
+                        ToolTip="Restablecer parámetros de Mano de Obra a los valores por defecto" />
+                <Button Style="{StaticResource Button.Primary}"
+                        Content="✓ Aplicar parámetros"
+                        Command="{Binding ApplyCommand}"
+                        ToolTip="Recalcular curvas de dotación y costos con los parámetros actuales" />
+              </StackPanel>
+
+              <!-- Left: Scope Badges, Title & Subtitle -->
+              <StackPanel VerticalAlignment="Center">
+                <!-- Badges / Scope Row -->
+                <WrapPanel VerticalAlignment="Center" Margin="0,0,0,8">
+                  <Border Background="{DynamicResource Brush.BlueSoft}"
+                          BorderBrush="{DynamicResource Brush.Line2}"
+                          BorderThickness="1"
+                          CornerRadius="12"
+                          Padding="10,3"
+                          Margin="0,0,8,4">
+                    <TextBlock Text="👷 COSTOS OPERATIVOS · CUADRILLAS Y DOTACIÓN"
+                               FontSize="11"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource Brush.Blue}" />
+                  </Border>
+
+                  <!-- Duration Badge -->
+                  <Border CornerRadius="12" Padding="10,3" Margin="0,0,8,4" Background="{DynamicResource Brush.SuccessBg}" BorderBrush="#BBF7D0" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                      <TextBlock Text="Duración: " FontSize="11" Foreground="{DynamicResource Brush.Success}" />
+                      <TextBlock Text="{Binding ChipMeses}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" />
+                    </StackPanel>
+                  </Border>
+
+                  <!-- Peak Headcount Badge -->
+                  <Border CornerRadius="12" Padding="10,3" Margin="0,0,8,4" Background="{DynamicResource Brush.AmberSoft}" BorderBrush="#FDE68A" BorderThickness="1">
+                    <TextBlock Text="{Binding PeakLabel}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Amber}" />
+                  </Border>
+
+                  <!-- Currency Switcher Badge -->
+                  <Border Padding="2" CornerRadius="7" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                          Margin="0,0,8,4" Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <Button Content="CLP" Command="{Binding SetCurrencyClpCommand}">
+                        <Button.Style>
+                          <Style TargetType="Button" BasedOn="{StaticResource Mo.SegBtn}">
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsClp}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Button.Style>
+                      </Button>
+                      <Button Content="UF" Command="{Binding SetCurrencyUfCommand}">
+                        <Button.Style>
+                          <Style TargetType="Button" BasedOn="{StaticResource Mo.SegBtn}">
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsUf}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Button.Style>
+                      </Button>
+                    </StackPanel>
+                  </Border>
+                </WrapPanel>
+
+                <!-- Title & Description -->
+                <TextBlock Text="Mano de Obra y Dotación Mensual"
+                           Style="{StaticResource Text.ViewTitle}"
+                           FontSize="20"
+                           FontWeight="Bold" />
+                <TextBlock Text="Programación mensual de cuadrillas directas, supervisión indirecta, leyes sociales y simulación de curvas de dotación."
+                           Style="{StaticResource Text.Body}"
+                           Foreground="{DynamicResource Brush.Muted}"
+                           Margin="0,3,0,0" />
+              </StackPanel>
+            </DockPanel>
+
+            <!-- Divider -->
+            <Separator Grid.Row="0" Margin="0,16,0,16" Background="{DynamicResource Brush.Line}" VerticalAlignment="Bottom" />
+
+            <!-- Bottom Row: 4 Modern Executive KPI Cards -->
+            <Grid Grid.Row="1" Margin="0,16,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+
+              <!-- KPI 1: Gran Total Mano de Obra -->
+              <Border Grid.Column="0"
+                      Background="{DynamicResource Brush.Surface2}"
+                      BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1"
+                      CornerRadius="10"
+                      Padding="14,12">
+                <DockPanel LastChildFill="True">
+                  <Border DockPanel.Dock="Left" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Width="38" Height="38" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="👷" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+                  <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding KpiTotalMo}" FontSize="18" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#2563EB" />
+                    <TextBlock Text="TOTAL MANO DE OBRA" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0" />
+                    <TextBlock Text="Sueldos base + leyes sociales" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+
+              <!-- KPI 2: M.O. Directa -->
+              <Border Grid.Column="2"
+                      Background="{DynamicResource Brush.Surface2}"
+                      BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1"
+                      CornerRadius="10"
+                      Padding="14,12">
+                <DockPanel LastChildFill="True">
+                  <Border DockPanel.Dock="Left" Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="8" Width="38" Height="38" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="🔨" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+                  <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding KpiDirecta}" FontSize="18" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#16A34A" />
+                    <TextBlock Text="M.O. DIRECTA (FAENA)" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0" />
+                    <TextBlock Text="Cuadrillas en terreno (variable)" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+
+              <!-- KPI 3: M.O. Indirecta -->
+              <Border Grid.Column="4"
+                      Background="{DynamicResource Brush.Surface2}"
+                      BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1"
+                      CornerRadius="10"
+                      Padding="14,12">
+                <DockPanel LastChildFill="True">
+                  <Border DockPanel.Dock="Left" Background="#FAF5FF" BorderBrush="#E9D5FF" BorderThickness="1" CornerRadius="8" Width="38" Height="38" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="📋" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+                  <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding KpiIndirecta}" FontSize="18" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#9333EA" />
+                    <TextBlock Text="M.O. INDIRECTA (LÍNEA)" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0" />
+                    <TextBlock Text="Jefatura y administración (fija)" FontSize="10" Foreground="{DynamicResource Brush.Muted}" />
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+
+              <!-- KPI 4: Leyes Sociales -->
+              <Border Grid.Column="6"
+                      Background="{DynamicResource Brush.Surface2}"
+                      BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1"
+                      CornerRadius="10"
+                      Padding="14,12">
+                <DockPanel LastChildFill="True">
+                  <Border DockPanel.Dock="Left" Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="8" Width="38" Height="38" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="⚖️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+                  <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding KpiLeyes}" FontSize="18" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="#D97706" />
+                    <TextBlock Text="LEYES SOCIALES" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,1,0,0" />
+                    <TextBlock FontSize="10" Foreground="{DynamicResource Brush.Muted}">
+                      <Run Text="Factor legal: " /><Run Text="{Binding LeyesSocialesPct, Mode=OneWay}" /><Run Text="%" />
+                    </TextBlock>
+                  </StackPanel>
+                </DockPanel>
+              </Border>
+            </Grid>
           </Grid>
         </Border>
 
-        <!-- Summary bar -->
-        <Border Background="{DynamicResource Brush.Navy2}" Padding="14,12" Margin="20,10,20,0" CornerRadius="10">
-          <DockPanel LastChildFill="False">
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-              <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="Sueldos Base" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding SumBase}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}" Margin="0,2,0,0" />
-              </StackPanel>
-              <Border Width="1" Height="28" Background="{DynamicResource Brush.White25}" Margin="0,0,20,0" VerticalAlignment="Center" />
-              <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="Leyes Sociales" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding SumLeyes}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.BrandStroke}" Margin="0,2,0,0" />
-              </StackPanel>
-              <Border Width="1" Height="28" Background="{DynamicResource Brush.White25}" Margin="0,0,20,0" VerticalAlignment="Center" />
-              <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="MO Directa" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding SumDirecta}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.SuccessBright}" Margin="0,2,0,0" />
-              </StackPanel>
-              <Border Width="1" Height="28" Background="{DynamicResource Brush.White25}" Margin="0,0,20,0" VerticalAlignment="Center" />
-              <StackPanel Margin="0,0,20,0">
-                <TextBlock Text="MO Indirecta" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding SumIndirecta}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber2}" Margin="0,2,0,0" />
-              </StackPanel>
-              <Border Width="1" Height="28" Background="{DynamicResource Brush.White25}" Margin="0,0,20,0" VerticalAlignment="Center" />
-              <StackPanel>
-                <TextBlock Text="Costo / mes prom." FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.HeaderMuted}" />
-                <TextBlock Text="{Binding SumPromMes}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.White}" Margin="0,2,0,0" />
-              </StackPanel>
-            </StackPanel>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding SumRight}" FontSize="{StaticResource Font.Size.sm}" FontFamily="{StaticResource Font.Mono}"
-                       Foreground="{DynamicResource Brush.BrandStroke}" VerticalAlignment="Center" Margin="20,0,0,0" />
-          </DockPanel>
-        </Border>
+        <!-- Main Body Content -->
+        <StackPanel Margin="20,0,20,14">
 
+          <!-- Section 1: Configuración de Parámetros de Simulación -->
+          <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                  CornerRadius="{StaticResource Radius.Lg}" Padding="16,14" Margin="0,0,0,16">
+            <StackPanel>
+              <TextBlock Text="PARÁMETROS OPERATIVOS DE PROYECCIÓN" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,10" />
+              <UniformGrid Columns="5" IsEnabled="{Binding CanEdit}">
+                <!-- Duración -->
+                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,10,0">
+                  <StackPanel>
+                    <TextBlock Text="DURACIÓN DE OBRA" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
+                    <DockPanel LastChildFill="True">
+                      <TextBlock DockPanel.Dock="Right" Text="meses" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="6,0,0,0" />
+                      <TextBox Text="{Binding TotalMeses, UpdateSourceTrigger=LostFocus}" Height="30"
+                               TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="13" FontWeight="Bold"
+                               Foreground="{DynamicResource Brush.Blue}" VerticalContentAlignment="Center"
+                               ToolTip="Pulsa Enter o sal del campo para aplicar (ej. 12, 15, 20)"
+                               KeyDown="OnParamKeyDown" />
+                    </DockPanel>
+                  </StackPanel>
+                </Border>
+
+                <!-- Leyes Sociales -->
+                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,10,0">
+                  <StackPanel>
+                    <TextBlock Text="LEYES SOCIALES" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
+                    <DockPanel LastChildFill="True">
+                      <TextBlock DockPanel.Dock="Right" Text="%" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="6,0,0,0" />
+                      <TextBox Text="{Binding LeyesSocialesPct, UpdateSourceTrigger=LostFocus}" Height="30"
+                               TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="13" FontWeight="Bold"
+                               Foreground="{DynamicResource Brush.Blue}" VerticalContentAlignment="Center"
+                               KeyDown="OnParamKeyDown" />
+                    </DockPanel>
+                  </StackPanel>
+                </Border>
+
+                <!-- Curva -->
+                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,10,0">
+                  <StackPanel>
+                    <TextBlock Text="CURVA DE DISTRIBUCIÓN" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
+                    <ComboBox Height="30" SelectedValue="{Binding CurvePreset}" SelectedValuePath="Tag" Style="{StaticResource Form.ComboBox}">
+                      <ComboBoxItem Tag="bell" Content="Campana (subida → pico → cierre)" IsSelected="True" />
+                      <ComboBoxItem Tag="flat" Content="Plana (dotación fija)" />
+                    </ComboBox>
+                  </StackPanel>
+                </Border>
+
+                <!-- Pico Directa -->
+                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,10,0">
+                  <StackPanel>
+                    <TextBlock Text="PICO M.O. DIRECTA" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
+                    <DockPanel LastChildFill="True">
+                      <TextBlock DockPanel.Dock="Right" Text="pers." FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="6,0,0,0" />
+                      <TextBox Text="{Binding PeakHeadcount, UpdateSourceTrigger=LostFocus}" Height="30"
+                               TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="13" FontWeight="Bold"
+                               Foreground="{DynamicResource Brush.Blue}" VerticalContentAlignment="Center"
+                               ToolTip="Pulsa Enter o sal del campo para aplicar. 0 = sin dotación"
+                               KeyDown="OnParamKeyDown" />
+                    </DockPanel>
+                  </StackPanel>
+                </Border>
+
+                <!-- Valor UF / Resumen Moneda -->
+                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                  <StackPanel>
+                    <TextBlock Text="VALOR UF PROYECTO" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
+                    <TextBlock Text="{Binding ChipUf, Mode=OneWay}" Height="30"
+                               TextAlignment="Center" FontFamily="{StaticResource Font.Mono}" FontSize="13" FontWeight="Bold"
+                               Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+              </UniformGrid>
+            </StackPanel>
+          </Border>
+
+          <!-- Section 2: Chart + Insights -->
+          <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="1.4*" />
+              <ColumnDefinition Width="12" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Curva de Dotaci&#243;n Chart -->
+            <Border Grid.Column="0" Style="{StaticResource Card.Section}" Padding="0">
+              <DockPanel>
+                <Border DockPanel.Dock="Top" Padding="16,10" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Background="{DynamicResource Brush.Surface2}">
+                  <DockPanel LastChildFill="True">
+                    <TextBlock Text="Histograma y Curva de Dotaci&#243;n Mensual" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal" Margin="0,0,10,0" VerticalAlignment="Center">
+                        <Border Width="9" Height="9" Background="{DynamicResource Brush.Blue2}" CornerRadius="2" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="Directa" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" />
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal" Margin="0,0,10,0" VerticalAlignment="Center">
+                        <Border Width="9" Height="9" Background="{DynamicResource Brush.AmberRisk}" CornerRadius="2" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="Indirecta" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" />
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <Line X1="0" Y1="5" X2="12" Y2="5" Stroke="{DynamicResource Brush.Red}" StrokeThickness="2" StrokeDashArray="3,2" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="Media" FontSize="10.5" Foreground="{DynamicResource Brush.Red}" FontWeight="SemiBold" />
+                      </StackPanel>
+                      <!-- Selector Personas vs Dias-Hombre -->
+                      <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="2">
+                        <StackPanel Orientation="Horizontal">
+                          <RadioButton Content="Personas" IsChecked="{Binding IsPersonasMode, Mode=TwoWay}"
+                                       GroupName="MoChartMetricGroup" Style="{StaticResource FilterChip.Base}" Padding="7,2" FontSize="10" />
+                          <RadioButton Content="D&#237;as-Hombre" IsChecked="{Binding IsDiasHombreMode, Mode=TwoWay}"
+                                       GroupName="MoChartMetricGroup" Style="{StaticResource FilterChip.Base}" Padding="7,2" FontSize="10" />
+                        </StackPanel>
+                      </Border>
+                    </StackPanel>
+                  </DockPanel>
+                </Border>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="16,12">
+                  <Border x:Name="ChartWheelZone" Background="Transparent">
+                    <Grid>
+                      <!-- Columnas del histograma -->
+                      <ItemsControl ItemsSource="{Binding ChartBars}">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <StackPanel Width="28" Margin="2,0" ToolTip="{Binding Tip}">
+                              <Border Height="120" VerticalAlignment="Bottom">
+                                <DockPanel LastChildFill="False" VerticalAlignment="Bottom">
+                                  <Border DockPanel.Dock="Bottom" Height="{Binding DirPct}" MinHeight="1"
+                                          Background="{DynamicResource Brush.Blue2}" CornerRadius="2,2,0,0" Opacity="0.9" />
+                                  <Border DockPanel.Dock="Bottom" Height="{Binding IndPct}" MinHeight="0"
+                                          Background="{DynamicResource Brush.AmberRisk}" CornerRadius="2,2,0,0" Opacity="0.85" />
+                                </DockPanel>
+                              </Border>
+                              <TextBlock Text="{Binding Label}" FontSize="{StaticResource Font.Size.micro}" FontFamily="{StaticResource Font.Mono}"
+                                         Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,6,0,0" />
+                            </StackPanel>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+
+                      <!-- Linea de dotacion media superpuesta -->
+                      <Grid Height="120" VerticalAlignment="Top" IsHitTestVisible="False" Margin="0,0,0,22"
+                            Visibility="{Binding HasChartData, Converter={StaticResource BoolToVisibility}}">
+                        <Line X1="0" Y1="0" X2="1" Y2="0" Stretch="Fill"
+                              Stroke="{DynamicResource Brush.Red}" StrokeThickness="1.5" StrokeDashArray="4,3"
+                              VerticalAlignment="Bottom" Margin="{Binding ChartMeanLineMargin}">
+                          <Line.Effect>
+                            <DropShadowEffect Color="#EF4444" BlurRadius="2" ShadowDepth="0" Opacity="0.3" />
+                          </Line.Effect>
+                        </Line>
+                        <Border HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                Margin="{Binding ChartMeanBadgeMargin}"
+                                Background="{DynamicResource Brush.Surface}"
+                                BorderBrush="{DynamicResource Brush.Red}"
+                                BorderThickness="1" CornerRadius="4" Padding="5,1.5">
+                          <TextBlock Text="{Binding ChartMeanLabel}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Red}" FontFamily="{StaticResource Font.Mono}" />
+                        </Border>
+                      </Grid>
+                    </Grid>
+                  </Border>
+                </ScrollViewer>
+              </DockPanel>
+            </Border>
+            <!-- Right: Insights Callouts -->
+            <StackPanel Grid.Column="2">
+              <Border CornerRadius="10" Padding="16,14" BorderThickness="1" BorderBrush="{DynamicResource Brush.SuccessBorder}" Background="{DynamicResource Brush.GreenSoft}" Margin="0,0,0,12">
+                <StackPanel>
+                  <DockPanel LastChildFill="True">
+                    <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.Surface}" CornerRadius="10" Padding="8,2">
+                      <TextBlock Text="{Binding ExDirPico, StringFormat={}Pico: {0}}" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" FontSize="11" />
+                    </Border>
+                    <TextBlock Text="Mano de Obra Directa" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
+                  </DockPanel>
+                  <TextBlock TextWrapping="Wrap" Margin="0,6,0,10" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" LineHeight="16">
+                    Personal que ejecuta físicamente la obra. Su dotación varía dinámicamente según la curva (inicio suave, pico central y repliegue de entrega).
+                  </TextBlock>
+                  <StackPanel Orientation="Horizontal">
+                    <StackPanel Margin="0,0,20,0">
+                      <TextBlock Text="SUELDO BASE PROM." FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                      <TextBlock Text="{Binding ExDirSueldoProm}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
+                    </StackPanel>
+                    <StackPanel>
+                      <TextBlock Text="CON LEYES SOCIALES" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                      <TextBlock Text="{Binding ExDirLeyVal}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
+                    </StackPanel>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <Border CornerRadius="10" Padding="16,14" BorderThickness="1" BorderBrush="{DynamicResource Brush.Amber2}" Background="{DynamicResource Brush.AmberSoft}">
+                <StackPanel>
+                  <DockPanel LastChildFill="True">
+                    <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.Surface}" CornerRadius="10" Padding="8,2">
+                      <TextBlock Text="{Binding ExIndRoles, StringFormat={}Roles: {0}}" FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" FontSize="11" />
+                    </Border>
+                    <TextBlock Text="Mano de Obra Indirecta" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
+                  </DockPanel>
+                  <TextBlock TextWrapping="Wrap" Margin="0,6,0,10" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Ink2}" LineHeight="16">
+                    Supervisión, jefaturas y personal administrativo que gestiona la faena de forma permanente y continua durante todo el plazo del proyecto.
+                  </TextBlock>
+                  <StackPanel Orientation="Horizontal">
+                    <StackPanel Margin="0,0,20,0">
+                      <TextBlock Text="DURACIÓN TOTAL" FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                      <TextBlock Text="{Binding ExIndDur}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
+                    </StackPanel>
+                    <StackPanel>
+                      <TextBlock Text="SUELDO BASE PROM." FontSize="{StaticResource Font.Size.2xs}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                      <TextBlock Text="{Binding ExIndSueldoProm}" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
+                    </StackPanel>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Grid>
+
+          <!-- Section 3: Salary Editors (Directa vs Indirecta) -->
+          <Border Style="{StaticResource Card.Section}" Padding="0" Margin="0,0,0,16">
+            <DockPanel>
+              <Border DockPanel.Dock="Top" Padding="18,14" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Background="{DynamicResource Brush.Surface2}">
+                <DockPanel>
+                  <StackPanel>
+                    <TextBlock Text="Estructura Salarial y Sueldos Base por Puesto" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" />
+                    <TextBlock Text="Edita los salarios base y la asignación horaria por cargo · El costo total y EPP se recalculan instantáneamente." FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
+                  </StackPanel>
+                  <Button DockPanel.Dock="Right" Content="↺ Restablecer sueldos estándar" Style="{StaticResource Button.Secondary}"
+                          Command="{Binding ResetSueldosCommand}" HorizontalAlignment="Right" MinWidth="180" />
+                </DockPanel>
+              </Border>
+
+              <UniformGrid Columns="2" Margin="0" IsEnabled="{Binding CanEdit}">
+                <!-- Columna Directa -->
+                <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,1,0">
+                  <DockPanel>
+                    <Border DockPanel.Dock="Top" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.SuccessBorder}" BorderThickness="0,0,0,1">
+                      <DockPanel LastChildFill="True">
+                        <Button DockPanel.Dock="Right" Content="+ Agregar puesto" Style="{StaticResource Button.Secondary}"
+                                Command="{Binding AddDirectaCargoCommand}" VerticalAlignment="Center" Padding="10,4" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                          <TextBlock Text="🔨 M.O. Directa" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
+                          <Border Margin="8,0,0,0" Padding="8,2" CornerRadius="10" Background="{DynamicResource Brush.GreenSoft}" VerticalAlignment="Center">
+                            <TextBlock Text="VARIABLE" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Green}" />
+                          </Border>
+                        </StackPanel>
+                      </DockPanel>
+                    </Border>
+                    <Border DockPanel.Dock="Bottom" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0">
+                      <DockPanel>
+                        <TextBlock Text="Promedio base · c/leyes" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding FootDir}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
+                      </DockPanel>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding DirectaEditors}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type mo:MoCargoEditorVm}">
+                          <Border BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Padding="14,10"
+                                  Background="{DynamicResource Brush.Surface}">
+                            <Grid>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="30" />
+                              </Grid.ColumnDefinitions>
+                              <Border Grid.Column="0" CornerRadius="4" Padding="4,2" Background="{DynamicResource Brush.GreenSoft}"
+                                      HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Tag}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
+                                           Foreground="{DynamicResource Brush.Green}" />
+                              </Border>
+                              <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
+                                <TextBox Text="{Binding Nombre, UpdateSourceTrigger=LostFocus}"
+                                         FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
+                                         Background="Transparent" BorderThickness="0" Padding="0,2"
+                                         Foreground="{DynamicResource Brush.Ink}"
+                                         ToolTip="Haga clic para editar el nombre del puesto" />
+                                <TextBlock Text="{Binding Hint}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" />
+                              </StackPanel>
+                              <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                <TextBlock Text="$" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Muted}"
+                                           VerticalAlignment="Center" Margin="0,0,4,0" />
+                                <TextBox Style="{StaticResource Mo.SalaryInput}"
+                                         Text="{Binding SueldoEditText, UpdateSourceTrigger=LostFocus}"
+                                         LostFocus="OnSalaryLostFocus" />
+                              </StackPanel>
+                              <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <TextBlock Text="c/ leyes" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding ConLeyesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Right" />
+                              </StackPanel>
+                              <Button Grid.Column="4" Style="{StaticResource Button.Ghost}"
+                                      Command="{Binding DeleteCommand}"
+                                      ToolTip="Eliminar este puesto"
+                                      Width="24" Height="24" Padding="0" Margin="4,0,0,0"
+                                      VerticalAlignment="Center">
+                                <TextBlock Text="✕" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" FontWeight="Bold" />
+                              </Button>
+                            </Grid>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </DockPanel>
+                </Border>
+
+                <!-- Columna Indirecta -->
+                <Border>
+                  <DockPanel>
+                    <Border DockPanel.Dock="Top" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Amber2}" BorderThickness="0,0,0,1">
+                      <DockPanel LastChildFill="True">
+                        <Button DockPanel.Dock="Right" Content="+ Agregar puesto" Style="{StaticResource Button.Secondary}"
+                                Command="{Binding AddIndirectaCargoCommand}" VerticalAlignment="Center" Padding="10,4" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                          <TextBlock Text="📋 M.O. Indirecta" FontSize="{StaticResource Font.Size.base}" FontWeight="Bold" VerticalAlignment="Center" />
+                          <Border Margin="8,0,0,0" Padding="8,2" CornerRadius="10" Background="{DynamicResource Brush.AmberSoft}" VerticalAlignment="Center">
+                            <TextBlock Text="FIJA" FontSize="{StaticResource Font.Size.2xs}" FontWeight="Bold" Foreground="{DynamicResource Brush.Amber}" />
+                          </Border>
+                        </StackPanel>
+                      </DockPanel>
+                    </Border>
+                    <Border DockPanel.Dock="Bottom" Padding="14,10" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0">
+                      <DockPanel>
+                        <TextBlock Text="Promedio base · c/leyes" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding FootInd}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
+                      </DockPanel>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding IndirectaEditors}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type mo:MoCargoEditorVm}">
+                          <Border BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Padding="14,10"
+                                  Background="{DynamicResource Brush.Surface}">
+                            <Grid>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="30" />
+                              </Grid.ColumnDefinitions>
+                              <Border Grid.Column="0" CornerRadius="4" Padding="4,2" Background="{DynamicResource Brush.AmberSoft}"
+                                      HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Tag}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.xs}" FontWeight="Bold"
+                                           Foreground="{DynamicResource Brush.Amber}" />
+                              </Border>
+                              <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
+                                <TextBox Text="{Binding Nombre, UpdateSourceTrigger=LostFocus}"
+                                         FontSize="{StaticResource Font.Size.base}" FontWeight="SemiBold"
+                                         Background="Transparent" BorderThickness="0" Padding="0,2"
+                                         Foreground="{DynamicResource Brush.Ink}"
+                                         ToolTip="Haga clic para editar el nombre del puesto" />
+                                <TextBlock Text="{Binding Hint}" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" />
+                              </StackPanel>
+                              <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                <TextBlock Text="$" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" Foreground="{DynamicResource Brush.Muted}"
+                                           VerticalAlignment="Center" Margin="0,0,4,0" />
+                                <TextBox Style="{StaticResource Mo.SalaryInput}"
+                                         Text="{Binding SueldoEditText, UpdateSourceTrigger=LostFocus}"
+                                         LostFocus="OnSalaryLostFocus" />
+                              </StackPanel>
+                              <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0"
+                                          ToolTip="Fracción del sueldo cobrada en esta obra (0 a 1). Ej.: 0,30 = 30% del sueldo">
+                                <StackPanel Margin="0,0,6,0" VerticalAlignment="Center">
+                                  <TextBlock Text="FRACCIÓN" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" />
+                                  <TextBlock Text="obra" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" />
+                                </StackPanel>
+                                <TextBox Style="{StaticResource Mo.FraccionInput}"
+                                         Text="{Binding FraccionEditText, UpdateSourceTrigger=LostFocus}"
+                                         LostFocus="OnSalaryLostFocus" />
+                              </StackPanel>
+                              <StackPanel Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <TextBlock Text="c/ leyes" FontSize="{StaticResource Font.Size.2xs}" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding ConLeyesLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="{StaticResource Font.Size.md}" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Brush.Ink2}" HorizontalAlignment="Right" />
+                              </StackPanel>
+                              <Button Grid.Column="5" Style="{StaticResource Button.Ghost}"
+                                      Command="{Binding DeleteCommand}"
+                                      ToolTip="Eliminar este puesto"
+                                      Width="24" Height="24" Padding="0" Margin="4,0,0,0"
+                                      VerticalAlignment="Center">
+                                <TextBlock Text="✕" FontSize="{StaticResource Font.Size.xs}" Foreground="{DynamicResource Brush.Muted}" FontWeight="Bold" />
+                              </Button>
+                            </Grid>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </DockPanel>
+                </Border>
+              </UniformGrid>
+            </DockPanel>
+          </Border>
+
+          <!-- Section 4: Dotación mensual por cargo (Heatmap Grid) -->
+          <Border Style="{StaticResource Card.Section}" Padding="0" Margin="0,0,0,16">
+            <StackPanel>
+              <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="18,14" Background="{DynamicResource Brush.Surface2}">
+                <DockPanel LastChildFill="True">
+                  <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Celdas con color = carga relativa al pico · flechas/Tab mueven · vacío vuelve a la curva"
+                               FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
+                               VerticalAlignment="Center" Margin="0,0,12,0" />
+                  </StackPanel>
+                  <TextBlock Text="Matriz de Dotación Mensual por Cargo (Headcount)" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
+                </DockPanel>
+              </Border>
+              <ScrollViewer x:Name="CargoTableScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
+                <Border x:Name="CargoWheelZone" Background="Transparent">
+                  <Grid x:Name="CargoTableGrid" />
+                </Border>
+              </ScrollViewer>
+            </StackPanel>
+          </Border>
+
+          <!-- Section 5: Costo mensual por cargo -->
+          <Border Style="{StaticResource Card.Section}" Padding="0" Margin="0,0,0,16">
+            <StackPanel>
+              <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="18,14" Background="{DynamicResource Brush.Surface2}">
+                <DockPanel>
+                  <TextBlock Text="Matriz de Costo Mensual Consolidado (Sueldo Base + Leyes Sociales)" Style="{StaticResource Text.SectionTitle}" />
+                  <TextBlock DockPanel.Dock="Right" Text="{Binding CostHint}" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}"
+                             HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </DockPanel>
+              </Border>
+              <ScrollViewer x:Name="CostTableScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
+                <Border x:Name="CostWheelZone" Background="Transparent">
+                  <Grid x:Name="CostTableGrid" />
+                </Border>
+              </ScrollViewer>
+            </StackPanel>
+          </Border>
+
+          <!-- Section 6: Executive Bottom Action Dock Bar -->
+          <Border Background="{DynamicResource Brush.Surface}"
+                  BorderBrush="{DynamicResource Brush.Line}"
+                  BorderThickness="1"
+                  CornerRadius="{StaticResource Radius.Lg}"
+                  Padding="20,16"
+                  Margin="0,0,0,14">
+            <DockPanel LastChildFill="True">
+              <!-- Left: Cost Breakdowns -->
+              <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,6">
+                  <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="12" Padding="10,3" Margin="0,0,12,0">
+                    <TextBlock Text="RESUMEN FINANCIERO M.O." FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                  </Border>
+                  <TextBlock Text="{Binding SumRight}" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Subtotal Badges Row -->
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+                    <TextBlock Text="Sueldos Base: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding SumBase}" FontSize="11.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" />
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+                    <TextBlock Text="Leyes Sociales: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding SumLeyes}" FontSize="11.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Purple}" />
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+                    <TextBlock Text="M.O. Directa: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding SumDirecta}" FontSize="11.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Green}" />
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+                    <TextBlock Text="M.O. Indirecta: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding SumIndirecta}" FontSize="11.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Amber}" />
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Promedio/Mes: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                    <TextBlock Text="{Binding SumPromMes}" FontSize="11.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" />
+                  </StackPanel>
+                </WrapPanel>
+              </StackPanel>
+
+              <!-- Right: Grand Total Display Box -->
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                <Border Background="{DynamicResource Brush.BlueSoft}"
+                        BorderBrush="{DynamicResource Brush.Line2}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Padding="16,8"
+                        VerticalAlignment="Center">
+                  <StackPanel HorizontalAlignment="Right">
+                    <TextBlock Text="TOTAL PRESUPUESTO MANO DE OBRA" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Right" />
+                    <TextBlock Text="{Binding TotalBarValue}" FontSize="20" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Right" />
+                    <TextBlock Text="{Binding TotalBarUf}" FontSize="11" FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right"
+                               Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </DockPanel>
+          </Border>
+
+        </StackPanel>
       </StackPanel>
     </ScrollViewer>
 

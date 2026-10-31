@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qubi Cost Electrical — Espacio de Trabajo: Adicional de Obra & Cubicación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy-950: #070D18;
+    --navy-900: #0B1324;
+    --navy-850: #0F1A30;
+    --navy-800: #14223F;
+    --navy-700: #1C2E54;
+    
+    --slate-50: #F8FAFC;
+    --slate-100: #F1F5F9;
+    --slate-200: #E2E8F0;
+    --slate-300: #CBD5E1;
+    --slate-400: #94A3B8;
+    --slate-500: #64748B;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1E293B;
+    --slate-900: #0F172A;
+
+    --blue-500: #2563EB;
+    --blue-600: #1D4ED8;
+    --blue-400: #60A5FA;
+    --blue-soft: #EFF6FF;
+    --blue-border: #BFDBFE;
+
+    --emerald-500: #10B981;
+    --emerald-600: #059669;
+    --emerald-soft: #ECFDF5;
+    --emerald-border: #A7F3D0;
+
+    --amber-500: #F59E0B;
+    --amber-600: #D97706;
+    --amber-soft: #FFFBEB;
+    --amber-border: #FDE68A;
+
+    --rose-500: #F43F5E;
+    --rose-600: #E11D48;
+    --rose-soft: #FFF1F2;
+    --rose-border: #FECDD3;
+
+    --purple-500: #8B5CF6;
+    --purple-soft: #FAF5FF;
+    --purple-border: #E9D5FF;
+
+    --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+    
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-modal: 0 25px 50px -12px rgba(15, 23, 42, 0.4), 0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; width: 100%; font-family: var(--font); color: var(--slate-800); background: #0B1324; overflow: hidden; }
+
+  /* Window Container simulating modern Desktop App Window */
+  .window-frame {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #F8FAFC;
+    overflow: hidden;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+     1. EXECUTIVE HEADER (CLEAN LIGHT CORPORATE WITH FINANCIAL INTELLIGENCE)
+  ───────────────────────────────────────────────────────────────────────────── */
+  .window-topbar {
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--text-main);
+    flex-shrink: 0;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .order-code-badge {
+    background: #F1F5F9;
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .order-title-group h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .order-title-group span {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .contract-pill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #FEF3C7;
+    border: 1px solid #FCD34D;
+    color: #B45309;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  /* Financial Summary strip in top bar */
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .financial-strip-header {
+    display: flex;
+    align-items: center;
+    background: #F8FAFC;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 12px;
+    gap: 14px;
+  }
+
+  .fin-item {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+  }
+
+  .fin-item .lbl {
+    font-size: 9px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .fin-item .val {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .fin-item.total .val {
+    color: #059669;
+    font-size: 14.5px;
+    font-weight: 800;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+     2. METADATA & QUICK ACTIONS BAR
+  ───────────────────────────────────────────────────────────────────────────── */
+  .metadata-bar {
+    background: #FFFFFF;
+    border-bottom: 1px solid #E2E8F0;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .fields-grid {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .input-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .text-input-clean {
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid #CBD5E1;
+    font-family: inherit;
+    font-size: 12px;
+    color: #0F172A;
+    background: #F8FAFC;
+    transition: all 0.15s;
+  }
+
+  .text-input-clean:focus {
+    background: #FFFFFF;
+    border-color: #2563EB;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  .actions-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.12s;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+
+  .btn-contract {
+    background: #0F172A;
+    color: #FFFFFF;
+    border-color: #334155;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-contract:hover { background: #1E293B; color: #38BDF8; }
+
+  .btn-extra {
+    background: #FAF5FF;
+    color: #7E22CE;
+    border-color: #E9D5FF;
+  }
+  .btn-extra:hover { background: #F3E8FF; }
+
+  .btn-secondary {
+    background: #FFFFFF;
+    color: #334155;
+    border-color: #CBD5E1;
+  }
+  .btn-secondary:hover { background: #F8FAFC; }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+     3. SPLIT WORKSPACE: UPPER PARTIDAS TABLE (40%) + LOWER CUBICACIÓN (60%)
+  ───────────────────────────────────────────────────────────────────────────── */
+  .workspace-split {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 20px;
+    gap: 12px;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Upper Card: Master Partidas */
+  .partidas-card {
+    height: 230px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+    flex-shrink: 0;
+  }
+
+  .card-header-bar {
+    background: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title-text {
+    font-size: 11px;
+    font-weight: 800;
+    color: #0F172A;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .table-scroll {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    text-align: left;
+  }
+
+  .styled-table th {
+    position: sticky;
+    top: 0;
+    background: #F1F5F9;
+    color: #475569;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 7px 10px;
+    border-bottom: 1px solid #CBD5E1;
+    z-index: 10;
+  }
+
+  .styled-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+  }
+
+  .partida-row {
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+
+  .partida-row:hover { background: #F8FAFC; }
+
+  .partida-row.active {
+    background: #EFF6FF !important;
+  }
+
+  .partida-row.active td:first-child {
+    border-left: 3.5px solid #2563EB;
+  }
+
+  .type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  .type-badge.contract {
+    background: #FFFBEB;
+    color: #B45309;
+    border: 1px solid #FDE68A;
+  }
+
+  .type-badge.extra {
+    background: #FAF5FF;
+    color: #7E22CE;
+    border: 1px solid #E9D5FF;
+  }
+
+  .qty-input-box {
+    width: 55px;
+    height: 24px;
+    padding: 0 4px;
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 11px;
+    text-align: right;
+    color: #0F172A;
+    background: #FFFFFF;
+  }
+
+  .pu-badge-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    color: #92400E;
+  }
+
+  .pu-badge-box.extra {
+    background: #FAF5FF;
+    border-color: #E9D5FF;
+    color: #6B21A8;
+  }
+
+  .btn-trash {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #94A3B8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .btn-trash:hover {
+    background: #FFF1F2;
+    border-color: #FECDD3;
+    color: #E11D48;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+     4. LOWER CARD: CUBICACIÓN POR ZONAS (DETAIL WORKBENCH)
+  ───────────────────────────────────────────────────────────────────────────── */
+  .cubicador-card {
+    flex: 1;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+    min-height: 260px;
+  }
+
+  .cubicador-toolbar {
+    background: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .active-partida-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .partida-code-tag {
+    background: #2563EB;
+    color: #FFFFFF;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 5px;
+  }
+
+  .partida-name-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0F172A;
+  }
+
+  .unit-tag {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: #475569;
+    background: #E2E8F0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .cant-pill-total {
+    background: #ECFDF5;
+    border: 1px solid #A7F3D0;
+    color: #065F46;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* Zone Matrix Table */
+  .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .matrix-table th {
+    position: sticky;
+    top: 0;
+    background: #F1F5F9;
+    color: #475569;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 7px 8px;
+    border-bottom: 1px solid #CBD5E1;
+    border-right: 1px solid #E2E8F0;
+    text-align: center;
+    z-index: 10;
+  }
+
+  .matrix-table th.col-left { text-align: left; }
+
+  .matrix-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #E2E8F0;
+    border-right: 1px solid #E2E8F0;
+    vertical-align: middle;
+  }
+
+  .matrix-cell-input {
+    width: 100%;
+    height: 24px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: right;
+    padding: 0 4px;
+    background: transparent;
+    color: #0F172A;
+    transition: all 0.12s;
+  }
+
+  .matrix-cell-input:hover {
+    background: #F8FAFC;
+    border-color: #CBD5E1;
+  }
+
+  .matrix-cell-input:focus {
+    background: #FFFFFF;
+    border-color: #2563EB;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  }
+
+  .cubicador-footer-bar {
+    background: #F8FAFC;
+    border-top: 1px solid #E2E8F0;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+     5. BOTTOM DIALOG FOOTER BAR
+  ───────────────────────────────────────────────────────────────────────────── */
+  .window-bottom-bar {
+    background: #FFFFFF;
+    border-top: 1px solid #E2E8F0;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .bottom-summary-pills {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 11.5px;
+    color: #475569;
+  }
+
+  .dialog-btn-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-save-primary {
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    color: #FFFFFF;
+    border: 1px solid #1D4ED8;
+    height: 36px;
+    padding: 0 20px;
+    font-size: 12.5px;
+    font-weight: 700;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  }
+
+  .btn-save-primary:hover {
+    background: #1D4ED8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  }
+
+  /* Toast Notification */
+  .toast-box {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #0F172A;
+    color: #FFFFFF;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: var(--shadow-modal);
+    display: none;
+    align-items: center;
+    gap: 8px;
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<div class="window-frame">
+
+  <!-- ─── 1. EXECUTIVE DARK NAVY TOP BAR ────────────────────────────────────── -->
+  <header class="window-topbar">
+    <div class="topbar-left">
+      <div class="order-code-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6"/></svg>
+        <span id="headerOrderCode">OC-001</span>
+      </div>
+      <div class="order-title-group">
+        <h2>Espacio de Trabajo — Adicional de Obra & Cubicación</h2>
+        <span>Control técnico de partidas contractuales congeladas y partidas extraordinarias</span>
+      </div>
+      <div class="contract-pill-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v2h-2V7zm0 4h2v6h-2v-6z"/></svg>
+        Precios Unitarios de Contrato 100% Congelados 🔒
+      </div>
+    </div>
+
+    <!-- Financial Mini-Cockpit -->
+    <div class="topbar-right">
+      <div class="financial-strip-header">
+        <div class="fin-item">
+          <span class="lbl">Partidas Base</span>
+          <span class="val" id="topFinBase">$ 164.070</span>
+        </div>
+        <div class="fin-item">
+          <span class="lbl">Extraordinarias</span>
+          <span class="val" id="topFinExtra">$ 0</span>
+        </div>
+        <div class="fin-item total">
+          <span class="lbl" style="color:#34D399;">Total Venta Adicional</span>
+          <span class="val" id="topFinTotal">$ 164.070</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── 2. METADATA INPUTS & FAST ACTION BAR ──────────────────────────────── -->
+  <section class="metadata-bar">
+    <div class="fields-grid">
+      <div class="input-group" style="width: 110px;">
+        <label class="input-label">N° Adicional</label>
+        <input type="text" class="text-input-clean" id="inputNum" value="OC-001" style="font-family:var(--mono); font-weight:700;">
+      </div>
+      <div class="input-group" style="flex: 1;">
+        <label class="input-label">Título del adicional / Justificación técnica</label>
+        <input type="text" class="text-input-clean" id="inputTitle" value="Modificación de Trazado y Acometida Eléctrica Principal">
+      </div>
+      <div class="input-group" style="width: 200px;">
+        <label class="input-label">Estimador / Responsable</label>
+        <input type="text" class="text-input-clean" id="inputAuthor" value="Cristóbal Silva (Jefe de Faena)">
+      </div>
+      <div class="input-group" style="width: 180px;">
+        <label class="input-label">Ref. RFI / Carta ITO</label>
+        <input type="text" class="text-input-clean" id="inputRef" value="RFI-ELEC-042">
+      </div>
+    </div>
+
+    <div class="actions-group">
+      <button class="btn btn-contract" onclick="openContractPicker()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        🔒 + Partida de Contrato
+      </button>
+      <button class="btn btn-extra" onclick="openExtraPartida()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        ★ + Partida Extraordinaria
+      </button>
+      <button class="btn btn-secondary" onclick="showConsolidatedMaterials()">
+        📦 Lista Consolidada
+      </button>
+    </div>
+  </section>
+
+  <!-- ─── 3. SPLIT WORKSPACE: PARTIDAS (UPPER) + CUBICACIÓN (LOWER) ─────────── -->
+  <main class="workspace-split">
+
+    <!-- UPPER CARD: PARTIDAS DEL ADICIONAL (MASTER TABLE) -->
+    <section class="partidas-card">
+      <div class="card-header-bar">
+        <div class="card-title-text">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Partidas del Adicional (Seleccione una partida para cubicar sus zonas abajo)
+        </div>
+        <div style="font-size:11px; font-weight:700; color:#2563EB;" id="partidasCountBadge">
+          3 partidas registradas
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th style="width: 120px;">Tipo Contrato</th>
+              <th style="width: 70px;">Ítem</th>
+              <th>Descripción de la Partida</th>
+              <th style="width: 60px; text-align: center;">Unid</th>
+              <th style="width: 85px; text-align: right;">Cant. Base</th>
+              <th style="width: 110px; text-align: right;">Δ Cant. Adicional</th>
+              <th style="width: 120px; text-align: right;">P.U. Venta</th>
+              <th style="width: 125px; text-align: right;">Subtotal Venta</th>
+              <th style="width: 40px; text-align: center;">Quitar</th>
+            </tr>
+          </thead>
+          <tbody id="partidasTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- LOWER CARD: CUBICACIÓN POR ZONAS (DETAIL WORKBENCH) -->
+    <section class="cubicador-card">
+      <!-- Active Partida Ribbon -->
+      <div class="cubicador-toolbar">
+        <div class="active-partida-info">
+          <span class="partida-code-tag" id="activeItemCode">EXT-01</span>
+          <span class="partida-name-title" id="activeItemTitle">Nueva canalización y cajas acometida eléctrica subterranea</span>
+          <span class="unit-tag" id="activeItemUnit">UD: GL</span>
+          
+          <div class="cant-pill-total">
+            <span>CANT TOTAL:</span>
+            <strong id="activeItemQty">1</strong>
+          </div>
+          <span style="font-size:10.5px; color:#2563EB;">🔗 Sincronizado con Casillas de Medición</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="btn btn-secondary" style="height:28px; padding:0 10px; font-size:11px;" onclick="addMaterialRow()">
+            + Agregar Insumo
+          </button>
+          <button class="btn btn-secondary" style="height:28px; padding:0 10px; font-size:11px;" onclick="preloadContractMaterials()">
+            📋 Precargar de Contrato
+          </button>
+          <button class="btn btn-secondary" style="height:28px; padding:0 10px; font-size:11px;" onclick="openPriceBank()">
+            🔍 Banco de Precios
+          </button>
+        </div>
+      </div>
+
+      <!-- Zone Matrix Table -->
+      <div class="table-scroll">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th style="width: 35px;">#</th>
+              <th style="width: 100px;" class="col-left">CÓDIGO</th>
+              <th class="col-left">DESCRIPCIÓN DE INSUMO / MATERIAL</th>
+              <th style="width: 50px;">UD</th>
+              <th style="width: 75px;">CANT TOTAL</th>
+              <th style="width: 75px;">ZONA 1</th>
+              <th style="width: 75px;">ZONA 2</th>
+              <th style="width: 75px;">ZONA 3</th>
+              <th style="width: 75px;">ZONA 4</th>
+              <th style="width: 75px;">ZONA 5</th>
+              <th style="width: 35px;">✕</th>
+            </tr>
+          </thead>
+          <tbody id="matrixTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Lower Card Footer: Summary of the line -->
+      <div class="cubicador-footer-bar">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="color:#64748B;">Medición total cubipada de la partida:</span>
+          <span style="font-family:var(--mono); font-weight:800; color:#047857; background:#ECFDF5; padding:2px 8px; border-radius:4px; border:1px solid #A7F3D0;" id="footMedicion">
+            1.00 GL
+          </span>
+          <span style="font-size:10.5px; color:#2563EB;">✓ Vinculada directamente a Δ Cantidad de la partida</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:16px;">
+          <span style="color:#64748B;">P.U. Venta: <strong style="color:#B45309; font-family:var(--mono);" id="footPu">$ 164.070</strong></span>
+          <span style="color:#64748B;">Subtotal Venta Partida: <strong style="color:#047857; font-family:var(--mono); font-size:13px;" id="footSubtotal">$ 164.070</strong></span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─── 4. DIALOG FOOTER BAR ──────────────────────────────────────────────── -->
+  <footer class="window-bottom-bar">
+    <div class="bottom-summary-pills">
+      <span>Partidas en adicional: <strong id="sumCount">3</strong></span>
+      <span>•</span>
+      <span>Costo Directo Estimado: <strong id="sumCosto">$ 128.180</strong></span>
+      <span>•</span>
+      <span>Gastos Generales (12%): <strong id="sumGG">$ 15.382</strong></span>
+      <span>•</span>
+      <span>Utilidad (15%): <strong id="sumUtil">$ 20.508</strong></span>
+      <span>•</span>
+      <span style="font-weight:700; color:#047857;">Total Venta: <strong id="sumVenta">$ 164.070</strong></span>
+    </div>
+
+    <div class="dialog-btn-actions">
+      <button class="btn btn-secondary" style="height:36px; padding:0 16px;" onclick="closeDialog()">Cancelar</button>
+      <button class="btn btn-save-primary" onclick="saveOrder()">✓ Guardar Adicional (Ctrl+S)</button>
+    </div>
+  </footer>
+
+</div>
+
+<div class="toast-box" id="toast">Acción completada</div>
+
+<!-- ─── JAVASCRIPT STATE ENGINE ────────────────────────────────────────────── -->
+<script>
+  let activeIndex = 0;
+
+  const partidasList = [
+    {
+      tipo: 'Contractual',
+      item: '1.1',
+      desc: 'Ductos y cajas acometida eléctrica subterránea',
+      unit: 'ML',
+      cantBase: 22,
+      addQty: 1,
+      pu: 164070,
+      frozen: true,
+      materiales: [
+        { codigo: 'PVC25', desc: 'Tubería conduit PVC 25 mm x 3m', unit: 'ML', z1: 50, z2: 50, z3: 50, z4: 50, z5: 0 },
+        { codigo: 'PVC25', desc: 'Tubería conduit PVC 25 mm x 3m', unit: 'ML', z1: 50, z2: 50, z3: 50, z4: 50, z5: 0 },
+        { codigo: 'PVC32', desc: 'Tubería conduit PVC 32 mm heavy duty', unit: 'ML', z1: 50, z2: 50, z3: 0, z4: 0, z5: 0 }
+      ]
+    },
+    {
+      tipo: 'Extraordinaria',
+      item: 'EXT-01',
+      desc: 'Canalización adicional para monitoreo de tableros',
+      unit: 'GL',
+      cantBase: 0,
+      addQty: 1,
+      pu: 85000,
+      frozen: false,
+      materiales: [
+        { codigo: 'EMT20', desc: 'Tubería acero galvanizado EMT 20mm', unit: 'ML', z1: 30, z2: 30, z3: 20, z4: 0, z5: 0 },
+        { codigo: 'CUP25', desc: 'Cable Superflex 3x2.5mm² RZ1-K', unit: 'M', z1: 90, z2: 90, z3: 60, z4: 0, z5: 0 }
+      ]
+    },
+    {
+      tipo: 'Extraordinaria',
+      item: 'EXT-02',
+      desc: 'Instalación de sensores de presencia en pasillos piso 3',
+      unit: 'GL',
+      cantBase: 0,
+      addQty: 1,
+      pu: 62000,
+      frozen: false,
+      materiales: [
+        { codigo: 'SEN-01', desc: 'Sensor de presencia infrarrojo 360°', unit: 'UN', z1: 4, z2: 4, z3: 2, z4: 0, z5: 0 }
+      ]
+    }
+  ];
+
+  function renderPartidasTable() {
+    const tbody = document.getElementById('partidasTableBody');
+    tbody.innerHTML = '';
+
+    partidasList.forEach((p, idx) => {
+      const tr = document.createElement('tr');
+      tr.className = 'partida-row' + (idx === activeIndex ? ' active' : '');
+      tr.onclick = (e) => {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+          setActivePartida(idx);
+        }
+      };
+
+      const subtotal = p.addQty * p.pu;
+
+      tr.innerHTML = `
+        <td>
+          <span class="type-badge ${p.frozen ? 'contract' : 'extra'}">
+            ${p.frozen ? '🔒 Contractual' : '★ Extraordinaria'}
+          </span>
+        </td>
+        <td style="font-family:var(--mono); font-weight:700; color:#1E40AF;">${p.item}</td>
+        <td>
+          <div style="font-weight:600; color:#0F172A;">${p.desc}</div>
+          <div style="font-size:10px; color:#2563EB;">${p.materiales.length} insumos cubicados</div>
+        </td>
+        <td style="text-align:center; font-family:var(--mono); color:#64748B;">${p.unit}</td>
+        <td style="text-align:right; font-family:var(--mono); color:#64748B;">${p.cantBase}</td>
+        <td style="text-align:right;">
+          <input type="number" class="qty-input-box" value="${p.addQty}" min="1" step="1"
+                 onchange="updatePartidaQty(${idx}, this.value)">
+        </td>
+        <td style="text-align:right;">
+          <span class="pu-badge-box ${p.frozen ? '' : 'extra'}">
+            ${p.frozen ? '🔒' : '★'}
+            $ ${p.pu.toLocaleString('es-CL')}
+          </span>
+        </td>
+        <td style="text-align:right; font-family:var(--mono); font-weight:700; color:#047857;">
+          $ ${subtotal.toLocaleString('es-CL')}
+        </td>
+        <td style="text-align:center;">
+          <button class="btn-trash" onclick="deletePartida(${idx})" title="Eliminar partida del adicional">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    renderActivePartidaCubicador();
+    updateSummary();
+  }
+
+  function setActivePartida(idx) {
+    activeIndex = idx;
+    renderPartidasTable();
+  }
+
+  function updatePartidaQty(idx, val) {
+    const q = parseFloat(val) || 1;
+    partidasList[idx].addQty = q;
+    renderPartidasTable();
+  }
+
+  function deletePartida(idx) {
+    const p = partidasList[idx];
+    if (confirm(`¿Eliminar la partida «${p.item} — ${p.desc}» de este adicional?`)) {
+      partidasList.splice(idx, 1);
+      if (activeIndex >= partidasList.length) {
+        activeIndex = Math.max(0, partidasList.length - 1);
+      }
+      renderPartidasTable();
+      showToast(`Partida ${p.item} eliminada.`);
+    }
+  }
+
+  function renderActivePartidaCubicador() {
+    const p = partidasList[activeIndex];
+    if (!p) {
+      document.getElementById('matrixTableBody').innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px; color:#94A3B8;">No hay partidas seleccionadas</td></tr>';
+      return;
+    }
+
+    document.getElementById('activeItemCode').textContent = p.item;
+    document.getElementById('activeItemTitle').textContent = p.desc;
+    document.getElementById('activeItemUnit').textContent = 'UD: ' + p.unit;
+    document.getElementById('activeItemQty').textContent = p.addQty;
+    document.getElementById('footMedicion').textContent = `${p.addQty} ${p.unit}`;
+    document.getElementById('footPu').textContent = '$ ' + p.pu.toLocaleString('es-CL');
+    document.getElementById('footSubtotal').textContent = '$ ' + (p.addQty * p.pu).toLocaleString('es-CL');
+
+    const tbody = document.getElementById('matrixTableBody');
+    tbody.innerHTML = '';
+
+    p.materiales.forEach((m, mIdx) => {
+      const totalInsumo = (m.z1 || 0) + (m.z2 || 0) + (m.z3 || 0) + (m.z4 || 0) + (m.z5 || 0);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align:center; font-family:var(--mono); color:#94A3B8;">${mIdx + 1}</td>
+        <td style="font-family:var(--mono); font-weight:700; color:#1E40AF;">${m.codigo}</td>
+        <td style="font-weight:600; color:#0F172A;">${m.desc}</td>
+        <td style="text-align:center; font-family:var(--mono); color:#64748B;">${m.unit}</td>
+        <td style="text-align:right; font-family:var(--mono); font-weight:700; color:#047857; background:#F0FDF4;">${totalInsumo}</td>
+        <td><input type="number" class="matrix-cell-input" value="${m.z1 || 0}" onchange="updateZone(${mIdx}, 'z1', this.value)"></td>
+        <td><input type="number" class="matrix-cell-input" value="${m.z2 || 0}" onchange="updateZone(${mIdx}, 'z2', this.value)"></td>
+        <td><input type="number" class="matrix-cell-input" value="${m.z3 || 0}" onchange="updateZone(${mIdx}, 'z3', this.value)"></td>
+        <td><input type="number" class="matrix-cell-input" value="${m.z4 || 0}" onchange="updateZone(${mIdx}, 'z4', this.value)"></td>
+        <td><input type="number" class="matrix-cell-input" value="${m.z5 || 0}" onchange="updateZone(${mIdx}, 'z5', this.value)"></td>
+        <td style="text-align:center;">
+          <button class="btn-trash" onclick="deleteMaterial(${mIdx})">✕</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateZone(mIdx, zoneKey, val) {
+    const num = parseFloat(val) || 0;
+    partidasList[activeIndex].materiales[mIdx][zoneKey] = num;
+    renderActivePartidaCubicador();
+  }
+
+  function deleteMaterial(mIdx) {
+    partidasList[activeIndex].materiales.splice(mIdx, 1);
+    renderActivePartidaCubicador();
+    showToast('Insumo eliminado de la planilla.');
+  }
+
+  function updateSummary() {
+    let base = 0;
+    let extra = 0;
+    partidasList.forEach(p => {
+      const sub = p.addQty * p.pu;
+      if (p.frozen) base += sub;
+      else extra += sub;
+    });
+
+    const total = base + extra;
+    document.getElementById('topFinBase').textContent = '$ ' + base.toLocaleString('es-CL');
+    document.getElementById('topFinExtra').textContent = '$ ' + extra.toLocaleString('es-CL');
+    document.getElementById('topFinTotal').textContent = '$ ' + total.toLocaleString('es-CL');
+
+    document.getElementById('partidasCountBadge').textContent = `${partidasList.length} ${partidasList.length === 1 ? 'partida registrada' : 'partidas registradas'}`;
+    document.getElementById('sumCount').textContent = partidasList.length;
+
+    const costo = Math.round(total * 0.78);
+    const gg = Math.round(costo * 0.12);
+    const util = total - costo - gg;
+
+    document.getElementById('sumCosto').textContent = '$ ' + costo.toLocaleString('es-CL');
+    document.getElementById('sumGG').textContent = '$ ' + gg.toLocaleString('es-CL');
+    document.getElementById('sumUtil').textContent = '$ ' + util.toLocaleString('es-CL');
+    document.getElementById('sumVenta').textContent = '$ ' + total.toLocaleString('es-CL');
+  }
+
+  function openContractPicker() {
+    showToast('Abriendo catálogo de partidas del contrato original (P.U. cerrados 🔒)...');
+  }
+
+  function openExtraPartida() {
+    showToast('Creando nueva partida extraordinaria fuera de contrato...');
+  }
+
+  function showConsolidatedMaterials() {
+    showToast('Generando lista consolidada de materiales a comprar para el adicional...');
+  }
+
+  function addMaterialRow() {
+    partidasList[activeIndex].materiales.push({
+      codigo: 'MAT-NUEVO',
+      desc: 'Nuevo insumo para este sector',
+      unit: 'UN',
+      z1: 10, z2: 10, z3: 0, z4: 0, z5: 0
+    });
+    renderActivePartidaCubicador();
+    showToast('Fila de insumo agregada a la planilla.');
+  }
+
+  function preloadContractMaterials() {
+    showToast('Materiales base precargados desde el contrato original.');
+  }
+
+  function openPriceBank() {
+    showToast('Buscando en catálogo del Banco de Precios...');
+  }
+
+  function saveOrder() {
+    showToast('✓ Adicional guardado exitosamente.');
+  }
+
+  function closeDialog() {
+    showToast('Cerrando ventana...');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'flex';
+    setTimeout(() => { t.style.display = 'none'; }, 2200);
+  }
+
+  // Init
+  renderPartidasTable();
+</script>
+
+</body>
+</html>

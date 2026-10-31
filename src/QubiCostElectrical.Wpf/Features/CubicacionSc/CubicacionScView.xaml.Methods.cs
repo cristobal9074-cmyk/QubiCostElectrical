@@ -350,8 +350,8 @@ public partial class CubicacionScView : UserControl
         else
         {
             TablerosColumn.MinWidth = 130;
-            TablerosColumn.MaxWidth = 300;
-            TablerosColumn.Width = _savedSidebarWidth.Value >= 130 ? _savedSidebarWidth : new GridLength(170);
+            TablerosColumn.MaxWidth = 320;
+            TablerosColumn.Width = _savedSidebarWidth.Value >= 130 ? _savedSidebarWidth : new GridLength(185);
 
             SidebarSplitter.Visibility = Visibility.Visible;
             SidebarMuecaIcon.Text = "◂";

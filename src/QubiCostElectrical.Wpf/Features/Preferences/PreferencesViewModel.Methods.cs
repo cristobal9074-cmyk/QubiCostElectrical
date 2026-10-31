@@ -109,6 +109,7 @@ public sealed partial class PreferencesViewModel
     }
 
     public BitmapImage? LogoImageSource => _logoImageSource;
+    public BitmapImage? SignatureImageSource => _signatureImageSource;
 
     [ObservableProperty] private bool _hasPendingChanges;
     [ObservableProperty] private string? _validationError;
@@ -178,7 +179,12 @@ public sealed partial class PreferencesViewModel
     partial void OnProfessionalRutChanged(string value) => HasPendingChanges = true;
     partial void OnProfessionalRoleChanged(string value) => HasPendingChanges = true;
     partial void OnProfessionalRegistroSecChanged(string value) => HasPendingChanges = true;
-    partial void OnProfessionalSignatureImagePathChanged(string value) => HasPendingChanges = true;
+    partial void OnProfessionalSignatureImagePathChanged(string value)
+    {
+        HasPendingChanges = true;
+        _signatureImageSource = LoadImageSafe(value);
+        OnPropertyChanged(nameof(SignatureImageSource));
+    }
     partial void OnProfessionalSignatureWidthMmChanged(int value) => HasPendingChanges = true;
     partial void OnProfessionalSignatureHeightMmChanged(int value) => HasPendingChanges = true;
     partial void OnPinMinLengthChanged(int value) => HasPendingChanges = true;
@@ -557,6 +563,8 @@ public sealed partial class PreferencesViewModel
         ProfessionalRole = _draft.ProfessionalRole;
         ProfessionalRegistroSec = _draft.ProfessionalRegistroSec;
         ProfessionalSignatureImagePath = _draft.ProfessionalSignatureImagePath;
+        _signatureImageSource = LoadImageSafe(_draft.ProfessionalSignatureImagePath);
+        OnPropertyChanged(nameof(SignatureImageSource));
         ProfessionalSignatureWidthMm = _draft.ProfessionalSignatureWidthMm <= 0 ? 46 : _draft.ProfessionalSignatureWidthMm;
         ProfessionalSignatureHeightMm = _draft.ProfessionalSignatureHeightMm <= 0 ? 16 : _draft.ProfessionalSignatureHeightMm;
         IsDarkMode = _draft.DarkMode;

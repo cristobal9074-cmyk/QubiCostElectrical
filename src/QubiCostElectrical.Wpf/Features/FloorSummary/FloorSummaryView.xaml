@@ -191,6 +191,27 @@
                   <!-- Cuerpo de Tarjeta (Materiales Agrupados) -->
                   <Border BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,1,0,0" Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel Background="{DynamicResource Brush.Surface2}">
+                      <!-- Encabezado de columnas de la tarjeta -->
+                      <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,0,1" Padding="8,5">
+                        <Grid>
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="76" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="46" />
+                            <ColumnDefinition Width="64" />
+                            <ColumnDefinition Width="88" />
+                            <ColumnDefinition Width="104" />
+                            <ColumnDefinition Width="64" />
+                          </Grid.ColumnDefinitions>
+                          <TextBlock Grid.Column="0" Text="CÓDIGO" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                          <TextBlock Grid.Column="1" Text="DESCRIPCIÓN MATERIAL" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                          <TextBlock Grid.Column="2" Text="UD." FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" />
+                          <TextBlock Grid.Column="3" Text="CANTIDAD" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,6,0" />
+                          <TextBlock Grid.Column="4" Text="P. UNIT CLP" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,6,0" />
+                          <TextBlock Grid.Column="5" Text="TOTAL CLP" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Right" Margin="0,0,6,0" />
+                          <TextBlock Grid.Column="6" Text="ORIGEN" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" TextAlignment="Center" />
+                        </Grid>
+                      </Border>
                       <ItemsControl ItemsSource="{Binding Materiales}" ItemTemplate="{StaticResource MaterialItemTemplate}">
                         <ItemsControl.ItemsPanel>
                           <ItemsPanelTemplate>

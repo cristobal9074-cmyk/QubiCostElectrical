@@ -1,8 +1,12 @@
-<UserControl x:Class="QubiCostElectrical.Wpf.Features.Purchases.PurchaseListView"
+﻿<UserControl x:Class="QubiCostElectrical.Wpf.Features.Purchases.PurchaseListView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
+             xmlns:purchases="clr-namespace:QubiCostElectrical.Wpf.Features.Purchases"
              KeyDown="OnUserControlKeyDown">
+  <UserControl.Resources>
+    <purchases:PurchaseGroupSubtotalConverter x:Key="PurchaseGroupSubtotalConverter" />
+  </UserControl.Resources>
   <UserControl.InputBindings>
     <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
     <KeyBinding Key="E" Modifiers="Control" Command="{Binding ExportExcelCommand}" />
@@ -24,7 +28,6 @@
         </WrapPanel>
       </ctrl:EmptyStateControl.Actions>
     </ctrl:EmptyStateControl>
-
         <TabControl Style="{StaticResource Form.TabControl}"
                 SelectedIndex="{Binding ActiveTab, Mode=TwoWay}"
                 Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
@@ -42,36 +45,32 @@
               <RowDefinition Height="*" />
               <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-
             <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,10">
               <StackPanel DockPanel.Dock="Left">
                 <TextBlock Text="Lista de compra" Style="{StaticResource Text.ViewTitle}" />
               </StackPanel>
-
               <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
-                <Button Style="{StaticResource Button.Secondary}" Content="Agrupar por proveedor"
-                        Command="{Binding GroupByProviderCommand}" Margin="0,0,6,0"
-                        ToolTip="Agrupa por proveedor; si no hay proveedor, usa categoría." />
                 <Button Style="{StaticResource Button.Secondary}" Content="Actualizar (F5)" Command="{Binding RefreshCommand}" Margin="0,0,6,0"
                         ToolTip="Recargar y consolidar lista de compras viva desde la cubicación (F5)" />
                 <Button Style="{StaticResource Button.Secondary}" Content="Solicitud RFQ (.xlsx)" Command="{Binding ExportRfqCommand}" Margin="0,0,6,0"
                         ToolTip="Exportar planilla de cotización para enviar por email a distribuidores (sin costos internos)." />
+                <Button Style="{StaticResource Button.Secondary}" Content="Orden de Compra (OC) (.xlsx)" Command="{Binding ExportPurchaseOrderCommand}" Margin="0,0,6,0"
+                        ToolTip="Generar y exportar Orden de Compra oficial (OC) en Excel para el proveedor seleccionado o lista activa." />
                 <Button Style="{StaticResource Button.Primary}" Content="Exportar Excel (Ctrl+E)" Command="{Binding ExportExcelCommand}"
                         ToolTip="Exportar lista de compras consolidada a Excel (Ctrl+E)" />
               </StackPanel>
             </DockPanel>
-
             <Border Grid.Row="1" Style="{StaticResource Card.Section}" Padding="10" Margin="0,0,0,10">
               <StackPanel>
                 <Grid>
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="170" />
-                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="180" />
+                    <ColumnDefinition Width="180" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
-
                   <Grid Grid.Column="0" Margin="0,0,8,0">
                     <TextBox x:Name="SearchBox"
                              Style="{StaticResource Form.SearchBox}"
@@ -99,13 +98,11 @@
                             Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVisibility}}"
                             ToolTip="Limpiar busqueda (Esc)" />
                   </Grid>
-
                   <ComboBox Grid.Column="1" Style="{StaticResource Form.ComboBox}"
                             ItemsSource="{Binding CategoryOptions}"
                             SelectedItem="{Binding SelectedCategory}"
                             Margin="0,0,8,0"
                             ToolTip="Filtrar por categoría de material" />
-
                   <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,8,0">
                     <TextBlock Text="Modo de tolerancia compra" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,2" />
                     <ComboBox Style="{StaticResource Form.ComboBox}"
@@ -113,17 +110,14 @@
                               SelectedItem="{Binding SelectedTolerancePreset}"
                               ToolTip="Aplica tolerancia por categoría física (Cables 10%, PVC 8%, Bandeja 5%, Tableros 0%) o porcentaje plano" />
                   </StackPanel>
-
                   <Button Grid.Column="3" Style="{StaticResource Button.Secondary}"
                           Content="⚙ Ajustar por categoría"
                           Command="{Binding ToggleCategoryEditorCommand}"
                           Margin="0,0,8,0"
                           ToolTip="Abre el panel para definir y editar los porcentajes de merma de cada familia (Cables, PVC, Bandejas, etc.)" />
-
-                  <Button Grid.Column="4" Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}"
+                  <Button Grid.Column="5" Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}"
                           ToolTip="Restablecer búsqueda y categoría (Esc)" />
                 </Grid>
-
                 <!-- Panel expandible de configuración rápida de tolerancias por categoría -->
                 <Border Margin="0,10,0,0" Padding="12,10" Background="{DynamicResource Brush.Surface2}"
                         BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6"
@@ -138,7 +132,6 @@
                                 Command="{Binding ApplyCategoryTolerancesCommand}" Padding="12,4" />
                       </StackPanel>
                     </DockPanel>
-
                     <WrapPanel Orientation="Horizontal">
                       <!-- Conductores -->
                       <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
@@ -148,7 +141,6 @@
                           <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
                         </StackPanel>
                       </Border>
-
                       <!-- PVC -->
                       <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
                         <StackPanel Orientation="Horizontal">
@@ -157,7 +149,6 @@
                           <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
                         </StackPanel>
                       </Border>
-
                       <!-- Bandejas -->
                       <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
                         <StackPanel Orientation="Horizontal">
@@ -166,7 +157,6 @@
                           <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
                         </StackPanel>
                       </Border>
-
                       <!-- Cañerías / EMT -->
                       <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
                         <StackPanel Orientation="Horizontal">
@@ -175,7 +165,6 @@
                           <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
                         </StackPanel>
                       </Border>
-
                       <!-- Artefactos -->
                       <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
                         <StackPanel Orientation="Horizontal">
@@ -184,7 +173,6 @@
                           <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
                         </StackPanel>
                       </Border>
-
                       <!-- Tableros -->
                       <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
                         <StackPanel Orientation="Horizontal">
@@ -193,7 +181,6 @@
                           <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
                         </StackPanel>
                       </Border>
-
                       <!-- Accesorios -->
                       <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
                         <StackPanel Orientation="Horizontal">
@@ -202,7 +189,6 @@
                           <TextBlock Text="%" VerticalAlignment="Center" Margin="3,0,0,0" FontWeight="SemiBold" />
                         </StackPanel>
                       </Border>
-
                       <!-- General -->
                       <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
                         <StackPanel Orientation="Horizontal">
@@ -216,7 +202,6 @@
                 </Border>
               </StackPanel>
             </Border>
-
             <Border Grid.Row="2" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}" Padding="10" Margin="0,0,0,10">
               <Grid>
                 <Grid.ColumnDefinitions>
@@ -226,7 +211,6 @@
                   <ColumnDefinition Width="Auto" />
                   <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-
                 <Border Style="{StaticResource Card.StatPill}" Margin="0,0,10,0">
                   <StackPanel>
                     <TextBlock Text="Proyecto" Style="{StaticResource Text.Caption}" />
@@ -251,13 +235,11 @@
                     <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" TextWrapping="Wrap" />
                   </StackPanel>
                 </Border>
-
                 <TextBlock Grid.Column="4" Text="La lista consolida compras desde la cubicación viva. Clic derecho en un material para ver su trazabilidad de obra."
                            Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}"
                            VerticalAlignment="Center" TextWrapping="Wrap" />
               </Grid>
             </Border>
-
             <DataGrid Grid.Row="3"
                       ItemsSource="{Binding FilteredRows}"
                       SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
@@ -269,12 +251,12 @@
                       HeadersVisibility="Column"
                       SelectionMode="Single"
                       SelectionUnit="FullRow"
-                      EnableRowVirtualization="True"
-                      VirtualizingPanel.IsVirtualizing="True"
-                      VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                      VirtualizingPanel.VirtualizationMode="Recycling"
-                      VirtualizingPanel.ScrollUnit="Pixel"
-                      ScrollViewer.CanContentScroll="True">
+                      EnableRowVirtualization="False"
+                      EnableColumnVirtualization="False"
+                      
+                      
+                      
+                      >
               <DataGrid.ContextMenu>
                 <ContextMenu>
                   <MenuItem Header="Ver trazabilidad de obra..." Command="{Binding ViewTraceabilityCommand}">
@@ -295,20 +277,61 @@
                 <GroupStyle>
                   <GroupStyle.HeaderTemplate>
                     <DataTemplate>
-                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="4,6,4,2"
-                                 Foreground="{DynamicResource Brush.Ink2}" />
+                      <Border Background="{DynamicResource Brush.Surface2}"
+                              BorderBrush="{DynamicResource Brush.Line}"
+                              BorderThickness="0,0,0,1"
+                              Padding="10,6"
+                              Margin="0,4,0,2"
+                              CornerRadius="4">
+                        <DockPanel LastChildFill="True">
+                          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Cantidad de materiales -->
+                            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="10" Padding="8,2" Margin="0,0,8,0">
+                              <TextBlock Text="{Binding ItemCount, StringFormat={}{0:N0} materiales}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Muted}" />
+                            </Border>
+
+                            <!-- Subtotal compra del grupo -->
+                            <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="4" Padding="8,3" Margin="0,0,8,0">
+                              <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Subtotal compra: " FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Converter={StaticResource PurchaseGroupSubtotalConverter}}"
+                                           FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
+                              </StackPanel>
+                            </Border>
+
+                            <!-- Boton directo de exportar a orden de compra -->
+                            <Button Style="{StaticResource Button.Secondary}"
+                                    Padding="9,3"
+                                    ToolTip="Exportar Orden de Compra (OC) oficial en Excel para este grupo/proveedor"
+                                    Click="OnExportGroupPurchaseOrderClick"
+                                    Tag="{Binding}">
+                              <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource Geo.FileText}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Ink}" Margin="0,0,5,0" />
+                                <TextBlock Text="Exportar OC (.xlsx)" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" />
+                              </StackPanel>
+                            </Button>
+                          </StackPanel>
+
+                          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="{DynamicResource Brush.Canvas}" CornerRadius="3" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center">
+                              <Path Data="{StaticResource Geo.Building}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </DockPanel>
+                      </Border>
                     </DataTemplate>
                   </GroupStyle.HeaderTemplate>
                 </GroupStyle>
               </DataGrid.GroupStyle>
               <DataGrid.Columns>
-                <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" IsReadOnly="True" Width="110" />
-                <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" IsReadOnly="True" Width="*" MinWidth="220" />
-                <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" IsReadOnly="True" Width="50" />
-                <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" IsReadOnly="True" Width="120" />
-                <DataGridTextColumn Header="Cant. neta" Binding="{Binding CantidadNeta, StringFormat={}{0:N0}}" IsReadOnly="True" Width="85"
+                <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" IsReadOnly="True" Width="110" MinWidth="110" />
+                <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" IsReadOnly="True" Width="*" MinWidth="320" />
+                <DataGridTextColumn Header="Ud." Binding="{Binding Unidad}" IsReadOnly="True" Width="50" MinWidth="50" />
+                <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" IsReadOnly="True" Width="120" MinWidth="120" />
+                <DataGridTextColumn Header="Cant. neta" Binding="{Binding CantidadNeta, StringFormat={}{0:N0}}" IsReadOnly="True" Width="90" MinWidth="90"
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-                <DataGridTextColumn Header="Tol. %" Binding="{Binding ToleranciaPct, UpdateSourceTrigger=LostFocus, StringFormat={}{0:N1}}" Width="70"
+                <DataGridTextColumn Header="Tol. %" Binding="{Binding ToleranciaPct, UpdateSourceTrigger=LostFocus, StringFormat={}{0:N1}}" Width="75" MinWidth="75"
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}">
                   <DataGridTextColumn.EditingElementStyle>
                     <Style TargetType="TextBox" BasedOn="{StaticResource Form.TextBox}">
@@ -317,17 +340,16 @@
                     </Style>
                   </DataGridTextColumn.EditingElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Cant. compra" Binding="{Binding CantidadCompra, StringFormat={}{0:N0}}" IsReadOnly="True" Width="95"
+                <DataGridTextColumn Header="Cant. compra" Binding="{Binding CantidadCompra, StringFormat={}{0:N0}}" IsReadOnly="True" Width="105" MinWidth="105"
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-                <DataGridTextColumn Header="P. Unit CLP" Binding="{Binding MatClpUnitario, StringFormat={}$ {0:N0}}" IsReadOnly="True" Width="90"
+                <DataGridTextColumn Header="P. Unit CLP" Binding="{Binding MatClpUnitario, StringFormat={}$ {0:N0}}" IsReadOnly="True" Width="105" MinWidth="105"
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-                <DataGridTextColumn Header="Total CLP" Binding="{Binding TotalCompraClp, StringFormat={}$ {0:N0}}" IsReadOnly="True" Width="95"
+                <DataGridTextColumn Header="Total CLP" Binding="{Binding TotalCompraClp, StringFormat={}$ {0:N0}}" IsReadOnly="True" Width="115" MinWidth="115"
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
-                <DataGridTextColumn Header="Líneas" Binding="{Binding Lineas}" IsReadOnly="True" Width="60"
+                <DataGridTextColumn Header="Líneas" Binding="{Binding Lineas}" IsReadOnly="True" Width="65" MinWidth="65"
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
               </DataGrid.Columns>
             </DataGrid>
-
             <Border Grid.Row="3" Panel.ZIndex="3"
                     Background="{DynamicResource Brush.Surface}"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -340,13 +362,11 @@
                 <TextBlock Text="Borra la búsqueda para ver toda la lista de compra." FontSize="12" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,4,0,0" />
               </StackPanel>
             </Border>
-
             <TextBlock Grid.Row="4" Text="Haga clic derecho en cualquier material para ver su trazabilidad de obra detallada o presione doble clic para ir a cubicación."
                        Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" Margin="0,10,0,0" />
           </Grid>
         </Border>
       </TabItem>
-
       <!-- Subpestaña 2: Trazabilidad de obra ("Dónde se usa este material?") -->
       <TabItem Header="Trazabilidad de obra">
         <Border Background="{DynamicResource Brush.Surface}"
@@ -358,7 +378,6 @@
               <RowDefinition Height="*" />
               <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-
             <!-- Encabezado de la trazabilidad -->
             <Border Grid.Row="0" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}" Padding="12" Margin="0,0,0,12">
               <DockPanel LastChildFill="True">
@@ -374,7 +393,6 @@
                         VerticalAlignment="Center" Padding="12,6" />
               </DockPanel>
             </Border>
-
             <!-- Estado sin selección -->
             <Border Grid.Row="1" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
                     CornerRadius="{StaticResource Radius.Md}" Padding="30"
@@ -392,7 +410,6 @@
                            Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="360" />
               </StackPanel>
             </Border>
-
             <!-- Grilla a ancho completo de usos en partidas -->
             <DataGrid Grid.Row="1"
                       ItemsSource="{Binding MaterialUsages}"
@@ -409,7 +426,7 @@
                 <MouseBinding Gesture="LeftDoubleClick" Command="{Binding GoToUsageCommand}" />
               </DataGrid.InputBindings>
               <DataGrid.Columns>
-                <DataGridTextColumn Header="Ítem" Binding="{Binding ItemNumber}" Width="90" />
+                <DataGridTextColumn Header="Ítem" Binding="{Binding ItemNumber}" Width="105" MinWidth="105" />
                 <DataGridTextColumn Header="Partida de origen" Binding="{Binding PartidaDescripcion}" Width="2*" MinWidth="240">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock">
@@ -434,7 +451,6 @@
                                     HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" ElementStyle="{StaticResource Text.Numeric.Right}" />
               </DataGrid.Columns>
             </DataGrid>
-
             <!-- Barra inferior con acción directa a cubicación -->
             <DockPanel Grid.Row="2" Margin="0,14,0,0" LastChildFill="True"
                        Visibility="{Binding HasSelectedUsage, Converter={StaticResource BoolToVisibility}}">

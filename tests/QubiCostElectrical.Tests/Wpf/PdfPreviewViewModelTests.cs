@@ -64,6 +64,66 @@ public sealed class PdfPreviewViewModelTests
     }
 
     [Fact]
+    public void Zoom100Command_ReturnsTo100Percent()
+    {
+        var vm = new PdfPreviewViewModel();
+        vm.ZoomOutCommand.Execute(null);
+
+        vm.Zoom100Command.Execute(null);
+
+        Assert.Equal(1.0, vm.Zoom);
+        Assert.Equal("100%", vm.ZoomPercentText);
+    }
+
+    [Fact]
+    public void FitPageCommand_RaisesRequestFitPageEvent()
+    {
+        var vm = new PdfPreviewViewModel();
+        bool triggered = false;
+        vm.RequestFitPage += (_, _) => triggered = true;
+
+        vm.FitPageCommand.Execute(null);
+
+        Assert.True(triggered);
+    }
+
+    [Fact]
+    public void ToggleTwoPageCommand_SwitchesModesAndLabels()
+    {
+        var vm = new PdfPreviewViewModel();
+        Assert.False(vm.IsTwoPageMode);
+        Assert.Equal("2 páginas", vm.TwoPageButtonLabel);
+
+        vm.ToggleTwoPageCommand.Execute(null);
+        Assert.True(vm.IsTwoPageMode);
+        Assert.Equal("1 página", vm.TwoPageButtonLabel);
+
+        vm.ToggleTwoPageCommand.Execute(null);
+        Assert.False(vm.IsTwoPageMode);
+        Assert.Equal("2 páginas", vm.TwoPageButtonLabel);
+    }
+
+    [Fact]
+    public void PageIndicator_ReflectsTwoPageMode()
+    {
+        var vm = new PdfPreviewViewModel();
+        // Reflection to set PageCount for unit testing indicator
+        var prop = typeof(PdfPreviewViewModel).GetProperty(nameof(PdfPreviewViewModel.PageCount));
+        prop?.SetValue(vm, 8);
+
+        Assert.Equal("1 / 8", vm.PageIndicator);
+
+        vm.IsTwoPageMode = true;
+        Assert.Equal("1-2 / 8", vm.PageIndicator);
+
+        vm.NextPageCommand.Execute(null);
+        Assert.Equal("3-4 / 8", vm.PageIndicator);
+
+        vm.PreviousPageCommand.Execute(null);
+        Assert.Equal("1-2 / 8", vm.PageIndicator);
+    }
+
+    [Fact]
     public void Zoom_RaisesPropertyChanged_ForZoomAndPercentText()
     {
         var vm = new PdfPreviewViewModel();

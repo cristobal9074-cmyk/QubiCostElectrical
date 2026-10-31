@@ -28,7 +28,7 @@
     <Setter Property="SelectionMode" Value="Single" />
     <Setter Property="SelectionUnit" Value="FullRow" />
     <Setter Property="EnableRowVirtualization" Value="True" />
-    <Setter Property="EnableColumnVirtualization" Value="True" />
+    <Setter Property="EnableColumnVirtualization" Value="False" />
     <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
     <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
     <Setter Property="VirtualizingPanel.IsContainerVirtualizable" Value="True" />
@@ -43,9 +43,9 @@
 
   <Style x:Key="DataGridColumnHeader.Prototype" TargetType="DataGridColumnHeader">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink4}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
     <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
-    <Setter Property="FontSize" Value="9.5" />
+    <Setter Property="FontSize" Value="10" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Height" Value="32" />
     <Setter Property="Padding" Value="10,6" />

@@ -45,7 +45,6 @@
                 ToolTip="Eliminar fila o capítulo (Supr)" />
     </ContextMenu>
   </UserControl.Resources>
-
   <Grid>
     <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
                             IconData="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2 M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2 M9 5h6 M9 12h6 M9 16h4"
@@ -55,10 +54,8 @@
         <Button Style="{StaticResource Button.Primary}" Content="Abrir proyecto…" Command="{Binding OpenProjectCommand}" MinWidth="180" />
       </ctrl:EmptyStateControl.Actions>
     </ctrl:EmptyStateControl>
-
     <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando itemizado…"
                                  Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
-
     <Grid Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
           Margin="12,6,12,4"
           VerticalAlignment="Stretch">
@@ -70,7 +67,6 @@
         <!-- Row 2: Mensaje de estado -->
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
-
       <!-- CONTENEDOR SUPERIOR: COMMAND BAR + HERO KPI BAR -->
       <StackPanel Grid.Row="0" Margin="0,0,0,5">
         <!-- COMMAND BAR COMPACTA DE ALTA DENSIDAD -->
@@ -78,7 +74,7 @@
                 BorderBrush="{DynamicResource Brush.Line}"
                 BorderThickness="1"
                 CornerRadius="8"
-                Padding="8,4"
+                Padding="10,6"
                 Margin="0,0,0,4">
           <DockPanel LastChildFill="True">
             <!-- Lado derecho: KPI Compacto + Perspectiva Comercial + Botonera -->
@@ -130,7 +126,6 @@
                   </StackPanel>
                 </StackPanel>
               </Border>
-
               <!-- Botón Toggle de Barra de Métricas y Proporción (Hero KPI) -->
               <Button Command="{Binding ToggleHeroKpiBarCommand}"
                       ToolTip="Mostrar / Ocultar panel de métricas ejecutivas y distribución de costos"
@@ -149,7 +144,8 @@
                   </Style>
                 </Button.Style>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                  <TextBlock Text="📊 Métricas" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0" />
+                  <Path Style="{StaticResource Icon.Vector.Sm}" Data="{StaticResource Geo.Grid}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Margin="0,0,5,0" VerticalAlignment="Center" />
+                  <TextBlock Text="Métricas" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0" />
                   <TextBlock FontSize="9" VerticalAlignment="Center" Opacity="0.7">
                     <TextBlock.Style>
                       <Style TargetType="TextBlock">
@@ -164,7 +160,6 @@
                   </TextBlock>
                 </StackPanel>
               </Button>
-
             <!-- Selector de Perspectiva Comercial: [ Venta | Costo Directo ] -->
             <Border Background="{DynamicResource Brush.ChipBg}"
                     BorderBrush="{DynamicResource Brush.Line}"
@@ -188,7 +183,6 @@
                              ToolTip="Costo directo neto de partidas (sin margen comercial)" />
               </StackPanel>
             </Border>
-
             <!-- Selector Interactivo de Moneda: [ UF | CLP | USD | EUR ] -->
             <Border Background="{DynamicResource Brush.ChipBg}"
                     BorderBrush="{DynamicResource Brush.Line}"
@@ -224,9 +218,7 @@
                              ToolTip="Presentar precios y totales en Euros (€)" />
               </StackPanel>
             </Border>
-
             <Border Width="1" Height="20" Background="{DynamicResource Brush.Line}" Margin="0,0,8,0" VerticalAlignment="Center" />
-
             <!-- Botón + Capítulo -->
             <Button Style="{StaticResource Button.Secondary}"
                     Content="+ Capítulo"
@@ -235,7 +227,6 @@
                     Height="28" Padding="10,2" Margin="0,0,5,0"
                     FontSize="11.5" FontWeight="SemiBold"
                     VerticalAlignment="Center" />
-
             <!-- Botón Primario: + Partida (Ins) -->
             <Button Style="{StaticResource Button.Primary}"
                     Command="{Binding AddPartidaCommand}"
@@ -247,7 +238,6 @@
                 <TextBlock Text="(Ins)" FontSize="9.5" FontFamily="{StaticResource Font.Mono}" Margin="4,0,0,0" Opacity="0.7" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
-
             <!-- Menú Importar ▾ -->
             <Button Style="{StaticResource Button.Secondary}"
                     Content="Importar ▾"
@@ -270,7 +260,6 @@
                 </ContextMenu>
               </Button.ContextMenu>
             </Button>
-
             <!-- Menú Más Opciones ⋯ -->
             <Button Style="{StaticResource Button.Secondary}"
                     Content="⋯"
@@ -297,17 +286,14 @@
               </Button.ContextMenu>
             </Button>
           </StackPanel>
-
           <!-- Lado izquierdo: Identidad + Segmented Filter + Buscador -->
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <!-- Identidad de sección: Itemizado + chip [ 38 ] -->
-            <TextBlock Text="Itemizado" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
+            <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="4" Padding="5,2" Margin="0,0,6,0" VerticalAlignment="Center"><TextBlock Text="WBS" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" /></Border><TextBlock Text="Itemizado" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" />
             <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="6,1" Margin="6,0,8,0" VerticalAlignment="Center">
-              <TextBlock Text="{Binding TotalPartidasCount}" FontSize="10.5" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}" />
+              <TextBlock Text="{Binding TotalPartidasCount, StringFormat='{}{0} partidas'}" FontSize="10" FontWeight="SemiBold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}" />
             </Border>
-
             <Border Width="1" Height="20" Background="{DynamicResource Brush.Line}" Margin="0,0,8,0" VerticalAlignment="Center" />
-
             <!-- Segmented Control: [ Todas (38) ] [ 🟢 Listas (32) ] [ 🟡 Pendientes (6) ] -->
             <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="2" Margin="0,0,8,0" VerticalAlignment="Center">
               <StackPanel Orientation="Horizontal">
@@ -322,7 +308,6 @@
                     </Border>
                   </StackPanel>
                 </RadioButton>
-
                 <RadioButton IsChecked="{Binding IsFilterListas}"
                              GroupName="ItemizadoStatusFilter"
                              Style="{StaticResource SegmentedFilterRadioButtonStyle}"
@@ -335,7 +320,6 @@
                     </Border>
                   </StackPanel>
                 </RadioButton>
-
                 <RadioButton IsChecked="{Binding IsFilterPendientes}"
                              GroupName="ItemizadoStatusFilter"
                              Style="{StaticResource SegmentedFilterRadioButtonStyle}"
@@ -350,7 +334,6 @@
                 </RadioButton>
               </StackPanel>
             </Border>
-
             <!-- Buscador Unificado con Atajo Ctrl+F y Badge de Coincidencia -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
               <!-- Badge Dinámico de Coincidencia -->
@@ -360,11 +343,10 @@
                 <TextBlock Text="{Binding FilteredCountLabel}" FontSize="10.5" FontWeight="SemiBold"
                            Foreground="{DynamicResource Brush.Blue}" FontFamily="{StaticResource Font.Mono}" />
               </Border>
-
               <!-- Buscador con Atajo Ctrl+F y Botón Limpiar (✕) -->
               <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Height="26" VerticalAlignment="Center" MinWidth="210" MaxWidth="320">
                 <DockPanel LastChildFill="True">
-                  <TextBlock DockPanel.Dock="Left" Text="🔍" FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,5,0" VerticalAlignment="Center" />
+                  <Path DockPanel.Dock="Left" Style="{StaticResource Icon.Vector.Sm}" Data="{StaticResource Geo.Search}" Stroke="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
                   <!-- Botón limpiar búsqueda cuando hay texto -->
                   <Button DockPanel.Dock="Right" Content="✕"
                           Command="{Binding ClearSearchCommand}"
@@ -388,16 +370,13 @@
           </StackPanel>
         </DockPanel>
       </Border>
-
       <!-- Hero KPI Bar (Resumen ejecutivo, proporción Mat/MO y salud de partidas) -->
       <local:ItemizadoHeroKpiBarControl Visibility="{Binding IsHeroKpiBarExpanded, Converter={StaticResource BoolToVisibility}}"
                                         Margin="0,0,0,2" />
     </StackPanel>
-
       <!-- Empty Itemizado state: onboarding compacto -->
       <local:ItemizadoEmptyStateControl Grid.Row="1"
                                         Visibility="{Binding ShowEmptyItemizado, Converter={StaticResource BoolToVisibility}}" />
-
       <!-- DataGrid Container with In-Grid Search Overlay and Sticky Footer -->
       <Grid Grid.Row="1" Margin="0"
             VerticalAlignment="Stretch"
@@ -409,7 +388,6 @@
               <RowDefinition Height="*" />
               <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-
             <!-- BREADCRUMB DE JERARQUÍA PERSISTENTE (STICKY CONTEXT) -->
             <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1"
                     Padding="12,5" MinHeight="32">
@@ -435,10 +413,8 @@
                     </StackPanel>
                   </Button>
                 </StackPanel>
-
                 <!-- Icono de contexto / jerarquía -->
-                <TextBlock DockPanel.Dock="Left" Text="📁" FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,8,0" VerticalAlignment="Center" />
-
+                <Path DockPanel.Dock="Left" Style="{StaticResource Icon.Vector.Sm}" Data="{StaticResource Geo.FolderOpen}" Stroke="{DynamicResource Brush.Muted}" Margin="0,0,8,0" VerticalAlignment="Center" />
                 <!-- Si hay breadcrumb activo: lista de nodos interactivos -->
                 <ItemsControl DockPanel.Dock="Left" ItemsSource="{Binding Breadcrumb.Nodes}"
                               Visibility="{Binding HasBreadcrumb, Converter={StaticResource BoolToVisibility}}">
@@ -460,14 +436,12 @@
                           <TextBlock Text="{Binding DisplayText}" FontSize="11" FontWeight="SemiBold"
                                      Foreground="{DynamicResource Brush.Ink}" />
                         </Button>
-
                         <!-- Chip para el elemento activo actual -->
                         <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="4" Padding="6,2" Margin="2,0,0,0"
                                 Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibility}}">
                           <TextBlock Text="{Binding DisplayText}" FontSize="11" FontWeight="Bold"
                                      Foreground="{DynamicResource Brush.Blue}" />
                         </Border>
-
                         <!-- Separador › (visible para todos excepto el último) -->
                         <TextBlock Text="›" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}"
                                    Margin="6,0" VerticalAlignment="Center"
@@ -476,7 +450,6 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-
                 <!-- Si NO hay selección o breadcrumb vacío -->
                 <TextBlock Text="Seleccione una partida para ver su jerarquía y contexto WBS"
                            FontSize="11" Foreground="{DynamicResource Brush.Muted}" FontStyle="Italic"
@@ -484,7 +457,6 @@
                            Visibility="{Binding HasBreadcrumb, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
               </DockPanel>
             </Border>
-
             <DataGrid x:Name="ItemGrid"
                   Grid.Row="1"
                   ItemsSource="{Binding FilteredRows}"
@@ -551,40 +523,65 @@
             </Style>
           </DataGrid.RowStyle>
           <DataGrid.Columns>
-            <!-- COLUMNA 1: ÍTEM -->
-            <DataGridTemplateColumn Header="ÍTEM" Width="72" HeaderStyle="{StaticResource CenteredColumnHeader}">
+            <!-- COLUMNA 1: ITEM -->
+            <DataGridTemplateColumn Header="&#205;TEM" Width="72" HeaderStyle="{StaticResource CenteredColumnHeader}">
+              <DataGridTemplateColumn.CellStyle>
+                <Style TargetType="DataGridCell" BasedOn="{StaticResource ItemizadoDataGridCell}">
+                  <Setter Property="Padding" Value="0" />
+                </Style>
+              </DataGridTemplateColumn.CellStyle>
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate>
-                  <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <!-- Para Capítulo o Partida con estilo de subtítulo: Badge WBS elegante -->
-                    <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                            CornerRadius="5" Padding="6,2"
-                            Visibility="{Binding IsChapterStyle, Converter={StaticResource BoolToVisibility}}">
-                      <TextBlock Text="{Binding Item}"
-                                 FontFamily="{StaticResource Font.Mono}"
-                                 FontSize="10.5" FontWeight="Bold"
-                                 Foreground="{DynamicResource Brush.Ink}" />
-                    </Border>
+                  <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <!-- Indicador de fila activa / seleccionada: barra vertical cobalto de 3px estilo VS Code / Excel -->
+                    <Border x:Name="ActiveRowIndicator" Width="3" HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                            Background="{DynamicResource Brush.Blue}" CornerRadius="0,1.5,1.5,0"
+                            Visibility="Collapsed" />
 
-                    <!-- Para Partida Normal: Texto Mono limpio y legible -->
-                    <TextBlock Text="{Binding Item}"
-                               Visibility="{Binding IsChapterStyle, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
-                               FontFamily="{StaticResource Font.Mono}"
-                               FontSize="11" FontWeight="Medium"
-                               Foreground="{DynamicResource Brush.Muted}"
-                               TextAlignment="Center" VerticalAlignment="Center">
-                      <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding ItemCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
-                              <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
-                              <Setter Property="ToolTip" Value="{Binding ItemCellError}" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </TextBlock.Style>
-                    </TextBlock>
+                    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                      <!-- Para Capitulo o Partida con estilo de subtitulo: Badge WBS elegante -->
+                      <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                              CornerRadius="5" Padding="6,2"
+                              Visibility="{Binding IsChapterStyle, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding Item}"
+                                   FontFamily="{StaticResource Font.Mono}"
+                                   FontSize="10.5" FontWeight="Bold"
+                                   Foreground="{DynamicResource Brush.Ink}" />
+                      </Border>
+                      <!-- Para Partida Normal: Texto Mono limpio y legible -->
+                      <TextBlock Text="{Binding Item}"
+                                 Visibility="{Binding IsChapterStyle, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                                 FontFamily="{StaticResource Font.Mono}"
+                                 FontSize="11" FontWeight="Medium"
+                                 Foreground="{DynamicResource Brush.Muted}"
+                                 TextAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding ItemCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" />
+                                <Setter Property="ToolTip" Value="{Binding ItemCellError}" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Grid>
                   </Grid>
+                  <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                      <Setter TargetName="ActiveRowIndicator" Property="Visibility" Value="Visible" />
+                      <Setter TargetName="ActiveRowIndicator" Property="Opacity" Value="0.45" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                      <Setter TargetName="ActiveRowIndicator" Property="Visibility" Value="Visible" />
+                      <Setter TargetName="ActiveRowIndicator" Property="Opacity" Value="1.0" />
+                    </DataTrigger>
+                  </DataTemplate.Triggers>
                 </DataTemplate>
               </DataGridTemplateColumn.CellTemplate>
               <DataGridTemplateColumn.CellEditingTemplate>
@@ -594,7 +591,6 @@
                 </DataTemplate>
               </DataGridTemplateColumn.CellEditingTemplate>
             </DataGridTemplateColumn>
-
             <!-- COLUMNA 2: DESCRIPCIÓN DE LA PARTIDA (CON ACCIONES HOVER) -->
             <DataGridTemplateColumn x:Name="ColDescripcion" Header="DESCRIPCIÓN DE LA PARTIDA" Width="720" MinWidth="320" CanUserResize="True">
               <DataGridTemplateColumn.CellTemplate>
@@ -620,7 +616,6 @@
                                    FontSize="9.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Muted}" />
                       </Border>
                     </StackPanel>
-
                     <!-- Fila de Partida -->
                     <Grid Visibility="{Binding IsTitleRow, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
                       <TextBlock Text="{Binding Descripcion}"
@@ -643,7 +638,6 @@
                           </Style>
                         </TextBlock.Style>
                       </TextBlock>
-
                       <!-- Acciones flotantes al hover (Cubicar & APU) sin provocar reflow de texto -->
                       <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="{DynamicResource Brush.Surface}" CornerRadius="4" Padding="4,0,0,0">
                         <Border.Style>
@@ -663,13 +657,13 @@
                           </Style>
                         </Border.Style>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                          <Button Content="📐 Cubicar"
+                          <Button Content="Cubicar"
                                   Command="{Binding DataContext.CubicarRowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                   CommandParameter="{Binding}"
                                   Style="{StaticResource MiniRowActionButton.Cubicar}"
                                   ToolTip="Abrir cubicación de la partida"
                                   Margin="0,0,4,0" />
-                          <Button Content="📦 APU"
+                          <Button Content="APU"
                                   Command="{Binding DataContext.OpenApuCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                   CommandParameter="{Binding}"
                                   Style="{StaticResource MiniRowActionButton}"
@@ -687,7 +681,6 @@
                 </DataTemplate>
               </DataGridTemplateColumn.CellEditingTemplate>
             </DataGridTemplateColumn>
-
             <!-- COLUMNA 3: UD -->
             <DataGridTextColumn Header="UD" Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="52" HeaderStyle="{StaticResource CenteredColumnHeader}">
               <DataGridTextColumn.ElementStyle>
@@ -701,7 +694,6 @@
                 <Style TargetType="TextBox" BasedOn="{StaticResource UnidadCellTextBox}" />
               </DataGridTextColumn.EditingElementStyle>
             </DataGridTextColumn>
-
             <!-- COLUMNA 4: CANTIDAD -->
             <DataGridTemplateColumn Header="CANTIDAD" Width="90" HeaderStyle="{StaticResource NumericColumnHeader}">
               <DataGridTemplateColumn.CellTemplate>
@@ -718,12 +710,11 @@
                 </DataTemplate>
               </DataGridTemplateColumn.CellEditingTemplate>
             </DataGridTemplateColumn>
-
             <!-- COLUMNA 5: P.U. (UF / CLP / USD / EUR) fx -->
             <DataGridTemplateColumn Width="115" HeaderStyle="{StaticResource NumericColumnHeader}" IsReadOnly="True">
               <DataGridTemplateColumn.Header>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                  <TextBlock Text="{Binding DataContext.HeaderUnitPriceCaption, RelativeSource={RelativeSource AncestorType=DataGrid}}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                  <TextBlock Text="{Binding DataContext.HeaderUnitPriceCaption, RelativeSource={RelativeSource AncestorType=DataGrid}}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" Margin="0,0,4,0" />
                   <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="3" Padding="3,0" VerticalAlignment="Center">
                     <TextBlock Text="fx" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
                   </Border>
@@ -740,12 +731,11 @@
                 </DataTemplate>
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
-
             <!-- COLUMNA 6: TOTAL (UF / CLP / USD / EUR) fx -->
             <DataGridTemplateColumn Width="125" HeaderStyle="{StaticResource NumericColumnHeader}" IsReadOnly="True">
               <DataGridTemplateColumn.Header>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                  <TextBlock Text="{Binding DataContext.HeaderTotalCaption, RelativeSource={RelativeSource AncestorType=DataGrid}}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink4}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                  <TextBlock Text="{Binding DataContext.HeaderTotalCaption, RelativeSource={RelativeSource AncestorType=DataGrid}}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" Margin="0,0,4,0" />
                   <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="3" Padding="3,0" VerticalAlignment="Center">
                     <TextBlock Text="fx" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
                   </Border>
@@ -773,8 +763,6 @@
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>
 
-
-
             <!-- COLUMNA 8: OBSERVACIONES DE LA PARTIDA -->
             <DataGridTemplateColumn x:Name="ColObservaciones" Header="OBSERVACIONES" Width="280" MinWidth="160" MaxWidth="400" CanUserResize="True" HeaderStyle="{StaticResource ItemizadoColumnHeader}">
               <DataGridTemplateColumn.CellTemplate>
@@ -799,7 +787,6 @@
             </DataGridTemplateColumn>
           </DataGrid.Columns>
         </DataGrid>
-
         <Border Grid.Row="1" Panel.ZIndex="3"
                 Background="{DynamicResource Brush.Surface}"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -813,7 +800,6 @@
                        Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,4,0,0" />
           </StackPanel>
         </Border>
-
         <!-- STICKY FOOTER DE RESUMEN (MODERNO) -->
         <Border Grid.Row="2"
                 Background="{DynamicResource Brush.Surface2}"
@@ -823,14 +809,13 @@
           <DockPanel LastChildFill="True">
             <!-- Right side: Total Oferta y Equivalente CLP -->
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,4,0"><StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="TOTAL OFERTA:" Style="{StaticResource Text.TotalsLabel}" Margin="0,0,6,0" VerticalAlignment="Center" />
                 <TextBlock Text="{Binding FooterTotalUfText}" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
                 <TextBlock Text="{Binding FooterTotalClpText}" FontSize="12" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink}" Margin="6,0,0,0" VerticalAlignment="Center"
                            Visibility="{Binding FooterTotalClpText, Converter={StaticResource StringNotEmptyToVisibility}}" />
-              </StackPanel>
+              </StackPanel></Border>
             </StackPanel>
-
             <!-- Left side: Contador de partidas -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
               <TextBlock Text="∑" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,5,0" VerticalAlignment="Center" />
@@ -847,7 +832,6 @@
         </Border>
       </Grid>
     </Border>
-
       <!-- Buscador Flotante In-Grid (Ctrl+F / F3) -->
       <ctrl:DataGridSearchOverlay x:Name="ItemSearchOverlay"
                                   TargetGrid="{Binding ElementName=ItemGrid}"
@@ -856,7 +840,6 @@
                                   Margin="0,8,18,0"
                                   Panel.ZIndex="100" />
     </Grid>
-
       <!-- Status message -->
       <TextBlock Grid.Row="2" Text="{Binding StatusMessage}" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Amber}"
                  Visibility="{Binding HasStatusMessage, Converter={StaticResource BoolToVisibility}}" Margin="0,4,0,0" />

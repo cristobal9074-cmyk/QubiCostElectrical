@@ -24,9 +24,9 @@ public sealed class ItemizadoImportCoordinator
         this.presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
     }
 
-    public async Task<ItemizadoImportOutcome> ImportExcelAsync(string filePath)
+    public async Task<ItemizadoImportOutcome> ImportExcelAsync(string filePath, string? sheetName = null)
     {
-        var (plan, error) = await Task.Run(() => presenter.TryBuildImportPlan(filePath));
+        var (plan, error) = await Task.Run(() => presenter.TryBuildImportPlan(filePath, sheetName, "Importar itemizado"));
         if (!string.IsNullOrWhiteSpace(error))
             return new ItemizadoImportOutcome(false, false, Array.Empty<ItemizadoRow>(), null, null, "Importar tabla", error);
 

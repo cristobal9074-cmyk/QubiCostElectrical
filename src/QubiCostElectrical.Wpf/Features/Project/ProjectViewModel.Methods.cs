@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Globalization;
 using System.Windows.Input;
 using Microsoft.Win32;
 using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Controls;
 using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Navigation;
@@ -32,6 +33,7 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
         GenerateFichaPdfCommand = new RelayCommand(GenerateFichaPdf, () => !ShowEmptyState && permissions.CanExportDocuments);
         SelectSectionCommand = new RelayCommand<string>(SelectSection);
+        AdjudicarObraCommand = new RelayCommand(AdjudicarObra, () => !ShowEmptyState && !session.IsReadOnly);
         SetEstadoCommand = new RelayCommand<string>(SetEstado, _ => !ShowEmptyState && !session.IsReadOnly);
         SetCommercialModelCommand = new RelayCommand<string>(SetCommercialModel, _ => !ShowEmptyState && !session.IsReadOnly);
         ApplyCommercialProfileCommand = new RelayCommand<string>(ApplyCommercialProfile, _ => !ShowEmptyState && !session.IsReadOnly);
@@ -364,6 +366,7 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
     public bool IsEstadoEnRevision => string.Equals(EstadoPresupuesto, "En revisión", StringComparison.OrdinalIgnoreCase)
         || string.Equals(EstadoPresupuesto, "En revision", StringComparison.OrdinalIgnoreCase);
     public bool IsEstadoAprobado => string.Equals(EstadoPresupuesto, "Aprobado", StringComparison.OrdinalIgnoreCase);
+    public bool IsEstadoAdjudicado => string.Equals(EstadoPresupuesto, EstadoPartida.Adjudicado, StringComparison.OrdinalIgnoreCase);
 
     public string SelectedSection
     {
@@ -408,6 +411,7 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
     public ICommand SetEstadoCommand { get; }
     public ICommand SetCommercialModelCommand { get; }
     public ICommand ApplyCommercialProfileCommand { get; }
+    public ICommand AdjudicarObraCommand { get; }
     public ObservableCollection<ProjectAuditEntryVm> AuditEntries { get; } = new();
 
     private void SelectSection(string? section)
@@ -415,6 +419,40 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         if (string.IsNullOrWhiteSpace(section))
             return;
         SelectedSection = section.Trim().ToLowerInvariant();
+    }
+
+    private void AdjudicarObra()
+    {
+        if (ShowEmptyState || session.IsReadOnly)
+            return;
+
+        var res = AppMessageDialog.Show(
+            "Adjudicar Obra y Congelar Línea Base",
+            "¿Confirmar la adjudicación de la obra? Esto actualizará el estado a 'Adjudicado' y congelará una 'Línea Base Contractual' en el historial de versiones del proyecto.",
+            primaryText: "Adjudicar y Congelar",
+            cancelText: "Cancelar");
+
+        if (res != AppMessageDialogResult.Primary)
+            return;
+
+        EstadoPresupuesto = EstadoPartida.Adjudicado;
+        Save();
+
+        var snap = BudgetVersionData.FromProjectFileData(session.CreateSnapshot());
+        var version = new BudgetVersionRow
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Codigo = $"LB-{session.Versiones.Count + 1:00}",
+            Nombre = "Línea Base Contractual (Adjudicación)",
+            Estado = "Línea Base",
+            FechaCreacion = AppClock.Now,
+            FechaModificacion = AppClock.Now,
+            Nota = "Línea base contractual congelada al adjudicar el proyecto para control de ejecución, compras y estados de pago.",
+            Snapshot = snap
+        };
+        session.Versiones.Add(version);
+        NotifyDirty();
+        _ = shell.SaveProjectAsync();
     }
 
     private void SetEstado(string? estado)
@@ -531,6 +569,7 @@ public sealed partial class ProjectViewModel : ViewModelBase, IPageWithPendingCh
         OnPropertyChanged(nameof(IsEstadoBorrador));
         OnPropertyChanged(nameof(IsEstadoEnRevision));
         OnPropertyChanged(nameof(IsEstadoAprobado));
+        OnPropertyChanged(nameof(IsEstadoAdjudicado));
     }
 
     public void Refresh() => Load();

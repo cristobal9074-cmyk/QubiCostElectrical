@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -43,6 +43,8 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     private readonly RelayCommand applyProjectPricesCommand;
     private readonly RelayCommand clearFiltersCommand;
     private readonly RelayCommand clearSearchCommand;
+    private readonly RelayCommand cargarCatalogoChileCommand;
+    private readonly RelayCommand purgarCatalogoChileCommand;
 
     private readonly ICollectionView entriesView;
 

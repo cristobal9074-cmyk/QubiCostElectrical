@@ -154,7 +154,7 @@
                 </Border.ToolTip>
               </Border>
             </StackPanel>
-            <TextBlock Text="{Binding MargenLabel}" Style="{StaticResource CostoKpiValue}" />
+            <TextBlock Text="{Binding MargenLabel}" Style="{StaticResource CostoKpiValue}" Foreground="{DynamicResource Brush.Success}" />
             <TextBlock Text="{Binding MargenSubLabel}" Style="{StaticResource CostoKpiHint}" />
           </StackPanel>
         </Border>
@@ -180,7 +180,7 @@
                 </Border.ToolTip>
               </Border>
             </StackPanel>
-            <TextBlock Text="{Binding Tabs.VentaNetaLabel}" Style="{StaticResource CostoKpiValue}" />
+            <TextBlock Text="{Binding Tabs.VentaNetaLabel}" Style="{StaticResource CostoKpiValue}" Foreground="{DynamicResource Brush.Blue}" />
             <TextBlock Text="{Binding Tabs.VentaNetaSub}" Style="{StaticResource CostoKpiHint}" />
           </StackPanel>
         </Border>

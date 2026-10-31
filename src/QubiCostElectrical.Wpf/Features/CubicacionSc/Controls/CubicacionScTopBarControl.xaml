@@ -5,7 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
     <!-- ── Unified Modern Executive Top Bar ──────────────────────── -->
-    <Border Style="{StaticResource Card.Surface}" Padding="10,6" Margin="0,0,0,10">
+    <Border Style="{StaticResource Card.Surface}" Padding="12,8" Margin="0,0,0,10">
         <DockPanel LastChildFill="True">
             <!-- Right side: Actions -->
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
@@ -96,6 +96,9 @@
 
             <!-- Left side: Selector de perspectiva (CTOS GENERALES / DEPTOS) + Búsqueda integrada y herramientas -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <TextBlock Text="⚡ C.SC" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" />
+                </Border>
                 <!-- Switch segmentado de perspectivas: CTOS GENERALES y DEPTOS -->
                 <Border Background="{DynamicResource Brush.SurfaceAlt}"
                         BorderBrush="{DynamicResource Brush.Border}"

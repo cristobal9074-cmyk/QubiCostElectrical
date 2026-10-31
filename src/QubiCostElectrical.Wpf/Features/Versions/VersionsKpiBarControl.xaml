@@ -4,15 +4,16 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
-  <!-- ════ Tira KPI de Versiones ════ -->
-  <Border Style="{StaticResource Card.Surface}" Padding="0" Margin="0,0,0,10"
+  <!-- ════ Tira KPI de Versiones ($20B+ Market Standard) ════ -->
+  <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+          BorderThickness="1" CornerRadius="10" Padding="0" Margin="0,0,0,10"
           VerticalAlignment="Top">
     <UniformGrid Columns="4">
 
       <!-- 1 · Variación neta -->
-      <Border Style="{StaticResource Versions.KpiCell}" BorderThickness="0">
+      <Border Style="{StaticResource Versions.KpiCell}" BorderThickness="0" CornerRadius="10,0,0,10">
         <StackPanel>
-          <TextBlock Text="VARIACIÓN NETA DEL COMPARADOR" Style="{StaticResource Versions.KpiLabel}" />
+          <TextBlock Text="VARIACIÓN NETA COMPARADOR" Style="{StaticResource Versions.KpiLabel}" />
           <TextBlock>
             <TextBlock.Style>
               <Style TargetType="TextBlock" BasedOn="{StaticResource Versions.KpiValue}">
@@ -68,23 +69,24 @@
       </Border>
 
       <!-- 3 · Versión activa -->
-      <Border Style="{StaticResource Versions.KpiCell}">
+      <Border Style="{StaticResource Versions.KpiCell}" Background="{DynamicResource Brush.BlueSoft}">
         <StackPanel>
-          <TextBlock Text="VERSIÓN ACTIVA" Style="{StaticResource Versions.KpiLabel}" />
-          <TextBlock Text="{Binding ActiveVersionText}" FontSize="13" />
-          <TextBlock Text="{Binding SummaryText}" Style="{StaticResource Versions.KpiNote}" />
+          <TextBlock Text="VERSIÓN ACTIVA EN SESIÓN" Style="{StaticResource Versions.KpiLabel}" Foreground="{DynamicResource Brush.Blue}" />
+          <TextBlock Text="{Binding ActiveVersionText}" FontSize="15" FontWeight="Bold" FontFamily="{StaticResource Font.Mono}"
+                     Foreground="{DynamicResource Brush.Blue}" Margin="0,4,0,0" />
+          <TextBlock Text="{Binding SummaryText}" Style="{StaticResource Versions.KpiNote}" Foreground="{DynamicResource Brush.Ink3}" />
         </StackPanel>
       </Border>
 
       <!-- 4 · Última actualización -->
-      <Border Style="{StaticResource Versions.KpiCell}">
+      <Border Style="{StaticResource Versions.KpiCell}" CornerRadius="0,10,10,0">
         <StackPanel>
           <TextBlock Text="ÚLTIMA ACTUALIZACIÓN" Style="{StaticResource Versions.KpiLabel}" />
           <TextBlock Text="{Binding SelectedVersion.FechaModificacion, StringFormat='{}{0:dd/MM · HH:mm}', FallbackValue=—}"
-                     FontSize="13.5" />
+                     Style="{StaticResource Versions.KpiValue}" FontSize="15" />
           <TextBlock Style="{StaticResource Versions.KpiNote}">
             <Run Text="por " />
-            <Run Text="{Binding SelectedVersion.CreadoPor, FallbackValue=—, Mode=OneWay}" />
+            <Run Text="{Binding SelectedVersion.CreadoPor, FallbackValue=—, Mode=OneWay}" FontWeight="SemiBold" />
           </TextBlock>
         </StackPanel>
       </Border>

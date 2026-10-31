@@ -1,164 +1,812 @@
-Codigo;Descripcion;Unidad;Familia;PrecioCLP;MO;Proveedor;Marca;Fecha
-THHN1.5;Conductor cobre THHN 1.5 mm²;ML;Conductores;148;59;;;2026-06-01
-THHN2.5;Conductor cobre THHN 2.5 mm²;ML;Conductores;215;70;;;2026-06-01
-THHN4;Conductor cobre THHN 4 mm²;ML;Conductores;320;78;;;2026-06-01
-THHN6;Conductor cobre THHN 6 mm²;ML;Conductores;460;86;;;2026-06-01
-THHN10;Conductor cobre THHN 10 mm²;ML;Conductores;741;98;;;2026-06-01
-THHN16;Conductor cobre THHN 16 mm²;ML;Conductores;1170;117;;;2026-06-01
-THHN25;Conductor cobre THHN 25 mm²;ML;Conductores;1794;137;;;2026-06-01
-THHN35;Conductor cobre THHN 35 mm²;ML;Conductores;2457;156;;;2026-06-01
-THHN50;Conductor cobre THHN 50 mm²;ML;Conductores;3432;195;;;2026-06-01
-THHN70;Conductor cobre THHN 70 mm²;ML;Conductores;4680;234;;;2026-06-01
-THHN95;Conductor cobre THHN 95 mm²;ML;Conductores;6318;273;;;2026-06-01
-THHN120;Conductor cobre THHN 120 mm²;ML;Conductores;7995;312;;;2026-06-01
-THHN150;Conductor cobre THHN 150 mm²;ML;Conductores;9945;351;;;2026-06-01
-THHN185;Conductor cobre THHN 185 mm²;ML;Conductores;12285;390;;;2026-06-01
-THHN240;Conductor cobre THHN 240 mm²;ML;Conductores;15795;468;;;2026-06-01
-NYY4X2.5;Cable NYY 4x2.5 mm²;ML;Conductores;1638;98;;;2026-06-01
-NYY4X4;Cable NYY 4x4 mm²;ML;Conductores;2418;117;;;2026-06-01
-NYY4X6;Cable NYY 4x6 mm²;ML;Conductores;3432;137;;;2026-06-01
-NYY4X10;Cable NYY 4x10 mm²;ML;Conductores;5265;156;;;2026-06-01
-NYY4X16;Cable NYY 4x16 mm²;ML;Conductores;8190;195;;;2026-06-01
-NYY4X25;Cable NYY 4x25 mm²;ML;Conductores;12480;234;;;2026-06-01
-NYY4X35;Cable NYY 4x35 mm²;ML;Conductores;16965;273;;;2026-06-01
-NYY4X50;Cable NYY 4x50 mm²;ML;Conductores;23400;351;;;2026-06-01
-NYY4X70;Cable NYY 4x70 mm²;ML;Conductores;31980;429;;;2026-06-01
-TTPLY2X1.5;Cable TTPLY 2x1.5 mm²;ML;Conductores;351;59;;;2026-06-01
-TTPLY3X2.5;Cable TTPLY 3x2.5 mm²;ML;Conductores;624;70;;;2026-06-01
-TTPLY3X4;Cable TTPLY 3x4 mm²;ML;Conductores;897;78;;;2026-06-01
-COND-TIERRA4;Conductor tierra desnudo 4 mm²;ML;Conductores;242;47;;;2026-06-01
-COND-TIERRA6;Conductor tierra desnudo 6 mm²;ML;Conductores;351;59;;;2026-06-01
-COND-TIERRA10;Conductor tierra desnudo 10 mm²;ML;Conductores;566;70;;;2026-06-01
-PVC20;Tubería conduit PVC 20 mm;ML;Canalización;109;78;;;2026-06-01
-PVC25;Tubería conduit PVC 25 mm;ML;Canalización;148;86;;;2026-06-01
-PVC32;Tubería conduit PVC 32 mm;ML;Canalización;215;98;;;2026-06-01
-PVC40;Tubería conduit PVC 40 mm;ML;Canalización;293;109;;;2026-06-01
-PVC50;Tubería conduit PVC 50 mm;ML;Canalización;410;117;;;2026-06-01
-PVC63;Tubería conduit PVC 63 mm;ML;Canalización;585;137;;;2026-06-01
-PVC75;Tubería conduit PVC 75 mm;ML;Canalización;780;156;;;2026-06-01
-PVC90;Tubería conduit PVC 90 mm;ML;Canalización;1092;176;;;2026-06-01
-PVC110;Tubería conduit PVC 110 mm;ML;Canalización;1560;215;;;2026-06-01
-EMT20;Tubería conduit EMT 20 mm;ML;Canalización;164;86;;;2026-06-01
-EMT25;Tubería conduit EMT 25 mm;ML;Canalización;226;98;;;2026-06-01
-EMT32;Tubería conduit EMT 32 mm;ML;Canalización;312;109;;;2026-06-01
-EMT40;Tubería conduit EMT 40 mm;ML;Canalización;429;125;;;2026-06-01
-EMT50;Tubería conduit EMT 50 mm;ML;Canalización;605;148;;;2026-06-01
-EMT63;Tubería conduit EMT 63 mm;ML;Canalización;858;176;;;2026-06-01
-BAN-PERF-100;Bandeja perforada acero 100 mm;ML;Canalización;1248;312;;;2026-06-01
-BAN-PERF-150;Bandeja perforada acero 150 mm;ML;Canalización;1638;351;;;2026-06-01
-BAN-PERF-200;Bandeja perforada acero 200 mm;ML;Canalización;2028;390;;;2026-06-01
-BAN-PERF-300;Bandeja perforada acero 300 mm;ML;Canalización;2808;449;;;2026-06-01
-BAN-PERF-400;Bandeja perforada acero 400 mm;ML;Canalización;3705;507;;;2026-06-01
-BAN-PLEG-100;Bandeja plegada acero 100 mm;ML;Canalización;1092;293;;;2026-06-01
-BAN-PLEG-200;Bandeja plegada acero 200 mm;ML;Canalización;1794;371;;;2026-06-01
-BAN-PLEG-300;Bandeja plegada acero 300 mm;ML;Canalización;2496;429;;;2026-06-01
-CAJA-DERIVACION;Caja de derivación PVC 100x100mm;UN;Canalización;176;234;;;2026-06-01
-CAJA-CHUQUI;Caja chuqui metálica 75x75mm;UN;Canalización;137;215;;;2026-06-01
-CAJA-PASO-200;Caja paso metálica 200x200mm;UN;Canalización;702;468;;;2026-06-01
-CAJA-PASO-300;Caja paso metálica 300x300mm;UN;Canalización;1482;624;;;2026-06-01
-CAJA-MEDIDA;Caja medidores monofásica 1 medidor;UN;Canalización;3315;4680;;;2026-06-01
-DIS-10A-1P;Disyuntor termomagnético 10A 1P;UN;Protecciones;1638;468;;;2026-06-01
-DIS-16A-1P;Disyuntor termomagnético 16A 1P;UN;Protecciones;1716;468;;;2026-06-01
-DIS-20A-1P;Disyuntor termomagnético 20A 1P;UN;Protecciones;1794;468;;;2026-06-01
-DIS-25A-1P;Disyuntor termomagnético 25A 1P;UN;Protecciones;1872;468;;;2026-06-01
-DIS-32A-1P;Disyuntor termomagnético 32A 1P;UN;Protecciones;2145;507;;;2026-06-01
-DIS-40A-1P;Disyuntor termomagnético 40A 1P;UN;Protecciones;2535;507;;;2026-06-01
-DIS-16A-2P;Disyuntor termomagnético 16A 2P;UN;Protecciones;2925;546;;;2026-06-01
-DIS-20A-2P;Disyuntor termomagnético 20A 2P;UN;Protecciones;3042;546;;;2026-06-01
-DIS-25A-2P;Disyuntor termomagnético 25A 2P;UN;Protecciones;3198;546;;;2026-06-01
-DIS-32A-2P;Disyuntor termomagnético 32A 2P;UN;Protecciones;3510;585;;;2026-06-01
-DIS-40A-2P;Disyuntor termomagnético 40A 2P;UN;Protecciones;3900;585;;;2026-06-01
-DIS-50A-2P;Disyuntor termomagnético 50A 2P;UN;Protecciones;4485;624;;;2026-06-01
-DIS-63A-2P;Disyuntor termomagnético 63A 2P;UN;Protecciones;5382;663;;;2026-06-01
-DIS-16A-3P;Disyuntor termomagnético 16A 3P;UN;Protecciones;4095;624;;;2026-06-01
-DIS-20A-3P;Disyuntor termomagnético 20A 3P;UN;Protecciones;4290;624;;;2026-06-01
-DIS-25A-3P;Disyuntor termomagnético 25A 3P;UN;Protecciones;4602;663;;;2026-06-01
-DIS-32A-3P;Disyuntor termomagnético 32A 3P;UN;Protecciones;5070;663;;;2026-06-01
-DIS-40A-3P;Disyuntor termomagnético 40A 3P;UN;Protecciones;5850;702;;;2026-06-01
-DIS-50A-3P;Disyuntor termomagnético 50A 3P;UN;Protecciones;6825;741;;;2026-06-01
-DIS-63A-3P;Disyuntor termomagnético 63A 3P;UN;Protecciones;8190;780;;;2026-06-01
-DIS-80A-3P;Disyuntor termomagnético 80A 3P;UN;Protecciones;10140;858;;;2026-06-01
-DIS-100A-3P;Disyuntor termomagnético 100A 3P;UN;Protecciones;12480;936;;;2026-06-01
-DIS-125A-3P;Disyuntor termomagnético 125A 3P;UN;Protecciones;15600;1014;;;2026-06-01
-DIS-160A-3P;Disyuntor termomagnético 160A 3P;UN;Protecciones;21450;1170;;;2026-06-01
-DIS-200A-3P;Disyuntor termomagnético 200A 3P;UN;Protecciones;28080;1365;;;2026-06-01
-DIS-250A-3P;Disyuntor termomagnético 250A 3P;UN;Protecciones;37050;1560;;;2026-06-01
-DIS-400A-3P;Disyuntor termomagnético 400A 3P;UN;Protecciones;62400;1950;;;2026-06-01
-DIF-25A-2P;Diferencial 25A 2P 30mA;UN;Protecciones;7020;585;;;2026-06-01
-DIF-40A-2P;Diferencial 40A 2P 30mA;UN;Protecciones;8190;624;;;2026-06-01
-DIF-63A-2P;Diferencial 63A 2P 30mA;UN;Protecciones;10920;702;;;2026-06-01
-DIF-25A-4P;Diferencial 25A 4P 30mA;UN;Protecciones;10920;702;;;2026-06-01
-DIF-40A-4P;Diferencial 40A 4P 30mA;UN;Protecciones;13260;780;;;2026-06-01
-DIF-63A-4P;Diferencial 63A 4P 30mA;UN;Protecciones;17550;858;;;2026-06-01
-SECCIONADOR-160A;Seccionador en carga 160A 3P;UN;Protecciones;25350;1365;;;2026-06-01
-SECCIONADOR-250A;Seccionador en carga 250A 3P;UN;Protecciones;42900;1755;;;2026-06-01
-SECCIONADOR-400A;Seccionador en carga 400A 3P;UN;Protecciones;70200;2340;;;2026-06-01
-TAB-6C;Tablero distribución metálico 6 circuitos;UN;Tableros;3705;9750;;;2026-06-01
-TAB-12C;Tablero distribución metálico 12 circuitos;UN;Tableros;6240;12480;;;2026-06-01
-TAB-18C;Tablero distribución metálico 18 circuitos;UN;Tableros;8580;15600;;;2026-06-01
-TAB-24C;Tablero distribución metálico 24 circuitos;UN;Tableros;11700;19500;;;2026-06-01
-TAB-36C;Tablero distribución metálico 36 circuitos;UN;Tableros;17550;25350;;;2026-06-01
-TAB-48C;Tablero distribución metálico 48 circuitos;UN;Tableros;23400;31200;;;2026-06-01
-TAB-GRAL-160A;Tablero general IP55 con seccionador 160A;UN;Tableros;97500;46800;;;2026-06-01
-TAB-GRAL-250A;Tablero general IP55 con seccionador 250A;UN;Tableros;148200;58500;;;2026-06-01
-TAB-GRAL-400A;Tablero general IP55 con seccionador 400A;UN;Tableros;214500;78000;;;2026-06-01
-TCE-5A;Tomacorriente embutir 10A/250V simple;UN;Enchufes y tomacorrientes;702;1365;;;2026-06-01
-TCE-10A;Tomacorriente embutir 10A/250V doble;UN;Enchufes y tomacorrientes;1092;1482;;;2026-06-01
-TCE-16A;Tomacorriente embutir 16A/250V (industrial);UN;Enchufes y tomacorrientes;2535;1638;;;2026-06-01
-TC-3F-32A;Tomacorriente trifásico encastre 32A;UN;Enchufes y tomacorrientes;7020;2340;;;2026-06-01
-INTERRUPTOR-SIMPLE;Interruptor simple luz embutir;UN;Enchufes y tomacorrientes;585;1170;;;2026-06-01
-INTERRUPTOR-DOBLE;Interruptor doble luz embutir;UN;Enchufes y tomacorrientes;780;1365;;;2026-06-01
-INTERRUPTOR-TRIPLE;Interruptor triple luz embutir;UN;Enchufes y tomacorrientes;1014;1482;;;2026-06-01
-CONMUTADOR;Conmutador 2 vías (pasillo) embutir;UN;Enchufes y tomacorrientes;683;1248;;;2026-06-01
-PULSADOR;Pulsador de timbre embutir;UN;Enchufes y tomacorrientes;468;1092;;;2026-06-01
-PLACA-1;Placa decorativa 1 módulo;UN;Enchufes y tomacorrientes;312;195;;;2026-06-01
-PLACA-2;Placa decorativa 2 módulos;UN;Enchufes y tomacorrientes;390;215;;;2026-06-01
-PLACA-3;Placa decorativa 3 módulos;UN;Enchufes y tomacorrientes;468;234;;;2026-06-01
-LUMINARIA-PANEL-60;Panel LED 60x60 cm 40W;UN;Iluminación;3315;1755;;;2026-06-01
-LUMINARIA-PANEL-60-2;Panel LED 60x60 cm 40W empotrado;UN;Iluminación;3705;1950;;;2026-06-01
-LUMINARIA-DOWNLIGHT-7;Downlight LED 7W empotrado;UN;Iluminación;1092;1365;;;2026-06-01
-LUMINARIA-DOWNLIGHT-12;Downlight LED 12W empotrado;UN;Iluminación;1482;1482;;;2026-06-01
-LUMINARIA-DOWNLIGHT-18;Downlight LED 18W empotrado;UN;Iluminación;2028;1560;;;2026-06-01
-LUMINARIA-INDUSTRIAL-100;Campana industrial LED 100W;UN;Iluminación;10920;4680;;;2026-06-01
-LUMINARIA-INDUSTRIAL-150;Campana industrial LED 150W;UN;Iluminación;14820;5460;;;2026-06-01
-LUMINARIA-INDUSTRIAL-200;Campana industrial LED 200W;UN;Iluminación;18720;6240;;;2026-06-01
-LUMINARIA-EMERGENCIA;Luminaria emergencia 3W 1h autónoma;UN;Iluminación;2535;1950;;;2026-06-01
-LUMINARIA-EMERGENCIA-3H;Luminaria emergencia 8W 3h autónoma;UN;Iluminación;4680;2145;;;2026-06-01
-LUMINARIA-EXTERIOR-30;Luminaria exterior LED 30W IP65;UN;Iluminación;3315;2340;;;2026-06-01
-LUMINARIA-EXTERIOR-50;Luminaria exterior LED 50W IP65;UN;Iluminación;4680;2730;;;2026-06-01
-LUMINARIA-EXTERIOR-100;Proyector exterior LED 100W IP65;UN;Iluminación;8580;3900;;;2026-06-01
-LUMINARIA-FLUORESCENTE-2X36;Luminaria fluorescente 2x36W (reemplazar);UN;Iluminación;1872;3120;;;2026-06-01
-SENSOR-MOVIMIENTO;Sensor de movimiento 180° empotrar;UN;Iluminación;1365;1560;;;2026-06-01
-TIMBRE-220V;Timbre electrónico 220V;UN;Accesorios;702;1755;;;2026-06-01
-TRANSF-10KVA;Transformador aislador 10 kVA 380/220V;UN;Equipos;109200;97500;;;2026-06-01
-TRANSF-25KVA;Transformador aislador 25 kVA 380/220V;UN;Equipos;214500;136500;;;2026-06-01
-TRANSF-50KVA;Transformador seco 50 kVA 10kV/380V;UN;Equipos;702000;312000;;;2026-06-01
-TRANSF-100KVA;Transformador seco 100 kVA 10kV/380V;UN;Equipos;1092000;468000;;;2026-06-01
-TRANSF-160KVA;Transformador seco 160 kVA 10kV/380V;UN;Equipos;1482000;585000;;;2026-06-01
-TRANSF-250KVA;Transformador seco 250 kVA 10kV/380V;UN;Equipos;2145000;702000;;;2026-06-01
-GEN-15KVA;Generador diesel 15 kVA;UN;Equipos;4680000;975000;;;2026-06-01
-GEN-30KVA;Generador diesel 30 kVA;UN;Equipos;8190000;1365000;;;2026-06-01
-GEN-60KVA;Generador diesel 60 kVA;UN;Equipos;14820000;1950000;;;2026-06-01
-UPS-3KVA;UPS online 3 kVA;UN;Equipos;109200;31200;;;2026-06-01
-UPS-6KVA;UPS online 6 kVA;UN;Equipos;202800;46800;;;2026-06-01
-UPS-10KVA;UPS online 10 kVA;UN;Equipos;331500;70200;;;2026-06-01
-TIERRA-BARRA;Barra de puesta a tierra cobre 600 mm;UN;Puesta a tierra;1872;3120;;;2026-06-01
-TIERRA-PLACA;Placa de tierra cobre 500x500mm 3mm;UN;Puesta a tierra;17550;23400;;;2026-06-01
-TIERRA-ELECTRODO;Electrodo de tierra varilla copperweld 5/8"x1.8m;UN;Puesta a tierra;2535;9750;;;2026-06-01
-TIERRA-ABRAZADERA;Abrazadera de tierra p/electrodo 5/8";UN;Puesta a tierra;312;585;;;2026-06-01
-TIERRA-BENTONITA;Bentonita sódica 20 kg;UN;Puesta a tierra;1755;1950;;;2026-06-01
-CONECTORES-ACORN;Conector tipo acorn p/conductor 4-16mm²;UN;Accesorios;86;156;;;2026-06-01
-TERMINALES-CU-16;Terminal cobre aislado 16mm²;UN;Accesorios;47;78;;;2026-06-01
-TERMINALES-CU-25;Terminal cobre aislado 25mm²;UN;Accesorios;70;98;;;2026-06-01
-TERMINALES-CU-35;Terminal cobre aislado 35mm²;UN;Accesorios;98;117;;;2026-06-01
-TERMINALES-CU-50;Terminal cobre aislado 50mm²;UN;Accesorios;148;137;;;2026-06-01
-TERMINALES-CU-70;Terminal cobre aislado 70mm²;UN;Accesorios;215;156;;;2026-06-01
-TERMINALES-CU-95;Terminal cobre aislado 95mm²;UN;Accesorios;312;176;;;2026-06-01
-PRENSACABLE-PG16;Prensacable PG16 plástico;UN;Accesorios;47;117;;;2026-06-01
-PRENSACABLE-PG21;Prensacable PG21 plástico;UN;Accesorios;59;117;;;2026-06-01
-PRENSACABLE-M20;Prensacable metálico M20;UN;Accesorios;137;137;;;2026-06-01
-RIEL-DIN-35;Riel DIN 35mm acero 1 metro;ML;Accesorios;312;390;;;2026-06-01
-CANAL-CABLEADO-40;Canal cableado PVC 40x25mm;ML;Canalización;254;468;;;2026-06-01
-CANAL-CABLEADO-60;Canal cableado PVC 60x40mm;ML;Canalización;371;546;;;2026-06-01
-CANAL-CABLEADO-80;Canal cableado PVC 80x50mm;ML;Canalización;507;624;;;2026-06-01
-CANAL-CABLEADO-100;Canal cableado PVC 100x60mm;ML;Canalización;683;702;;;2026-06-01
+﻿Codigo;Descripcion;Unidad;Familia;PrecioCLP;MO;Rendimiento;OrigenPrecio
+H07Z1-K1.5;COND. H07Z1-K 1.5 mm²;ML;Conductores;273;20;40;Catálogo Base Chile 2026
+H07Z1-K2.5;COND. H07Z1-K 2.5 mm²;ML;Conductores;444;20;0;Catálogo Base Chile 2026
+H07Z1-K4;COND. H07Z1-K 4 mm²;ML;Conductores;698;20;0;Catálogo Base Chile 2026
+H07Z1-K6;COND. H07Z1-K 6 mm²;ML;Conductores;1038;20;0;Catálogo Base Chile 2026
+H07Z1-K10;COND. H07Z1-K 10 mm²;ML;Conductores;2198;44;0;Catálogo Base Chile 2026
+H07Z1-K16;COND H07Z1-K 16 mm²;ML;Conductores;0;44;0;Catálogo Base Chile 2026
+H071.5;COND. H07V-U 1.5  mm²;ML;Conductores;270;20;0;Catálogo Base Chile 2026
+H072.5;COND. H07V-U  2.5  mm²;ML;Conductores;432;20;0;Catálogo Base Chile 2026
+H074;COND. H07V-U  4.0  mm²;ML;Conductores;700;20;0;Catálogo Base Chile 2026
+H076;COND. H07V-U  6.0  mm²;ML;Conductores;996;44;0;Catálogo Base Chile 2026
+H0710;COND. H07V-U  10   mm²;ML;Conductores;3000;44;0;Catálogo Base Chile 2026
+H0716;COND. H07V-U  16   mm²;ML;Conductores;0;60;0;Catálogo Base Chile 2026
+NSYA1.5;COND. NSYA 1.5  mm²;ML;Conductores;626;20;0;Catálogo Base Chile 2026
+NSYA2.5;COND. NSYA 2.5  mm²;ML;Conductores;801;20;0;Catálogo Base Chile 2026
+NSYA4.0;COND. NSYA 4.0  mm²;ML;Conductores;1334;20;0;Catálogo Base Chile 2026
+NSYA6.0;COND. NSYA 6.0  mm²;ML;Conductores;1868;44;0;Catálogo Base Chile 2026
+NSYA10;COND. NSYA 10   mm²;ML;Conductores;3478;44;0;Catálogo Base Chile 2026
+SF14;COND. SUPERFLEX  #14 (2.08 mm2);ML;Conductores;498;20;0;Catálogo Base Chile 2026
+SF12;COND. SUPERFLEX  #12 (3.31 mm2);ML;Conductores;703;20;0;Catálogo Base Chile 2026
+SF10;COND. SUPERFLEX # 10 (5.26 mm2);ML;Conductores;1047;32;0;Catálogo Base Chile 2026
+SF8;COND. SUPERFLEX # 8 (8.37 mm2);ML;Conductores;1627;44;0;Catálogo Base Chile 2026
+SF6;COND. SUPERFLEX # 6 (13.30 mm2);ML;Conductores;2451;55;0;Catálogo Base Chile 2026
+SF4;COND. SUPERFLEX # 4 (21.2 mm2);ML;Conductores;3755;60;0;Catálogo Base Chile 2026
+SF3;COND. SUPERFLEX # 3 (26.7 mm2);ML;Conductores;4840;67;0;Catálogo Base Chile 2026
+SF2;COND. SUPERFLEX # 2 (33.6 mm2);ML;Conductores;5948;78;0;Catálogo Base Chile 2026
+SF1;COND. SUPERFLEX # 1 (42.4 mm2);ML;Conductores;7263;91;0;Catálogo Base Chile 2026
+SF1/0;COND. SUPERFLEX # 1/0 (53.4 mm2);ML;Conductores;9218;98;0;Catálogo Base Chile 2026
+SF2/0;COND. SUPERFLEX # 2/0 (67.4 mm2);ML;Conductores;11790;121;0;Catálogo Base Chile 2026
+SF3/0;COND. SUPERFLEX # 3/0 (85.0 mm2);ML;Conductores;14227;144;0;Catálogo Base Chile 2026
+SF4/0;COND. SUPERFLEX # 4/0 (107.0 mm2);ML;Conductores;17773;187;0;Catálogo Base Chile 2026
+SF250;COND. SUPERFLEX 250 MCM (127 mm2);ML;Conductores;20995;225;0;Catálogo Base Chile 2026
+SF300;COND. SUPERFLEX 300 MCM (152 mm2);ML;Conductores;0;268;0;Catálogo Base Chile 2026
+SF350;COND. SUPERFLEX 350 MCM (177 mm2);ML;Conductores;28612;308;0;Catálogo Base Chile 2026
+SF400;COND. SUPERFLEX 400 MCM (202 mm2);ML;Conductores;0;369;0;Catálogo Base Chile 2026
+SF500;COND. SUPERFLEX 500 MCM (253 mm2);ML;Conductores;40102;429;0;Catálogo Base Chile 2026
+SF750;COND. SUPERFLEX 750 MCM (380 mm2);ML;Conductores;66673;429;0;Catálogo Base Chile 2026
+THHN14;COND. THHN # 14 (2.08 mm2);ML;Conductores;520;20;0;Catálogo Base Chile 2026
+THHN12;COND. THHN # 12 (3.31 mm2);ML;Conductores;779;20;0;Catálogo Base Chile 2026
+THHN10;COND. THHN # 10 (5.26 mm2);ML;Conductores;1255;32;0;Catálogo Base Chile 2026
+THHN8;COND. THHN # 8  (8.37 mm2);ML;Conductores;2021;44;0;Catálogo Base Chile 2026
+THHN6;COND. THHN # 6  (13.30 mm2);ML;Conductores;3189;55;0;Catálogo Base Chile 2026
+THHN4;COND. THHN # 4   (21.2 mm2);ML;Conductores;5781;60;0;Catálogo Base Chile 2026
+THHN3;COND. THHN # 3   (26.7 mm2);ML;Conductores;7606;67;0;Catálogo Base Chile 2026
+THHN2;COND. THHN # 2   (33.6 mm2);ML;Conductores;8435;78;0;Catálogo Base Chile 2026
+THHN1;COND. THHN # 1   (42.4 mm2);ML;Conductores;11852;91;0;Catálogo Base Chile 2026
+THHN1/0;COND. THHN # 1/0 (53.4 mm2);ML;Conductores;9326;98;0;Catálogo Base Chile 2026
+THHN2/0;COND. THHN # 2/0 (67.4 mm2);ML;Conductores;17235;121;0;Catálogo Base Chile 2026
+THHN3/0;COND. THHN # 3/0 (85.0 mm2);ML;Conductores;23454;144;0;Catálogo Base Chile 2026
+THHN4/0;COND. THHN # 4/0 (107.0 mm2);ML;Conductores;26138;187;0;Catálogo Base Chile 2026
+THHN250;COND. THHN 250 MCM (127 mm2);ML;Conductores;31580;225;0;Catálogo Base Chile 2026
+THHN300;COND. THHN 300 MCM (152 mm2);ML;Conductores;32200;268;0;Catálogo Base Chile 2026
+THHN350;COND. THHN 350 MCM (177 mm2);ML;Conductores;42600;308;0;Catálogo Base Chile 2026
+THHN400;COND. THHN 400 MCM (203 mm2);ML;Conductores;44813;369;0;Catálogo Base Chile 2026
+THHN500;COND. THHN 500 MCM (253 mm2);ML;Conductores;60264;429;0;Catálogo Base Chile 2026
+RVK14;COND. XTU # 14 (2.08 mm2);ML;Conductores;444;20;0;Catálogo Base Chile 2026
+RVK12;COND. XTU # 12 (3.31 mm2);ML;Conductores;616;20;0;Catálogo Base Chile 2026
+RVK10;COND. RVK 1X10 mm2;ML;Conductores;2531;48;0;Catálogo Base Chile 2026
+RVK8;COND. XTU # 8 (8.37 mm2);ML;Conductores;1376;44;0;Catálogo Base Chile 2026
+RVK6;COND. RVK 1X6.0 mm2;ML;Conductores;1540;44;0;Catálogo Base Chile 2026
+RVK4;COND. RVK 1X4.0 mm2;ML;Conductores;1108;32;0;Catálogo Base Chile 2026
+RVK3;COND. XTU # 3 (26.7 mm2);ML;Conductores;5707;67;0;Catálogo Base Chile 2026
+RVK2;COND. XTU # 2 (33.6 mm2);ML;Conductores;4755;78;0;Catálogo Base Chile 2026
+RVK1;COND. XTU # 1 (42.04 mm2);ML;Conductores;5930;91;0;Catálogo Base Chile 2026
+RVK1/0;COND. XTU # 1/0 (53.4 mm2);ML;Conductores;7403;98;0;Catálogo Base Chile 2026
+RVK2/0;COND. XTU # 2/0 (67.2 mm2);ML;Conductores;9400;121;0;Catálogo Base Chile 2026
+RVK3/0;COND. XTU # 3/0 (85 mm2);ML;Conductores;14074;144;0;Catálogo Base Chile 2026
+RVK4/0;COND. XTU # 4/0 (107.0 mm2);ML;Conductores;14300;187;0;Catálogo Base Chile 2026
+RVK250;COND. XTU 250 MCM (127 mm2 );ML;Conductores;17000;225;0;Catálogo Base Chile 2026
+RVK300;COND. XTU 300 MCM (152 mm2);ML;Conductores;22500;268;0;Catálogo Base Chile 2026
+RVK350;COND. XTU 350 MCM (177 mm2);ML;Conductores;26000;308;0;Catálogo Base Chile 2026
+RVK400;COND. XTU 400 MCM (203 mm2);ML;Conductores;30500;369;0;Catálogo Base Chile 2026
+RVK500;COND. XTU 500 MCM (253 mm2);ML;Conductores;35000;429;0;Catálogo Base Chile 2026
+RVK2*1,5;COND. RVK 2X1.5 mm2;ML;Conductores;700;18;0;Catálogo Base Chile 2026
+RVK3*1,5;COND. RVK 3X1.5 mm2;ML;Conductores;946;24;0;Catálogo Base Chile 2026
+RVK4*1,5;COND. RVK 4X1.5 mm2;ML;Conductores;1278;32;0;Catálogo Base Chile 2026
+RVK5*1,5;COND. RVK 5X1.5 mm2;ML;Conductores;1547;39;0;Catálogo Base Chile 2026
+RVK7*1,5;COND. RVK 7X1.5 mm2;ML;Conductores;5066;127;0;Catálogo Base Chile 2026
+RVK2*2,5;COND. RVK 2X2.5 mm2;ML;Conductores;1774;44;0;Catálogo Base Chile 2026
+RVK3*2,5;COND. RVK 3X2.5 mm2;ML;Conductores;2130;53;0;Catálogo Base Chile 2026
+RVK4*2,5;COND. RVK 4X2.5 mm2;ML;Conductores;2740;69;0;Catálogo Base Chile 2026
+RVK5*2,5;COND. RVK 5X2.5 mm2;ML;Conductores;3322;83;0;Catálogo Base Chile 2026
+RVK7*2,5;COND. RVK 7X2.5 mm2;ML;Conductores;7830;196;0;Catálogo Base Chile 2026
+RVK3*4,0;COND. RVK 3X4.0 mm2;ML;Conductores;2300;58;0;Catálogo Base Chile 2026
+RVK4*4,0;COND. RVK 4X4.0 mm2;ML;Conductores;3030;76;0;Catálogo Base Chile 2026
+RVK5*4,0;COND. RVK 5X4.0 mm2;ML;Conductores;3727;93;0;Catálogo Base Chile 2026
+RVK3*6,0;COND. RVK 3X6.0 mm2;ML;Conductores;3300;83;0;Catálogo Base Chile 2026
+RVK4*6,0;COND. RVK 4X6.0 mm2;ML;Conductores;4400;110;0;Catálogo Base Chile 2026
+RVK5*6,0;COND. RVK 5X6.0 mm2;ML;Conductores;5500;138;0;Catálogo Base Chile 2026
+RVK3*10;COND. RVK 3X10 mm2;ML;Conductores;4000;100;0;Catálogo Base Chile 2026
+RVK4*10;COND. RVK 4X10 mm2;ML;Conductores;7200;180;0;Catálogo Base Chile 2026
+RVK5*10;COND. RVK 5X10 mm2;ML;Conductores;7700;193;0;Catálogo Base Chile 2026
+RVK3*16;COND. RVK 3X16 mm2;ML;Conductores;8500;213;0;Catálogo Base Chile 2026
+RVK4*16;COND. RVK 4X16 mm2;ML;Conductores;11200;280;0;Catálogo Base Chile 2026
+RV5*16;COND. RVK 5X16 mm2;ML;Conductores;18300;458;0;Catálogo Base Chile 2026
+RVK4*25;COND. RVK 5X25 mm2;ML;Conductores;20700;538;0;Catálogo Base Chile 2026
+RVK4*35;COND. RVK 4X35 mm2;ML;Conductores;25000;173;0;Catálogo Base Chile 2026
+RVK5*35;COND. RVK 5X35 mm2;ML;Conductores;29000;173;0;Catálogo Base Chile 2026
+RVK4*50;COND. RVK 5X50 mm2;ML;Conductores;48000;208;0;Catálogo Base Chile 2026
+RVK4*70;COND. RVK 4X70 mm2;ML;Conductores;46000;250;0;Catálogo Base Chile 2026
+RVK1,5;COND. RVK 1X1.5 mm2;ML;Conductores;670;32;0;Catálogo Base Chile 2026
+RVK2.5;COND. RVK 1X2.5 mm2;ML;Conductores;791;32;0;Catálogo Base Chile 2026
+RVK16;COND. RVK 1X16 mm2;ML;Conductores;3362;60;0;Catálogo Base Chile 2026
+RVK25;COND. RVK 1X25 mm2;ML;Conductores;5560;67;0;Catálogo Base Chile 2026
+RVK35;COND. RVK 1X35 mm2;ML;Conductores;8091;80;0;Catálogo Base Chile 2026
+RVK50;COND. RVK 1X50 mm2;ML;Conductores;10200;98;0;Catálogo Base Chile 2026
+RVK70;COND. RVK 1X70 mm2;ML;Conductores;14400;121;0;Catálogo Base Chile 2026
+RVK95;COND. RVK 1X95 mm2;ML;Conductores;19130;180;0;Catálogo Base Chile 2026
+RVK120;COND. RVK 1X120 mm2;ML;Conductores;24300;225;0;Catálogo Base Chile 2026
+RVK150;COND. RVK 1X150 mm2;ML;Conductores;29500;310;0;Catálogo Base Chile 2026
+RVK185;COND. RVK 1X185 mm2;ML;Conductores;36600;310;0;Catálogo Base Chile 2026
+RVK240;COND. RVK 1X240 mm2;ML;Conductores;48400;429;0;Catálogo Base Chile 2026
+H07Z1-K1.5C;COND. LIBRE DE HALOGENO  1,5 mm2;ML;Conductores;284;20;0;Catálogo Base Chile 2026
+H07Z1-K2.5C;COND. LIBRE DE HALOGENO  2,5 mm2;ML;Conductores;387;20;0;Catálogo Base Chile 2026
+H07Z1-K4C;COND. LIBRE DE HALOGENO  4 mm2;ML;Conductores;310;20;0;Catálogo Base Chile 2026
+H07Z1-K6C;COND. LIBRE DE HALOGENO  6 mm2;ML;Conductores;730;44;0;Catálogo Base Chile 2026
+H07Z1-K10C;COND. LIBRE DE HALOGENO  10 mm2;ML;Conductores;2200;44;0;Catálogo Base Chile 2026
+H07Z1-K16C;COND. LIBRE DE HALOGENO  16 mm2;ML;Conductores;3300;60;0;Catálogo Base Chile 2026
+H07Z1-K25C;COND. LIBRE DE HALOGENO  25 mm2;ML;Conductores;5080;67;0;Catálogo Base Chile 2026
+H07Z1-K35C;COND. LIBRE DE HALOGENO  35 mm2;ML;Conductores;7040;78;0;Catálogo Base Chile 2026
+H07Z1-K50C;COND. LIBRE DE HALOGENO  50 mm2;ML;Conductores;9050;98;0;Catálogo Base Chile 2026
+H07Z1-K70C;COND. LIBRE DE HALOGENO  70 mm2;ML;Conductores;14070;121;0;Catálogo Base Chile 2026
+H07Z1-K95C;COND. LIBRE DE HALOGENO  95 mm2;ML;Conductores;18300;187;0;Catálogo Base Chile 2026
+H07Z1-K120C;COND. LIBRE DE HALOGENO  120 mm2;ML;Conductores;23300;225;0;Catálogo Base Chile 2026
+H07Z1-K150C;COND. LIBRE DE HALOGENO  150 mm2;ML;Conductores;29200;308;0;Catálogo Base Chile 2026
+H07Z1-K185C;COND. LIBRE DE HALOGENO  185 mm2;ML;Conductores;35200;369;0;Catálogo Base Chile 2026
+H07Z1-K240C;COND. LIBRE DE HALOGENO  240 mm2;ML;Conductores;49400;429;0;Catálogo Base Chile 2026
+RZ1-K1,5;COND. RZ1-K  1,5 mm2;ML;Conductores;970;20;0;Catálogo Base Chile 2026
+RZ1-K2,5;COND. RZ1-K  2,5 mm2;ML;Conductores;1089;44;0;Catálogo Base Chile 2026
+RZ1-K4;COND. RZ1-K  4 mm2;ML;Conductores;1113;20;0;Catálogo Base Chile 2026
+RZ1-K6;COND. RZ1-K  6 mm2;ML;Conductores;1459;44;0;Catálogo Base Chile 2026
+RZ1-K10;COND. RZ1-K  10 mm2;ML;Conductores;2198;44;0;Catálogo Base Chile 2026
+RZ1-K16;COND. RZ1-K  16 mm2;ML;Conductores;3323;60;0;Catálogo Base Chile 2026
+RZ1-K25;COND. RZ1-K  25 mm2;ML;Conductores;4819;67;0;Catálogo Base Chile 2026
+RZ1-K35;COND. RZ1-K  35 mm2;ML;Conductores;6806;78;0;Catálogo Base Chile 2026
+RZ1-K50;COND. RZ1-K  50 mm2;ML;Conductores;9641;98;0;Catálogo Base Chile 2026
+RZ1-K70;COND. RZ1-K  70 mm2;ML;Conductores;13204;121;0;Catálogo Base Chile 2026
+RZ1-K95;COND. RZ1-K  95 mm2;ML;Conductores;17048;187;0;Catálogo Base Chile 2026
+RZ1-K120;COND. RZ1-K  120 mm2;ML;Conductores;21446;225;0;Catálogo Base Chile 2026
+RZ1-K150;COND. RZ1-K  150 mm2;ML;Conductores;26866;308;0;Catálogo Base Chile 2026
+RZ1-K185;COND. RZ1-K  185 mm2;ML;Conductores;32055;369;0;Catálogo Base Chile 2026
+RZ1-K240;COND. RZ1-K  240 mm2;ML;Conductores;41922;429;0;Catálogo Base Chile 2026
+RZ1-K(AS+)1;COND. RZ1-K (AS+) 2X1,5 mm2;ML;Conductores;1271;20;0;Catálogo Base Chile 2026
+RZ1-K(AS+)2;COND. RZ1-K (AS+) 3X1,5 mm2;ML;Conductores;1728;44;0;Catálogo Base Chile 2026
+RZ1-K(AS+)3;COND. RZ1-K (AS+) 3X2,5 mm2;ML;Conductores;2270;44;0;Catálogo Base Chile 2026
+RZ1-K(AS+)4;COND. RZ1-K (AS+) 3X6 mm2;ML;Conductores;4025;44;0;Catálogo Base Chile 2026
+RZ1-K(AS+)5;COND. RZ1-K (AS+) 4X1,5 mm2;ML;Conductores;2013;44;0;Catálogo Base Chile 2026
+RZ1-K(AS+)6;COND. RZ1-K (AS+) 4X2,5 mm2;ML;Conductores;2725;44;0;Catálogo Base Chile 2026
+RZ1-K(AS+)7;COND. RZ1-K (AS+) 5X1,5 mm2;ML;Conductores;3022;44;0;Catálogo Base Chile 2026
+RZ1-K(AS+)8;COND. RZ1-K (AS+) 5X4 mm2;ML;Conductores;5515;44;0;Catálogo Base Chile 2026
+RZ1-K(AS+)9;COND. RZ1-K (AS+) 5X6 mm2;ML;Conductores;6513;44;0;Catálogo Base Chile 2026
+RZ1-K(AS+)10;COND. RZ1-K (AS+) 5X10 mm2;ML;Conductores;11010;44;0;Catálogo Base Chile 2026
+RZ1-K(AS+)11;COND. RZ1-K (AS+) 5X16 mm2;ML;Conductores;16040;44;0;Catálogo Base Chile 2026
+RZ1-K(AS+)12;COND. RZ1-K (AS+) 1X10 mm2;ML;Conductores;2380;44;0;Catálogo Base Chile 2026
+RZ1-K(AS+)4MM;COND. RZ1-K (AS+) 1X4 mm2;ML;Conductores;1750;44;0;Catálogo Base Chile 2026
+XAT2;COND. XAT 2 AWG 15 KV;ML;Conductores;8765;340;0;Catálogo Base Chile 2026
+XAT35;COND. XAT 35 mm2  15 KV;ML;Conductores;9520;390;0;Catálogo Base Chile 2026
+XAT1;COND. XAT 1 AWG 25 KV;ML;Conductores;14602;455;0;Catálogo Base Chile 2026
+XAT1/0;COND. XAT 1/0 AWG 15 KV;ML;Conductores;0;490;0;Catálogo Base Chile 2026
+XAT2/0;COND. XAT 2/0 AWG 15 KV;ML;Conductores;18000;605;0;Catálogo Base Chile 2026
+XAT70;COND. XAT 70 mm2 15 KV;ML;Conductores;0;665;0;Catálogo Base Chile 2026
+XAT3/0;COND. XAT 3/0 AWG 15 KV;ML;Conductores;0;720;0;Catálogo Base Chile 2026
+XAT4/0;COND. XAT 4/0 AWG 15 KV;ML;Conductores;0;935;0;Catálogo Base Chile 2026
+XAT120;COND. XAT 120 mm2 25 KV;ML;Conductores;16704;1030;0;Catálogo Base Chile 2026
+XAT250;COND. XAT 250 MCM 15 KV;ML;Conductores;0;1125;0;Catálogo Base Chile 2026
+XAT350;COND. XAT 350 MCM 15 KV;ML;Conductores;0;1540;0;Catálogo Base Chile 2026
+XAT240;COND. XAT 240 mm2 25 KV;ML;Conductores;63601;1030;0;Catálogo Base Chile 2026
+SVT3*1.5;CORDON SVT 4 x1,5 mm²;ML;Conductores;1500;20;0;Catálogo Base Chile 2026
+SVT3*2.5;CORDON SVT 3 x2,5 mm²;ML;Conductores;2000;20;0;Catálogo Base Chile 2026
+SVT5*1.5;CORDON SVT 5 x1,5 mm²;ML;Conductores;2014;20;0;Catálogo Base Chile 2026
+SVT2*2.5;CORDON SVT 4 x 2,5 mm²;ML;Conductores;2762;20;0;Catálogo Base Chile 2026
+LH3X1,5;CORDON EVA 3 x1,5 mm²;ML;Conductores;1403;20;0;Catálogo Base Chile 2026
+LH3X2,5;CORDON EVA 3 x2,5 mm²;ML;Conductores;1925;0;0;Catálogo Base Chile 2026
+LH7X1,5;CORDON EVA 7 x1,5 mm²;ML;Conductores;5000;150;0;Catálogo Base Chile 2026
+LH12X1,5;CORDON EVA 12 x1,5 mm²;ML;Conductores;7100;150;0;Catálogo Base Chile 2026
+LH3X4;CORDON EVA 3 x4 mm²;ML;Conductores;2760;20;0;Catálogo Base Chile 2026
+LH5X4;CORDON EVA 5 x4 mm²;ML;Conductores;5300;20;0;Catálogo Base Chile 2026
+LH5X6;CORDON EVA 5 x6 mm²;ML;Conductores;8500;20;0;Catálogo Base Chile 2026
+LH4X25;CORDON EVA 4 x25 mm²;ML;Conductores;22000;20;0;Catálogo Base Chile 2026
+SILI4;COND. SILICONA   4  mm²;ML;Conductores;1500;20;0;Catálogo Base Chile 2026
+SILI6;COND. SILICONA  6  mm²;ML;Conductores;2230;44;0;Catálogo Base Chile 2026
+SILI10;COND. SILICONA  10  mm²;ML;Conductores;4230;44;0;Catálogo Base Chile 2026
+AS+4;COND. RZ1-K AS+ 4  mm²;ML;Conductores;0;20;0;Catálogo Base Chile 2026
+AS+6;COND. RZ1-K AS+ 6  mm²;ML;Conductores;0;44;0;Catálogo Base Chile 2026
+AS+10;COND. RZ1-K AS+ 10  mm²;ML;Conductores;0;44;0;Catálogo Base Chile 2026
+DESN8;COND. Cu DESNUDO # 8 (8.37 mm2);ML;Conductores;2000;44;0;Catálogo Base Chile 2026
+DESN6;COND. Cu DESNUDO # 6 (13.3 mm2);ML;Conductores;2255;55;0;Catálogo Base Chile 2026
+DESN4;COND. Cu DESNUDO #  4  (21.2 mm2);ML;Conductores;3563;60;0;Catálogo Base Chile 2026
+DESN2;COND. Cu DESNUDO #  2  (33.6 mm2);ML;Conductores;5600;78;0;Catálogo Base Chile 2026
+DESN1;COND. Cu DESNUDO #  1  (42.4 mm2);ML;Conductores;6000;91;0;Catálogo Base Chile 2026
+DESN1/0;COND. Cu DESNUDO # 1/0 (53.4 mm2);ML;Conductores;10440;98;0;Catálogo Base Chile 2026
+DESN2/07;COND. Cu DESNUDO # 2/0  7 HEBRAS   (67.4 mm2);ML;Conductores;12261;121;0;Catálogo Base Chile 2026
+DESN3/0;COND. Cu DESNUDO # 3/0 (85.0 mm2);ML;Conductores;19600;144;0;Catálogo Base Chile 2026
+DESN4/07;COND. Cu DESNUDO # 4/0 7 HEBRAS  (107  mm2);ML;Conductores;22050;187;0;Catálogo Base Chile 2026
+PAU500;CAJA PAU 500X600X80 MM (6050805);UN;Cajas;123000;3075;0;Catálogo Base Chile 2026
+PAU300;CAJA PAU 300X400X80 MM (3040805);UN;Cajas;90000;2250;0;Catálogo Base Chile 2026
+1000*600*250T;Gabinete metalico, IP 66, C/ placa montaje;UN;Cajas;232000;5800;0;Catálogo Base Chile 2026
+RACK42U;Gabinete Rack Servidor 19 42u 2055x600x1000mm;UN;Cajas;1290000;32250;0;Catálogo Base Chile 2026
+GAB;Gabinete metalico 2000x600x600 mm;UN;Cajas;1000000;25000;0;Catálogo Base Chile 2026
+ALAMGALV16;ALAMBRE GALVANIZADO 16AWG;ML;Canalizado;80;20;0;Catálogo Base Chile 2026
+PVC1/2LHR;PVC COND. 1/2" (20 mm) LIBRE DE HALOGENO;ML;Canalizado;1700;134;0;Catálogo Base Chile 2026
+PVC3/4LHR;PVC COND. 3/4" (25 mm) LIBRE DE HALOGENO;ML;Canalizado;1830;135;0;Catálogo Base Chile 2026
+PVC1LHR;PVC COND. 1" (32 mm) LIBRE DE HALOGENO;ML;Canalizado;2630;168;0;Catálogo Base Chile 2026
+PVC11/4LHR;PVC COND. 1 1/4" (40 mm) LIBRE DE HALOGENO;ML;Canalizado;4639;228;0;Catálogo Base Chile 2026
+PVC11/2LHR;PVC COND. 1 1/2" (50 mm) LIBRE DE HALOGENO;ML;Canalizado;5518;249;0;Catálogo Base Chile 2026
+PVC2LHR;PVC COND. 2" (63 mm) LIBRE DE HALOGENO;ML;Canalizado;6858;380;0;Catálogo Base Chile 2026
+PVC1/2LH;PVC COND. 1/2" (20 mm) LIBRE DE HALOGENO;ML;Canalizado;320;134;0;Catálogo Base Chile 2026
+PVC3/4LH;PVC COND. 3/4" (25 mm) LIBRE DE HALOGENO;ML;Canalizado;560;135;0;Catálogo Base Chile 2026
+PVC1LH;PVC COND. 1" (32 mm) LIBRE DE HALOGENO;ML;Canalizado;630;168;0;Catálogo Base Chile 2026
+PVC11/4LH;PVC COND. 1 1/4" (40 mm) LIBRE DE HALOGENO;ML;Canalizado;0;228;0;Catálogo Base Chile 2026
+PVC11/2LH;PVC COND. 1 1/2" (50 mm) LIBRE DE HALOGENO;ML;Canalizado;0;249;0;Catálogo Base Chile 2026
+PVC2LH;PVC COND. 2" (63 mm) LIBRE DE HALOGENO;ML;Canalizado;0;380;0;Catálogo Base Chile 2026
+PVC5/8;PVC COND. 5/8" (16 mm)  SUBTERRANEO;ML;Canalizado;227;80;0;Catálogo Base Chile 2026
+PVC1/2;PVC COND. 1/2" (20 mm)  SUBTERRANEO;ML;Canalizado;339;80;0;Catálogo Base Chile 2026
+PVC3/4;PVC COND. 3/4" (25 mm) SUBTERRANEO;ML;Canalizado;437;80;0;Catálogo Base Chile 2026
+PVC1;PVC COND. 1" (32 mm) SUBTERRANEO;ML;Canalizado;662;80;0;Catálogo Base Chile 2026
+PVC11/4;PVC COND. 1 1/4" (40 mm) SUBTERRANEO;ML;Canalizado;833;107;0;Catálogo Base Chile 2026
+PVC11/2;PVC COND. 1 1/2" (50 mm) SUBTERRANEO;ML;Canalizado;967;107;0;Catálogo Base Chile 2026
+PVC2;PVC COND. 2" (63 mm) SUBTERRANEO;ML;Canalizado;1620;141;0;Catálogo Base Chile 2026
+PVC21/2;PVC COND. 2 1/2" (75 mm) SUBTERRANEO;ML;Canalizado;2169;141;0;Catálogo Base Chile 2026
+PVC3;PVC COND. 3" (90 mm) SUBTERRANEO;ML;Canalizado;2867;168;0;Catálogo Base Chile 2026
+PVC4;PVC COND. 4" (110 mm) SUBTERRANEO;ML;Canalizado;4589;168;0;Catálogo Base Chile 2026
+PVC11/4S40;PVC COND. 1 1/4" (40 mm) SUBTERRANEO SC40;ML;Canalizado;1417;120;0;Catálogo Base Chile 2026
+PVC11/2S40;PVC COND. 1 1/2" (50 mm) SUBTERRANEO SC40;ML;Canalizado;1683;120;0;Catálogo Base Chile 2026
+PVC2S40;PVC COND. 2" (63 mm) SUBTERRANEO SC40;ML;Canalizado;1949;160;0;Catálogo Base Chile 2026
+PVC21/2S40;PVC COND. 2 1/2" (75 mm) SUBTERRANEO SC40;ML;Canalizado;3117;160;0;Catálogo Base Chile 2026
+PVC3S40;PVC COND. 3" (90 mm) SUBTERRANEO SC40;ML;Canalizado;4167;185;0;Catálogo Base Chile 2026
+PVC4S40;PVC COND. 4" (110 mm) SUBTERRANEO SC40;ML;Canalizado;5917;190;0;Catálogo Base Chile 2026
+PVC5S40;PVC COND. 5" (125 mm) SUBTERRANEO SC40;ML;Canalizado;8083;190;0;Catálogo Base Chile 2026
+PVC6S40;PVC COND. 6" (140 mm) SUBTERRANEO SC40;ML;Canalizado;10250;285;0;Catálogo Base Chile 2026
+PVC11/4S80;PVC COND. 1 1/4" (40 mm) SUBTERRANEO SC80;ML;Canalizado;0;120;0;Catálogo Base Chile 2026
+PVC11/2S80;PVC COND. 1 1/2" (50 mm) SUBTERRANEO SC80;ML;Canalizado;2000;120;0;Catálogo Base Chile 2026
+PVC2S80;PVC COND. 2" (63 mm) SUBTERRANEO SC80;ML;Canalizado;3187;160;0;Catálogo Base Chile 2026
+PVC21/2S80;PVC COND. 2 1/2" (75 mm) SUBTERRANEO SC80;ML;Canalizado;4070;160;0;Catálogo Base Chile 2026
+PVC3S80;PVC COND. 3" (90 mm) SUBTERRANEO SC80;ML;Canalizado;6333;185;0;Catálogo Base Chile 2026
+PVC4S80;PVC COND. 4" (110 mm) SUBTERRANEO SC80;ML;Canalizado;7500;190;0;Catálogo Base Chile 2026
+PVC5S80;PVC COND. 5" (125 mm) SUBTERRANEO SC80;ML;Canalizado;11167;190;0;Catálogo Base Chile 2026
+PVC6S80;PVC COND. 6" (140 mm) SUBTERRANEO SC80;ML;Canalizado;14167;285;0;Catálogo Base Chile 2026
+TERMINAL 11/4S80+2T;TERMINAL 11/4" SC80 C/2 TUERCA;UN;Canalizado;3800;135;0;Catálogo Base Chile 2026
+TERMINAL 11/2S80+2T;TERMINAL  11/2" SC80 C/2 TUERCA;UN;Canalizado;3800;135;0;Catálogo Base Chile 2026
+TERMINAL 3S80+2T;TERMINAL  3" SC80 C/2 TUERCA;UN;Canalizado;6500;255;0;Catálogo Base Chile 2026
+TERMINAL 4S80+2T;TERMINAL  4" SC80 C/2 TUERCA;UN;Canalizado;6500;270;0;Catálogo Base Chile 2026
+TERMINAL 5S80+2T;TERMINAL  5" SC80 C/2 TUERCA;UN;Canalizado;6500;290;0;Catálogo Base Chile 2026
+TERMINAL 6S80+2T;TERMINAL  6" SC80 C/2 TUERCA;UN;Canalizado;6500;305;0;Catálogo Base Chile 2026
+TERMINAL 8S80+2T;TERMINAL  8" SC80 C/2 TUERCA;UN;Canalizado;6500;355;0;Catálogo Base Chile 2026
+SEPARADOR1;SEPARADOR DE MADERA 90 MM 4 DUCTOS;UN;Abrazaderas;2600;300;0;Catálogo Base Chile 2026
+SEPARADOR2;SEPARADOR DE MADERA 140 MM 4 DUCTOS;UN;Abrazaderas;5200;300;0;Catálogo Base Chile 2026
+TAG5/8;TUBO ACERO GALVANIZADO 16MM (EMT);ML;Canalizado;602;190;0;Catálogo Base Chile 2026
+TAG1/2;TUBO ACERO GALVANIZADO 20 MM (EMT);ML;Canalizado;1033;190;0;Catálogo Base Chile 2026
+TAG3/4;TUBO ACERO GALVANIZADO 90 MM (EMT);ML;Canalizado;15667;485;0;Catálogo Base Chile 2026
+TAG1;TUBO ACERO GALVANIZADO 32 MM (EMT);ML;Canalizado;2129;250;0;Catálogo Base Chile 2026
+TAG11/4;TUBO ACERO GALVANIZADO 40 MM (EMT);ML;Canalizado;2891;351;0;Catálogo Base Chile 2026
+TAG11/2;TUBO ACERO GALVANIZADO 50 MM ( EMT);ML;Canalizado;3633;374;0;Catálogo Base Chile 2026
+TAG2;TUBO ACERO GALVANIZADO 63 MM (EMT);ML;Canalizado;6500;420;0;Catálogo Base Chile 2026
+TAG21/2;TUBO ACERO GALVANIZADO 75 MM (EMT);ML;Canalizado;12852;485;0;Catálogo Base Chile 2026
+TAG4;TUBO ACERO GALVANIZADO 110 MM (EMT);ML;Canalizado;29333;485;0;Catálogo Base Chile 2026
+CAG1/2;CONDUIT GALVANIZADO 20 MM;ML;Canalizado;3300;273;0;Catálogo Base Chile 2026
+CAG3/4;CONDUIT GALVANIZADO 25 MM;ML;Canalizado;4100;340;0;Catálogo Base Chile 2026
+CAG1;CONDUIT GALVANIZADO 32 MM;ML;Canalizado;7211;556;0;Catálogo Base Chile 2026
+CAG11/4;CONDUIT GALVANIZADO 40 MM;ML;Canalizado;7578;584;0;Catálogo Base Chile 2026
+CAG11/2;CONDUIT GALVANIZADO 50 MM;ML;Canalizado;12667;688;0;Catálogo Base Chile 2026
+CAG2;CONDUIT GALVANIZADO 63 MM;ML;Canalizado;20000;917;0;Catálogo Base Chile 2026
+CAG21/2;CONDUIT GALVANIZADO 75 MM;ML;Canalizado;21400;1265;0;Catálogo Base Chile 2026
+CAG3;CONDUIT GALVANIZADO 90 MM;ML;Canalizado;34333;1594;0;Catálogo Base Chile 2026
+CAG4;CONDUIT GALVANIZADO 110 MM;ML;Canalizado;35533;2405;0;Catálogo Base Chile 2026
+CAG5;CONDUIT GALVANIZADO 140 MM;ML;Canalizado;64000;2405;0;Catálogo Base Chile 2026
+TMF1/2;T.M. FLEXIBLE 20 MM 3322;ML;Canalizado;819;168;0;Catálogo Base Chile 2026
+TMF1/2R;T.M. FLEXIBLE 20 MM  4322;ML;Canalizado;1325;168;0;Catálogo Base Chile 2026
+TMF3/4;T.M. FLEXIBLE 25 MM 3322;ML;Canalizado;1026;184;0;Catálogo Base Chile 2026
+TMF3/4R;T.M. FLEXIBLE 25 MM 4322;ML;Canalizado;1987;184;0;Catálogo Base Chile 2026
+TMF1;T.M. FLEXIBLE 32 MM 3322;ML;Canalizado;1527;221;0;Catálogo Base Chile 2026
+TMF1R;T.M. FLEXIBLE 32 MM 4322;ML;Canalizado;3016;221;0;Catálogo Base Chile 2026
+TMF11/4;T.M. FLEXIBLE 40 MM 3322;ML;Canalizado;2229;251;0;Catálogo Base Chile 2026
+TMF11/4R;T.M. FLEXIBLE 40 MM 4322;ML;Canalizado;4451;251;0;Catálogo Base Chile 2026
+TMF11/2;T.M. FLEXIBLE 50 MM 3322;ML;Canalizado;2796;298;0;Catálogo Base Chile 2026
+TMF11/2R;T.M. FLEXIBLE 50 MM 4322;ML;Canalizado;5620;298;0;Catálogo Base Chile 2026
+TMF2;T.M. FLEXIBLE 63 MM 3322;ML;Canalizado;4843;342;0;Catálogo Base Chile 2026
+TMF2R;T.M. FLEXIBLE 63 MM 4322;ML;Canalizado;8436;342;0;Catálogo Base Chile 2026
+TMF21/2;T.M. FLEXIBLE 75 MM 3322;ML;Canalizado;9964;420;0;Catálogo Base Chile 2026
+TMF21/2R;T.M. FLEXIBLE 75 MM 4322;ML;Canalizado;17800;420;0;Catálogo Base Chile 2026
+TMF3;T.M. FLEXIBLE 90 MM 3322;ML;Canalizado;11744;530;0;Catálogo Base Chile 2026
+TMF3R;T.M. FLEXIBLE 90 MM 4322;ML;Canalizado;24000;530;0;Catálogo Base Chile 2026
+TMF4;T.M. FLEXIBLE 110 MM 3322;ML;Canalizado;23104;640;0;Catálogo Base Chile 2026
+TMF4R;T.M. FLEXIBLE 110 MM 4322;ML;Canalizado;40000;640;0;Catálogo Base Chile 2026
+TTMF1/2;CONECTOR  T.M.F. 1/2";UN;Canalizado;751;157;0;Catálogo Base Chile 2026
+TTMF3/4;CONECTOR  T.M.F. 3/4";UN;Canalizado;1202;173;0;Catálogo Base Chile 2026
+TTMF1;CONECTOR  T.M.F. 1";UN;Canalizado;1778;210;0;Catálogo Base Chile 2026
+TTMF11/4;CONECTOR  T.M.F. 11/4";UN;Canalizado;2731;240;0;Catálogo Base Chile 2026
+TTMF11/2;CONECTOR  T.M.F. 11/2";UN;Canalizado;3808;287;0;Catálogo Base Chile 2026
+TTMF2;CONECTOR  T.M.F. 2";UN;Canalizado;7768;331;0;Catálogo Base Chile 2026
+TTMF21/2;CONECTOR  T.M.F. 21/2";UN;Canalizado;13500;409;0;Catálogo Base Chile 2026
+TTMF3;CONECTOR  T.M.F. 3";UN;Canalizado;18600;519;0;Catálogo Base Chile 2026
+TTMF4;CONECTOR  T.M.F. 4";UN;Canalizado;31106;629;0;Catálogo Base Chile 2026
+M03;CAJAS DISTRIBUCION;;;0;0;0;Catálogo Base Chile 2026
+C5/8;CAJA  PLASTICA. 5/8" (11 salidas);UN;Cajas;320;20;0;Catálogo Base Chile 2026
+C5/8LH;CAJA  PLASTICA. 5/8" LH (11 salidas);UN;Cajas;520;20;0;Catálogo Base Chile 2026
+CE;CAJA PASO 80x 80x40 mm (ESTANCA);UN;Cajas;2782;45;0;Catálogo Base Chile 2026
+A01;CAJA GALV. CON TAPA 100x65x65 mm;UN;Cajas;1200;45;0;Catálogo Base Chile 2026
+A11;CAJA GALV. CON TAPA 100x100x65 mm;UN;Cajas;1650;45;0;Catálogo Base Chile 2026
+B12;CAJA Y TAPA B-12 200x100x100 ZN.;UN;Cajas;5693;45;0;Catálogo Base Chile 2026
+B15;CAJA Y TAPA B-15 150x150x100 ZN.;UN;Cajas;5763;45;0;Catálogo Base Chile 2026
+B22;CAJA Y TAPA B-22 200*200*100 ZN.;UN;Cajas;7584;45;0;Catálogo Base Chile 2026
+B23;CAJA Y TAPA B-23 300*200*100 ZN.;UN;Cajas;11211;45;0;Catálogo Base Chile 2026
+C34;CAJA Y TAPA C-34 400*300*150 ZN.;UN;Cajas;21470;45;0;Catálogo Base Chile 2026
+A01G;CAJA GALV. CON TAPA 100x65x65 mm (galv);UN;Cajas;1900;45;0;Catálogo Base Chile 2026
+A11G;CAJA GALV. CON TAPA 100x100x65 mm (galv);UN;Cajas;2684;45;0;Catálogo Base Chile 2026
+B12G;CAJA Y TAPA B-12 200*100*100 GALV.;UN;Cajas;8416;45;0;Catálogo Base Chile 2026
+B15G;CAJA Y TAPA B-15 150*150*100 GALV.;UN;Cajas;8632;45;0;Catálogo Base Chile 2026
+B22G;CAJA Y TAPA B-22 200*200*100 GALV.;UN;Cajas;11267;45;0;Catálogo Base Chile 2026
+B23G;CAJA Y TAPA B-23 300*200*100 GALV.;UN;Cajas;15956;45;0;Catálogo Base Chile 2026
+C34G;CAJA Y TAPA C-34 400*300*150 LISA GALV.;UN;Cajas;29636;45;0;Catálogo Base Chile 2026
+CI1;CAJA IDROBOX UN MODULO REF. 25501;UN;Cajas;23000;45;0;Catálogo Base Chile 2026
+CI2;CAJA IDROBOX PARA DOS MODULOS REF. 25502;UN;Cajas;24000;45;0;Catálogo Base Chile 2026
+CI3;CAJA IDROBOX PARA TRES MODULOS REF. 25503;UN;Cajas;26000;45;0;Catálogo Base Chile 2026
+CI3S;TAPA SINTHESI HIDROBOX 3P 109900102;UN;Cajas;14409;45;0;Catálogo Base Chile 2026
+10*10*10;CAJA Y TAPA N4 100*100*100 ZN.;UN;Cajas;16348;450;0;Catálogo Base Chile 2026
+20*10*10;CAJA Y TAPA N4 200*100*100 ZN.;UN;Cajas;20932;450;0;Catálogo Base Chile 2026
+20*15*10;CAJA Y TAPA N4 200*150*100 ZN.;UN;Cajas;22086;450;0;Catálogo Base Chile 2026
+20*20*10;CAJA Y TAPA N4 200*200*100 ZN.;UN;Cajas;23425;450;0;Catálogo Base Chile 2026
+25*15*10;CAJA Y TAPA N4 250*150*100 ZN.;UN;Cajas;23425;450;0;Catálogo Base Chile 2026
+30*30*15;CAJA Y TAPA N4 300*300*150 ZN.;UN;Cajas;32836;450;0;Catálogo Base Chile 2026
+50*40*15;CAJA Y TAPA N4 500*400*150 ZN.;UN;Cajas;61454;450;0;Catálogo Base Chile 2026
+SAIMEM28;28 MODULOS (6091);UN;Tableros;56000;0;0;Catálogo Base Chile 2026
+SAIMEM30;30 MODULOS (6093);UN;Tableros;85000;0;0;Catálogo Base Chile 2026
+SAIMEM36;36 MODULOS (6095-D);UN;Tableros;102000;0;0;Catálogo Base Chile 2026
+SAIMEM45;45 MODULOS (6097-D);UN;Tableros;117000;0;0;Catálogo Base Chile 2026
+SAIMEM54;54 MODULOS (6099-D);UN;Tableros;140000;0;0;Catálogo Base Chile 2026
+SAIMEM64;64 MODULOS (6099-64M);UN;Tableros;290000;0;0;Catálogo Base Chile 2026
+SAIMEM75;75MODULOS  (6099-75M);UN;Tableros;325000;0;0;Catálogo Base Chile 2026
+SAIMEP8.1;8 MODULOS (6521-D);UN;Tableros;18008;0;0;Catálogo Base Chile 2026
+SAIMEP8.2;8 MODULOS (6522-D);UN;Tableros;11388;0;0;Catálogo Base Chile 2026
+SAIMEP12.1;12 MODULOS (6541-D);UN;Tableros;23032;0;0;Catálogo Base Chile 2026
+SAIMEP12.2;12 MODULOS (6542-D);UN;Tableros;14303;0;0;Catálogo Base Chile 2026
+SAIMEP20.1;20 MODULOS (6581-D);UN;Tableros;47264;0;0;Catálogo Base Chile 2026
+SAIMEP20.2;20 MODULOS (6582-D);UN;Tableros;19956;0;0;Catálogo Base Chile 2026
+CDB300*200;CAJA 300X200X150;UN;Cajas;30000;2500;0;Catálogo Base Chile 2026
+CDB400*300;CAJA 400X300X200;UN;Cajas;42000;3000;0;Catálogo Base Chile 2026
+CDB500*400;CAJA 600X500X230;UN;Cajas;95500;4000;0;Catálogo Base Chile 2026
+BLZN100;BPC LISA ZN 100x100mm;ML;Bandejas;9556;806;0;Catálogo Base Chile 2026
+BLZN150;BPC LISA ZN 150x100mm;ML;Bandejas;11306;882;0;Catálogo Base Chile 2026
+BLZN200;BPC LISA ZN 200x100mm;ML;Bandejas;12737;958;0;Catálogo Base Chile 2026
+BLZN250;BPC LISA ZN 250x100mm;ML;Bandejas;14181;958;0;Catálogo Base Chile 2026
+BLZN300;BPC LISA ZN 300x100mm;ML;Bandejas;18169;994;0;Catálogo Base Chile 2026
+BLZN400;BPC LISA ZN 400x100mm;ML;Bandejas;21573;1150;0;Catálogo Base Chile 2026
+BLZN450;BPC LISA ZN 450x100mm;ML;Bandejas;23725;1215;0;Catálogo Base Chile 2026
+BLZN500;BPC LISA ZN 500x100mm;ML;Bandejas;26361;1248;0;Catálogo Base Chile 2026
+BLZN600;BPC LISA ZN 600x100mm;ML;Bandejas;26202;1280;0;Catálogo Base Chile 2026
+BLG100;BPC LISA GALV 100x100mm;ML;Bandejas;13116;806;0;Catálogo Base Chile 2026
+BLG150;BPC LISA GALV 150x100mm;ML;Bandejas;18966;882;0;Catálogo Base Chile 2026
+BLG200;BPC LISA GALV  200x100mm;ML;Bandejas;21369;958;0;Catálogo Base Chile 2026
+BLG250;BPC LISA GALV 250x100mm;ML;Bandejas;23691;958;0;Catálogo Base Chile 2026
+BLG300;BPC LISA GALV 300x100mm;ML;Bandejas;26702;994;0;Catálogo Base Chile 2026
+BLG400;BPC LISA GALV 400x100mm;ML;Bandejas;31731;1215;0;Catálogo Base Chile 2026
+BLG450;BPC LISA GALV 450x100mm;ML;Bandejas;31100;1248;0;Catálogo Base Chile 2026
+BLG500;BPC LISA GALV 500x100mm;ML;Bandejas;31100;1280;0;Catálogo Base Chile 2026
+BLG600;BPC LISA GALV 600x100mm;ML;Bandejas;43176;1406;0;Catálogo Base Chile 2026
+BRZN100;BPC RANURADA ZN 100 x 100 mm;ML;Bandejas;8737;806;0;Catálogo Base Chile 2026
+BRZN150;BPC RANURADA ZN 150 x 100 mm;ML;Bandejas;10337;882;0;Catálogo Base Chile 2026
+BRZN200;BPC RANURADA ZN 200 x 100 mm;ML;Bandejas;11646;958;0;Catálogo Base Chile 2026
+BRZN250;BPC RANURADA ZN 250 x 100 mm;ML;Bandejas;12966;959;0;Catálogo Base Chile 2026
+BRZN300;BPC RANURADA ZN 300 x 100 mm;ML;Bandejas;18169;994;0;Catálogo Base Chile 2026
+BRZN350;BPC RANURADA ZN 350 x 100 mm;ML;Bandejas;18169;995;0;Catálogo Base Chile 2026
+BRZN400;BPC RANURADA ZN 400 x 100 mm;ML;Bandejas;21573;1215;0;Catálogo Base Chile 2026
+BRZN450;BPC RANURADA ZN 450 x 100 mm;ML;Bandejas;33035;1248;0;Catálogo Base Chile 2026
+BRZN500;BPC RANURADA ZN 500 x 100 mm;ML;Bandejas;26361;1280;0;Catálogo Base Chile 2026
+BRZN600;BPC RANURADA ZN 600 x 100 mm;ML;Bandejas;29365;1406;0;Catálogo Base Chile 2026
+BRZN700;BPC RANURADA ZN 700 x 100 mm;ML;Bandejas;32445;1600;0;Catálogo Base Chile 2026
+BRG100;BPC RANURADA GALV 100 x 100 mm;ML;Bandejas;13116;806;0;Catálogo Base Chile 2026
+BRG150;BPC RANURADA GALV 150 x 100 mm;ML;Bandejas;14752;882;0;Catálogo Base Chile 2026
+BRG200;BPC RANURADA GALV 200 x 100 mm;ML;Bandejas;16621;958;0;Catálogo Base Chile 2026
+BRG250;BPC RANURADA GALV 250 x 100 mm;ML;Bandejas;18427;959;0;Catálogo Base Chile 2026
+BRG300;BPC RANURADA GALV 300 x 100 mm;ML;Bandejas;20768;994;0;Catálogo Base Chile 2026
+BRG400;BPC RANURADA GALV 400 x 100 mm;ML;Bandejas;24679;1215;0;Catálogo Base Chile 2026
+BRG450;BPC RANURADA GALV 450 x 100 mm;ML;Bandejas;26070;1248;0;Catálogo Base Chile 2026
+BRG500;BPC RANURADA GALV 500 x 100 mm;ML;Bandejas;30468;1280;0;Catálogo Base Chile 2026
+BRG600;BPC RANURADA GALV 600 x 100 mm;ML;Bandejas;34820;1406;0;Catálogo Base Chile 2026
+BRG800;BPC RANURADA GALV 800 x 100 mm;ML;Bandejas;53403;1600;0;Catálogo Base Chile 2026
+CZN100;CURVA BPC  ZN 100 x 100 mm;ML;Bandejas;11568;806;0;Catálogo Base Chile 2026
+CZN150;CURVA BPC  ZN 150 x 100 mm;ML;Bandejas;13686;806;0;Catálogo Base Chile 2026
+CZN200;CURVA BPC  ZN 200 x 100 mm;ML;Bandejas;15418;882;0;Catálogo Base Chile 2026
+CZN250;CURVA BPC  ZN 250 x 100 mm;ML;Bandejas;17166;958;0;Catálogo Base Chile 2026
+CZN300;CURVA BPC  ZN 300 x 100 mm;ML;Bandejas;19245;959;0;Catálogo Base Chile 2026
+CZN400;CURVA BPC  ZN 400 x 100 mm;ML;Bandejas;22850;994;0;Catálogo Base Chile 2026
+CZN450;CURVA BPC  ZN 450 x 100 mm;ML;Bandejas;24945;995;0;Catálogo Base Chile 2026
+CZN500;CURVA BPC  ZN 500 x 100 mm;ML;Bandejas;30317;1215;0;Catálogo Base Chile 2026
+CZN600;CURVA BPC  ZN 600 x 100 mm;ML;Bandejas;33769;1248;0;Catálogo Base Chile 2026
+CG100;CURVA BPC GALV 100 x 100 mm;ML;Bandejas;12350;806;0;Catálogo Base Chile 2026
+CG150;CURVA BPC GALV 150 x 100 mm;ML;Bandejas;17856;806;0;Catálogo Base Chile 2026
+CG200;CURVA BPC GALV 200 x 100 mm;ML;Bandejas;20119;882;0;Catálogo Base Chile 2026
+CG250;CURVA BPC GALV 250 x 100 mm;ML;Bandejas;22305;958;0;Catálogo Base Chile 2026
+CG300;CURVA BPC GALV 300 x 100 mm;ML;Bandejas;24566;959;0;Catálogo Base Chile 2026
+CG400;CURVA BPC GALV 400 x 100 mm;ML;Bandejas;29876;994;0;Catálogo Base Chile 2026
+CG450;CURVA BPC GALV 450 x 100 mm;ML;Bandejas;33239;995;0;Catálogo Base Chile 2026
+CG500;CURVA BPC GALV 500 x 100 mm;ML;Bandejas;36602;1215;0;Catálogo Base Chile 2026
+CG600;CURVA BPC GALV 600 x 100 mm;ML;Bandejas;40653;1248;0;Catálogo Base Chile 2026
+TEEZN100;TEE BPC  ZN 100 x 100 mm;ML;Bandejas;12070;806;0;Catálogo Base Chile 2026
+TEEZN150;TEE BPC  ZN 150 x 100 mm;ML;Bandejas;14281;806;0;Catálogo Base Chile 2026
+TEEZN200;TEE BPC  ZN 200 x 100 mm;ML;Bandejas;20110;882;0;Catálogo Base Chile 2026
+TEEZN250;TEE BPC  ZN 250 x 100 mm;ML;Bandejas;22390;958;0;Catálogo Base Chile 2026
+TEEZN300;TEE BPC  ZN 300 x 100 mm;ML;Bandejas;25104;959;0;Catálogo Base Chile 2026
+TEEZN400;TEE BPC  ZN 400 x 100 mm;ML;Bandejas;29804;994;0;Catálogo Base Chile 2026
+TEEZN450;TEE BPC  ZN 450 x 100 mm;ML;Bandejas;29804;995;0;Catálogo Base Chile 2026
+TEEZN500;TEE BPC  ZN 500 x 100 mm;ML;Bandejas;31635;1248;0;Catálogo Base Chile 2026
+TEEZN600;TEE BPC  ZN 600 x 100 mm;ML;Bandejas;35239;1248;0;Catálogo Base Chile 2026
+TEEG100;TEE BPC GALV 100 x 100 mm;ML;Bandejas;17500;806;0;Catálogo Base Chile 2026
+TEEG150;TEE BPC GALV 150 x 100 mm;ML;Bandejas;18632;806;0;Catálogo Base Chile 2026
+TEEG200;TEE BPC GALV 200 x 100 mm;ML;Bandejas;20994;882;0;Catálogo Base Chile 2026
+TEEG250;TEE BPC GALV 250 x 100 mm;ML;Bandejas;20994;958;0;Catálogo Base Chile 2026
+TEEG300;TEE BPC GALV 300 x 100 mm;ML;Bandejas;26234;959;0;Catálogo Base Chile 2026
+TEEG400;TEE BPC GALV 400 x 100 mm;ML;Bandejas;31175;994;0;Catálogo Base Chile 2026
+TEEG450;TEE BPC GALV 450 x 100 mm;ML;Bandejas;34268;995;0;Catálogo Base Chile 2026
+TEEG500;TEE BPC GALV 500 x 100 mm;ML;Bandejas;38191;1248;0;Catálogo Base Chile 2026
+TEEG600;TEE BPC GALV 600 x 100 mm;ML;Bandejas;45585;1248;0;Catálogo Base Chile 2026
+EZN100;EPC ZN 100 x 100 mm;ML;Bandejas;15211;806;0;Catálogo Base Chile 2026
+EZN150;EPC ZN 150 x 100 mm;ML;Bandejas;15705;882;0;Catálogo Base Chile 2026
+EZN200;EPC ZN 200 x 100 mm;ML;Bandejas;16199;958;0;Catálogo Base Chile 2026
+EZN250;EPC ZN 250 x 100 mm;ML;Bandejas;16866;994;0;Catálogo Base Chile 2026
+EZN300;EPC ZN 300 x 100 mm;ML;Bandejas;17549;994;0;Catálogo Base Chile 2026
+EZN400;EPC ZN 400 x 100 mm;ML;Bandejas;18793;1215;0;Catálogo Base Chile 2026
+EZN450;EPC ZN 450 x 100 mm;ML;Bandejas;19328;1248;0;Catálogo Base Chile 2026
+EZN500;EPC ZN 500 x 100 mm;ML;Bandejas;20652;1280;0;Catálogo Base Chile 2026
+EZN600;EPC ZN 600 x 100 mm;ML;Bandejas;22002;1406;0;Catálogo Base Chile 2026
+EG100;EPC GALV 100 x 100 mm;ML;Bandejas;16201;806;0;Catálogo Base Chile 2026
+EG150;EPC GALV 150 x 100 mm;ML;Bandejas;16762;882;0;Catálogo Base Chile 2026
+EG200;EPC GALV 200 x 100 mm;ML;Bandejas;17258;958;0;Catálogo Base Chile 2026
+EG250;EPC GALV 250 x 100 mm;ML;Bandejas;17750;958;0;Catálogo Base Chile 2026
+EG300;EPC GALV 300 x 100 mm;ML;Bandejas;18246;994;0;Catálogo Base Chile 2026
+EG400;EPC GALV 400 x 100 mm;ML;Bandejas;19479;1215;0;Catálogo Base Chile 2026
+EG450;EPC GALV 450 x 100 mm;ML;Bandejas;19996;1215;0;Catálogo Base Chile 2026
+EG500;EPC GALV 500 x 100 mm;ML;Bandejas;20692;1280;0;Catálogo Base Chile 2026
+EG600;EPC GALV 600 x 100 mm;ML;Bandejas;23457;1406;0;Catálogo Base Chile 2026
+EG700;EPC GALV 700 x 100 mm;ML;Bandejas;24519;1406;0;Catálogo Base Chile 2026
+TAPARECTAZ100;TAPA RECTA ZINCADA 100 x 100 mm;ML;Bandejas;3698;806;0;Catálogo Base Chile 2026
+TAPARECTAZ150;TAPA RECTA ZINCADA 150 x 100 mm;ML;Bandejas;5185;882;0;Catálogo Base Chile 2026
+TAPARECTAZ200;TAPA RECTA ZINCADA 200 x 100 mm;ML;Bandejas;6657;958;0;Catálogo Base Chile 2026
+TAPARECTAZ250;TAPA RECTA ZINCADA 250 x 100 mm;ML;Bandejas;8205;994;0;Catálogo Base Chile 2026
+TAPARECTAZ300;TAPA RECTA ZINCADA 300 x 100 mm;ML;Bandejas;9561;994;0;Catálogo Base Chile 2026
+TAPARECTAZ350;TAPA RECTA ZINCADA 350 x 100 mm;ML;Bandejas;11112;994;0;Catálogo Base Chile 2026
+TAPARECTAZ400;TAPA RECTA ZINCADA 400 x 100 mm;ML;Bandejas;12662;1215;0;Catálogo Base Chile 2026
+TAPARECTAZ450;TAPA RECTA ZINCADA 450 x 100 mm;ML;Bandejas;14025;1248;0;Catálogo Base Chile 2026
+TAPARECTAZ500;TAPA RECTA ZINCADA 500 x 100 mm;ML;Bandejas;18362;1280;0;Catálogo Base Chile 2026
+TAPARECTAZ600;TAPA RECTA ZINCADA 600 x 100 mm;ML;Bandejas;21851;1406;0;Catálogo Base Chile 2026
+TAPARECTAZ700;TAPA RECTA ZINCADA 700 x 100 mm;ML;Bandejas;25514;1600;0;Catálogo Base Chile 2026
+TAPARECTAZ800;TAPA RECTA ZINCADA 800 x 100 mm;ML;Bandejas;30005;1600;0;Catálogo Base Chile 2026
+TAPARECTAG100;TAPA RECTA GALVANIZADA 100 x 100 mm;ML;Bandejas;4731;806;0;Catálogo Base Chile 2026
+TAPARECTAG150;TAPA RECTA GALVANIZADA 150 x 100 mm;ML;Bandejas;6616;882;0;Catálogo Base Chile 2026
+TAPARECTAG200;TAPA RECTA GALVANIZADA 200 x 100 mm;ML;Bandejas;8471;958;0;Catálogo Base Chile 2026
+TAPARECTAG250;TAPA RECTA GALVANIZADA 250 x 100 mm;ML;Bandejas;7527;958;0;Catálogo Base Chile 2026
+TAPARECTAG300;TAPA RECTA GALVANIZADA 300 x 100 mm;ML;Bandejas;12114;994;0;Catálogo Base Chile 2026
+TAPARECTAG350;TAPA RECTA GALVANIZADA 350 x 100 mm;ML;Bandejas;14484;994;0;Catálogo Base Chile 2026
+TAPARECTAG400;TAPA RECTA GALVANIZADA 400 x 100 mm;ML;Bandejas;16094;1215;0;Catálogo Base Chile 2026
+TAPARECTAG450;TAPA RECTA GALVANIZADA 450 x 100 mm;ML;Bandejas;12785;1215;0;Catálogo Base Chile 2026
+TAPARECTAG500;TAPA RECTA GALVANIZADA 500 x 100 mm;ML;Bandejas;25998;1280;0;Catálogo Base Chile 2026
+TAPARECTAG600;TAPA RECTA GALVANIZADA 600 x 100 mm;ML;Bandejas;27497;1406;0;Catálogo Base Chile 2026
+TAPARECTAG700;TAPA RECTA GALVANIZADA 700 x 100 mm;ML;Bandejas;35873;1406;0;Catálogo Base Chile 2026
+TAPARECTAG800;TAPA RECTA GALVANIZADA 800 x 100 mm;ML;Bandejas;42263;1406;0;Catálogo Base Chile 2026
+TCZN100;TAPA CURVA ZN 100 MM;ML;Bandejas;4253;882;0;Catálogo Base Chile 2026
+TCZN150;TAPA CURVA ZN 150 MM;ML;Bandejas;5963;882;0;Catálogo Base Chile 2026
+TCZN200;TAPA CURVA ZN 200 MM;ML;Bandejas;7655;958;0;Catálogo Base Chile 2026
+TCZN250;TAPA CURVA ZN 250 MM;ML;Bandejas;9433;994;0;Catálogo Base Chile 2026
+TCZN300;TAPA CURVA ZN 300 MM;ML;Bandejas;10997;994;0;Catálogo Base Chile 2026
+TCZN400;TAPA CURVA ZN 400 MM;ML;Bandejas;14561;1215;0;Catálogo Base Chile 2026
+TCZN450;TAPA CURVA ZN 450 MM;ML;Bandejas;16132;1248;0;Catálogo Base Chile 2026
+TCZN500;TAPA CURVA ZN 500 MM;ML;Bandejas;27149;1280;0;Catálogo Base Chile 2026
+TCZN600;TAPA CURVA ZN 600 MM;ML;Bandejas;32309;1406;0;Catálogo Base Chile 2026
+TCG100;TAPA CURVA  GALV 100 MM;ML;Bandejas;4897;882;0;Catálogo Base Chile 2026
+TCG150;TAPA CURVA  GALV 150 MM;ML;Bandejas;6845;958;0;Catálogo Base Chile 2026
+TCG200;TAPA CURVA  GALV 200 MM;ML;Bandejas;8767;958;0;Catálogo Base Chile 2026
+TCG250;TAPA CURVA  GALV 250 MM;ML;Bandejas;10819;994;0;Catálogo Base Chile 2026
+TCG300;TAPA CURVA  GALV 300 MM;ML;Bandejas;12538;994;0;Catálogo Base Chile 2026
+TCG400;TAPA CURVA  GALV 400 MM;ML;Bandejas;16655;1215;0;Catálogo Base Chile 2026
+TCG450;TAPA CURVA  GALV 450 MM;ML;Bandejas;18377;1215;0;Catálogo Base Chile 2026
+TCG500;TAPA CURVA  GALV 500 MM;ML;Bandejas;29897;1280;0;Catálogo Base Chile 2026
+TCG600;TAPA CURVA  GALV 600 MM;ML;Bandejas;35576;1406;0;Catálogo Base Chile 2026
+TCG700;TAPA CURVA  GALV 700 MM;ML;Bandejas;39834;1406;0;Catálogo Base Chile 2026
+TCG800;TAPA CURVA  GALV 800 MM;ML;Bandejas;44092;1406;0;Catálogo Base Chile 2026
+TTEEZN100;TAPA TEE ZN 100 MM;ML;Bandejas;4931;882;0;Catálogo Base Chile 2026
+TTEEZN150;TAPA TEE ZN 150 MM;ML;Bandejas;6916;958;0;Catálogo Base Chile 2026
+TTEEZN200;TAPA TEE ZN 200 MM;ML;Bandejas;8876;994;0;Catálogo Base Chile 2026
+TTEEZN250;TAPA TEE ZN 250 MM;ML;Bandejas;10936;994;0;Catálogo Base Chile 2026
+TTEEZN300;TAPA TEE ZN 300 MM;ML;Bandejas;12749;1215;0;Catálogo Base Chile 2026
+TTEEZN400;TAPA TEE ZN 400 MM;ML;Bandejas;16881;1248;0;Catálogo Base Chile 2026
+TTEEZN450;TAPA TEE ZN 450 MM;ML;Bandejas;18704;1248;0;Catálogo Base Chile 2026
+TTEEZN500;TAPA TEE ZN 500 MM;ML;Bandejas;31479;1406;0;Catálogo Base Chile 2026
+TTEEZN600;TAPA TEE ZN 600 MM;ML;Bandejas;37459;1406;0;Catálogo Base Chile 2026
+TTEEG100;TAPA TEE GALV 100 MM;ML;Bandejas;5676;882;0;Catálogo Base Chile 2026
+TTEEG150;TAPA TEE GALV 150 MM;ML;Bandejas;7936;958;0;Catálogo Base Chile 2026
+TTEEG200;TAPA TEE GALV 200 MM;ML;Bandejas;10164;958;0;Catálogo Base Chile 2026
+TTEEG250;TAPA TEE GALV 250 MM;ML;Bandejas;12544;994;0;Catálogo Base Chile 2026
+TTEEG300;TAPA TEE GALV 300 MM;ML;Bandejas;14536;1215;0;Catálogo Base Chile 2026
+TTEEG400;TAPA TEE GALV 400 MM;ML;Bandejas;19311;1215;0;Catálogo Base Chile 2026
+TTEEG450;TAPA TEE GALV 450 MM;ML;Bandejas;21306;1406;0;Catálogo Base Chile 2026
+TTEEG500;TAPA TEE GALV 500 MM;ML;Bandejas;34664;1406;0;Catálogo Base Chile 2026
+TTEEG600;TAPA TEE GALV 600 MM;ML;Bandejas;41246;994;0;Catálogo Base Chile 2026
+CZ100;CANASTILLO ZINC 100x65 mm;ML;Bandejas;7139;806;0;Catálogo Base Chile 2026
+CZ150;CANASTILLO ZINC 150x65 mm;ML;Bandejas;8203;882;0;Catálogo Base Chile 2026
+CZ200;CANASTILLO ZINC 200x65 mm;ML;Bandejas;10297;806;0;Catálogo Base Chile 2026
+CZ300;CANASTILLO ZINC 300x65 mm;ML;Bandejas;14861;958;0;Catálogo Base Chile 2026
+CZ400;CANASTILLO ZINC 400x65 mm;ML;Bandejas;19735;994;0;Catálogo Base Chile 2026
+TC100;TAPA CANASTILLO 100 mm;ML;Bandejas;3698;172;0;Catálogo Base Chile 2026
+TC150;TAPA CANASTILLO 150 mm;ML;Bandejas;5185;172;0;Catálogo Base Chile 2026
+TC200;TAPA CANASTILLO 200 mm;ML;Bandejas;6657;172;0;Catálogo Base Chile 2026
+TC300;TAPA CANASTILLO 300 mm;ML;Bandejas;9561;180;0;Catálogo Base Chile 2026
+TC400;TAPA CANASTILLO 400 mm;ML;Bandejas;12662;219;0;Catálogo Base Chile 2026
+SOPORTE;SOPORTE EPC-BPC;UN;Soportes;5500;720;0;Catálogo Base Chile 2026
+SEPZN;SEPARADOR ZINCADO BPC;ML;Soportes;1188;460;0;Catálogo Base Chile 2026
+SEPGALV;SEPARADOR GALVANIZADO BPC;ML;Soportes;1407;460;0;Catálogo Base Chile 2026
+PAZ;PERNOS PARTIDOS Az;UN;Soportes;1018;20;0;Catálogo Base Chile 2026
+MOLDE;MOLDE GRAFITO CU 4/0 AWG - UNION  X;UN;Malla a tierra;85000;655;0;Catálogo Base Chile 2026
+MFLEJE;MOLDE GRAFITO CU 4/0 AWG - UNION  T;UN;Malla a tierra;85000;655;0;Catálogo Base Chile 2026
+TF2/0;CARGA CW #90 HASTA 2/0;UN;Malla a tierra;5800;655;0;Catálogo Base Chile 2026
+TF250;CARGA CW DE 3/0 A 250 MCM;UN;Malla a tierra;9055;655;0;Catálogo Base Chile 2026
+CR;CAMARILLA REGISTRO GRAU;UN;Malla a tierra;5997;271;0;Catálogo Base Chile 2026
+GEM-25A;ADITIVO GEM - 25A , 11.3 Kg (3 kg/ML rendimiento);UN;Malla a tierra;21239;245;0;Catálogo Base Chile 2026
+BC5/8*1,5;BARRA CW 5/8"x1.5 mts;UN;Malla a tierra;7000;875;0;Catálogo Base Chile 2026
+BC5/8*3;BARRA CW 5/8"x3 mts;UN;Malla a tierra;23322;1350;0;Catálogo Base Chile 2026
+BC3/4*1,5;BARRA CW 3/4" x 1,5 mts;UN;Malla a tierra;11214;1350;0;Catálogo Base Chile 2026
+BC3/4*3;BARRA CW 3/4" x 3 mts;UN;Malla a tierra;25499;1350;0;Catálogo Base Chile 2026
+MTM2500;MALLA TIERRA MAGNETOACTIVA 2500K2500A;UN;Malla a tierra;12207955;100000;0;Catálogo Base Chile 2026
+MTM1500;MALLA TIERRA MAGNETOACTIVA 1500K1500A;UN;Malla a tierra;8551041;100000;0;Catálogo Base Chile 2026
+MTM1000;MALLA TIERRA MAGNETOACTIVA 1000K1000A;UN;Malla a tierra;7340094;100000;0;Catálogo Base Chile 2026
+MTM700;MALLA TIERRA MAGNETOACTIVA 700K700A;UN;Malla a tierra;5087857;100000;0;Catálogo Base Chile 2026
+MTM500;MALLA TIERRA MAGNETOACTIVA 500K500A;UN;Malla a tierra;4330502;100000;0;Catálogo Base Chile 2026
+MTM400;MALLA TIERRA MAGNETOACTIVA 400K400A;UN;Malla a tierra;3960375;100000;0;Catálogo Base Chile 2026
+MTM100;MALLA TIERRA MAGNETOACTIVA 100K100A;UN;Malla a tierra;3341387;100000;0;Catálogo Base Chile 2026
+MTM70;MALLA TIERRA MAGNETOACTIVA 70K70A;UN;Malla a tierra;3047034;100000;0;Catálogo Base Chile 2026
+MTM45;MALLA TIERRA MAGNETOACTIVA 45K45A;UN;Malla a tierra;1596017;100000;0;Catálogo Base Chile 2026
+RC5/8;ABRAZADERA RC 5";UN;Soportes;1680;120;0;Catálogo Base Chile 2026
+RC1/2;ABRAZADERA RC 1/2";UN;Soportes;255;120;0;Catálogo Base Chile 2026
+RC3/4;ABRAZADERA RC 3/4";UN;Soportes;327;120;0;Catálogo Base Chile 2026
+RC1;ABRAZADERA RC 1";UN;Soportes;327;120;0;Catálogo Base Chile 2026
+RC11/4;ABRAZADERA RC 11/4";UN;Soportes;437;120;0;Catálogo Base Chile 2026
+RC11/2;ABRAZADERA RC 11/2";UN;Soportes;472;120;0;Catálogo Base Chile 2026
+RC2;ABRAZADERA RC 2";UN;Soportes;827;120;0;Catálogo Base Chile 2026
+RC21/2;ABRAZADERA RC 21/2";UN;Soportes;877;120;0;Catálogo Base Chile 2026
+RC3;ABRAZADERA RC 3";UN;Soportes;1054;120;0;Catálogo Base Chile 2026
+RC4;ABRAZADERA RC 4";UN;Soportes;1341;120;0;Catálogo Base Chile 2026
+CADDY1/2;ABRAZADERA CADDY 1/2";UN;Soportes;250;20;0;Catálogo Base Chile 2026
+CADDY3/4;ABRAZADERA CADDY 3/4";UN;Soportes;250;25;0;Catálogo Base Chile 2026
+CADDY1;ABRAZADERA CADDY 1";UN;Soportes;343;40;0;Catálogo Base Chile 2026
+CADDY11/4;ABRAZADERA CADDY 11/4";UN;Soportes;406;60;0;Catálogo Base Chile 2026
+CADDY11/2;ABRAZADERA CADDY 11/2";UN;Soportes;468;80;0;Catálogo Base Chile 2026
+CADDY2;ABRAZADERA CADDY 2";UN;Soportes;827;80;0;Catálogo Base Chile 2026
+CADDY21/2;ABRAZADERA CADDY 21/2";UN;Soportes;1107;90;0;Catálogo Base Chile 2026
+CADDY3;ABRAZADERA CADDY 3";UN;Soportes;1107;120;0;Catálogo Base Chile 2026
+CADDY4;ABRAZADERA CADDY 4";UN;Soportes;1341;130;0;Catálogo Base Chile 2026
+CADDY5;ABRAZADERA CADDY 5";UN;Soportes;1341;140;0;Catálogo Base Chile 2026
+MATIX9/12;Interruptor 9/12;UN;Artefactos;6060;200;0;Catálogo Base Chile 2026
+MATIX9/15;Interruptor 9/15;UN;Artefactos;9670;200;0;Catálogo Base Chile 2026
+MATIX9/24;Interruptor 9/24;UN;Artefactos;7260;200;0;Catálogo Base Chile 2026
+MATIX9/32;Interruptor 9/32;UN;Artefactos;13280;200;0;Catálogo Base Chile 2026
+MATIX9/24+9/12;Interruptor 9/24+9/12;UN;Artefactos;10870;200;0;Catálogo Base Chile 2026
+MATIX9/24+9/15;Interruptor 9/24+9/15;UN;Artefactos;14480;200;0;Catálogo Base Chile 2026
+MATIX924D;Interruptor 9/24 Doble;UN;Artefactos;12070;200;0;Catálogo Base Chile 2026
+MATIX924T;Interruptor 9/24 Triple;UN;Artefactos;16880;200;0;Catálogo Base Chile 2026
+MATIXES10;Enchufe Simple 10A;UN;Artefactos;5490;200;0;Catálogo Base Chile 2026
+MATIXED10;Enchufe Doble 10A;UN;Artefactos;8530;200;0;Catálogo Base Chile 2026
+MATIXET10;Enchufe Triple 10A;UN;Artefactos;11570;200;0;Catálogo Base Chile 2026
+MATIXES16;Enchufe Simple 16A;UN;Artefactos;9100;200;0;Catálogo Base Chile 2026
+MATIXED16;Enchufe Doble 16A;UN;Artefactos;15750;200;0;Catálogo Base Chile 2026
+MATIXET16;Enchufe Triple 16A;UN;Artefactos;22400;200;0;Catálogo Base Chile 2026
+MATIXPULS;Zumbador;UN;Artefactos;21910;200;0;Catálogo Base Chile 2026
+MATIXZUMB;Pulsador;UN;Artefactos;6370;200;0;Catálogo Base Chile 2026
+MATIXSEG1;Enchufe hembra Seguridad Simple;UN;Artefactos;17810;200;0;Catálogo Base Chile 2026
+MATIXSEG2;Enchufe hembra Seguridad Doble;UN;Artefactos;33170;200;0;Catálogo Base Chile 2026
+MATIXSEG3;Enchufe hembra Seguridad Triple;UN;Artefactos;48530;200;0;Catálogo Base Chile 2026
+MATIXUSB1;Enchufe USB 1 Modulo;UN;Artefactos;25710;200;0;Catálogo Base Chile 2026
+MATIXUSB2;Enchufe USB 2 Modulo;UN;Artefactos;48970;200;0;Catálogo Base Chile 2026
+MATIXUSB3;Enchufe USB 3 Modulo;UN;Artefactos;72230;200;0;Catálogo Base Chile 2026
+MATIXUSBED10;Enchufe 1 USB + 2 ED10;UN;Artefactos;31790;200;0;Catálogo Base Chile 2026
+MAGIC9/12;Interruptor 9/12;UN;Artefactos;8680;200;0;Catálogo Base Chile 2026
+MAGIC9/15;Interruptor 9/15;UN;Artefactos;12360;200;0;Catálogo Base Chile 2026
+MAGIC9/24;Interruptor 9/24;UN;Artefactos;9610;200;0;Catálogo Base Chile 2026
+MAGIC9/32;Interruptor 9/32;UN;Artefactos;16040;200;0;Catálogo Base Chile 2026
+MAGIC9/24+9/12;Interruptor 9/24+9/12;UN;Artefactos;13290;200;0;Catálogo Base Chile 2026
+MAGIC9/24+9/15;Interruptor 9/24+9/15;UN;Artefactos;16970;200;0;Catálogo Base Chile 2026
+MAGIC924D;Interruptor 9/24 Doble;UN;Artefactos;14220;200;0;Catálogo Base Chile 2026
+MAGIC924T;Interruptor 9/24 Triple;UN;Artefactos;18830;200;0;Catálogo Base Chile 2026
+MAGICES10;Enchufe Simple 10A;UN;Artefactos;9150;200;0;Catálogo Base Chile 2026
+MAGICED10;Enchufe Doble 10A;UN;Artefactos;13300;200;0;Catálogo Base Chile 2026
+MAGICET10;Enchufe Triple 10A;UN;Artefactos;17450;200;0;Catálogo Base Chile 2026
+MAGICES16;Enchufe Simple 16A;UN;Artefactos;11820;200;0;Catálogo Base Chile 2026
+MAGICED16;Enchufe Doble 16A;UN;Artefactos;18640;200;0;Catálogo Base Chile 2026
+MAGICET16;Enchufe Triple 16A;UN;Artefactos;25460;200;0;Catálogo Base Chile 2026
+MAGICPULS;Zumbador;UN;Artefactos;32250;200;0;Catálogo Base Chile 2026
+MAGICZUMB;Pulsador;UN;Artefactos;10390;200;0;Catálogo Base Chile 2026
+MAGICSEG1;Enchufe hembra Seguridad Simple;UN;Artefactos;20360;200;0;Catálogo Base Chile 2026
+MAGICSEG2;Enchufe hembra Seguridad Doble;UN;Artefactos;35720;200;0;Catálogo Base Chile 2026
+MAGICSEG3;Enchufe hembra Seguridad Triple;UN;Artefactos;51080;200;0;Catálogo Base Chile 2026
+GN9/12;Interruptor 9/12;UN;Artefactos;1932;200;0;Catálogo Base Chile 2026
+GN9/15;Interruptor 9/15;UN;Artefactos;3030;200;0;Catálogo Base Chile 2026
+GN9/24;Interruptor 9/24;UN;Artefactos;2258;200;0;Catálogo Base Chile 2026
+GN9/32;Interruptor 9/32;UN;Artefactos;4128;200;0;Catálogo Base Chile 2026
+GN9/24+9/12;Interruptor 9/24+9/12;UN;Artefactos;3356;200;0;Catálogo Base Chile 2026
+GN9/24+9/15;Interruptor 9/24+9/15;UN;Artefactos;4454;200;0;Catálogo Base Chile 2026
+GN924D;Interruptor 9/24 Doble;UN;Artefactos;3682;200;0;Catálogo Base Chile 2026
+GN924T;Interruptor 9/24 Triple;UN;Artefactos;5106;200;0;Catálogo Base Chile 2026
+GNES10;Enchufe Simple 10A;UN;Artefactos;1903;200;0;Catálogo Base Chile 2026
+GNED10;Enchufe Doble 10A;UN;Artefactos;2972;200;0;Catálogo Base Chile 2026
+GNET10;Enchufe Triple 10A;UN;Artefactos;4041;200;0;Catálogo Base Chile 2026
+GNES16;Enchufe Simple 16A;UN;Artefactos;2909;200;0;Catálogo Base Chile 2026
+GNED16;Enchufe Doble 16A;UN;Artefactos;4984;200;0;Catálogo Base Chile 2026
+GNET16;Enchufe Triple 16A;UN;Artefactos;7059;200;0;Catálogo Base Chile 2026
+GNPULS;Zumbador;UN;Artefactos;11222;200;0;Catálogo Base Chile 2026
+GNZUMB;Pulsador;UN;Artefactos;2297;200;0;Catálogo Base Chile 2026
+GNUSB1;Enchufe USB 1 Modulo;UN;Artefactos;11675;200;0;Catálogo Base Chile 2026
+GNUSB2;Enchufe USB 2 Modulo;UN;Artefactos;22516;200;0;Catálogo Base Chile 2026
+GNUSB3;Enchufe USB 3 Modulo;UN;Artefactos;33357;200;0;Catálogo Base Chile 2026
+GNUSBED10;Enchufe 1 USB + 2 ED10;UN;Artefactos;13813;200;0;Catálogo Base Chile 2026
+MARI9/12;Interruptor 9/12;UN;Artefactos;2477;200;0;Catálogo Base Chile 2026
+MARI9/15;Interruptor 9/15;UN;Artefactos;3901;200;0;Catálogo Base Chile 2026
+MARI9/24;Interruptor 9/24;UN;Artefactos;2803;200;0;Catálogo Base Chile 2026
+MARI9/32;Interruptor 9/32;UN;Artefactos;5325;200;0;Catálogo Base Chile 2026
+MARI9/24+9/12;Interruptor 9/24+9/12;UN;Artefactos;4227;200;0;Catálogo Base Chile 2026
+MARI9/24+9/15;Interruptor 9/24+9/15;UN;Artefactos;5651;200;0;Catálogo Base Chile 2026
+MARI924D;Interruptor 9/24 Doble;UN;Artefactos;4553;200;0;Catálogo Base Chile 2026
+MARI924T;Interruptor 9/24 Triple;UN;Artefactos;6303;200;0;Catálogo Base Chile 2026
+MARIES10;Enchufe Simple 10A;UN;Artefactos;2441;200;0;Catálogo Base Chile 2026
+MARIED10;Enchufe Doble 10A;UN;Artefactos;3829;200;0;Catálogo Base Chile 2026
+MARIET10;Enchufe Triple 10A;UN;Artefactos;5217;200;0;Catálogo Base Chile 2026
+MARIES16;Enchufe Simple 16A;UN;Artefactos;3603;200;0;Catálogo Base Chile 2026
+MARIED16;Enchufe Doble 16A;UN;Artefactos;6153;200;0;Catálogo Base Chile 2026
+MARIET16;Enchufe Triple 16A;UN;Artefactos;8703;200;0;Catálogo Base Chile 2026
+MARIPULS;Zumbador;UN;Artefactos;14468;200;0;Catálogo Base Chile 2026
+MARIZUMB;Pulsador;UN;Artefactos;2461;200;0;Catálogo Base Chile 2026
+SBLUE9/12;Interruptor 9/12;UN;Artefactos;5927;200;0;Catálogo Base Chile 2026
+SBLUE9/15;Interruptor 9/15;UN;Artefactos;9208;200;0;Catálogo Base Chile 2026
+SBLUE9/24;Interruptor 9/24;UN;Artefactos;6778;200;0;Catálogo Base Chile 2026
+SBLUE9/32;Interruptor 9/32;UN;Artefactos;12489;200;0;Catálogo Base Chile 2026
+SBLUE9/24+9/12;Interruptor 9/24+9/12;UN;Artefactos;10059;200;0;Catálogo Base Chile 2026
+SBLUE9/24+9/15;Interruptor 9/24+9/15;UN;Artefactos;13340;200;0;Catálogo Base Chile 2026
+SBLUE924D;Interruptor 9/24 Doble;UN;Artefactos;10910;200;0;Catálogo Base Chile 2026
+SBLUE924T;Interruptor 9/24 Triple;UN;Artefactos;15042;200;0;Catálogo Base Chile 2026
+SBLUEES10;Enchufe Simple 10A;UN;Artefactos;5419;200;0;Catálogo Base Chile 2026
+SBLUEED10;Enchufe Doble 10A;UN;Artefactos;8192;200;0;Catálogo Base Chile 2026
+SBLUEET10;Enchufe Triple 10A;UN;Artefactos;10965;200;0;Catálogo Base Chile 2026
+SBLUEES16;Enchufe Simple 16A;UN;Artefactos;8962;200;0;Catálogo Base Chile 2026
+SBLUEED16;Enchufe Doble 16A;UN;Artefactos;15278;200;0;Catálogo Base Chile 2026
+SBLUEET16;Enchufe Triple 16A;UN;Artefactos;21594;200;0;Catálogo Base Chile 2026
+SBLUEPULS;Zumbador;UN;Artefactos;18232;200;0;Catálogo Base Chile 2026
+SBLUEZUMB;Pulsador;UN;Artefactos;6341;200;0;Catálogo Base Chile 2026
+SBLUEUSB1;Enchufe USB 1 Modulo;UN;Artefactos;24584;200;0;Catálogo Base Chile 2026
+SBLUEUSB2;Enchufe USB 2 Modulo;UN;Artefactos;46522;200;0;Catálogo Base Chile 2026
+SBLUEUSB3;Enchufe USB 3 Modulo;UN;Artefactos;68460;200;0;Catálogo Base Chile 2026
+SBLUEUSBED10;Enchufe 1 USB + 2 ED10;UN;Artefactos;30130;200;0;Catálogo Base Chile 2026
+S129/12;Interruptor 9/12;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S129/15;Interruptor 9/15;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S129/24;Interruptor 9/24;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S129/32;Interruptor 9/32;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S129/24+9/12;Interruptor 9/24+9/12;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S129/24+9/15;Interruptor 9/24+9/15;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12924D;Interruptor 9/24 Doble;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12924T;Interruptor 9/24 Triple;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12ES10;Enchufe Simple 10A;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12ED10;Enchufe Doble 10A;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12ET10;Enchufe Triple 10A;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12ES16;Enchufe Simple 16A;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12ED16;Enchufe Doble 16A;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12ET16;Enchufe Triple 16A;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12PULS;Zumbador;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12ZUMB;Pulsador;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12USB1;Enchufe USB 1 Modulo;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12USB2;Enchufe USB 2 Modulo;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12USB3;Enchufe USB 3 Modulo;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S12USBED10;Enchufe 1 USB + 2 ED10;UN;Artefactos;0;200;0;Catálogo Base Chile 2026
+S179/12;Interruptor 9/12;UN;Artefactos;2055;200;0;Catálogo Base Chile 2026
+S179/15;Interruptor 9/15;UN;Artefactos;3049;200;0;Catálogo Base Chile 2026
+S179/24;Interruptor 9/24;UN;Artefactos;2442;200;0;Catálogo Base Chile 2026
+S179/32;Interruptor 9/32;UN;Artefactos;4043;200;0;Catálogo Base Chile 2026
+S179/24+9/12;Interruptor 9/24+9/12;UN;Artefactos;3436;200;0;Catálogo Base Chile 2026
+S179/24+9/15;Interruptor 9/24+9/15;UN;Artefactos;4430;200;0;Catálogo Base Chile 2026
+S17924D;Interruptor 9/24 Doble;UN;Artefactos;3823;200;0;Catálogo Base Chile 2026
+S17924T;Interruptor 9/24 Triple;UN;Artefactos;5204;200;0;Catálogo Base Chile 2026
+S17ES10;Enchufe Simple 10A;UN;Artefactos;2084;200;0;Catálogo Base Chile 2026
+S17ED10;Enchufe Doble 10A;UN;Artefactos;3107;200;0;Catálogo Base Chile 2026
+S17ET10;Enchufe Triple 10A;UN;Artefactos;4130;200;0;Catálogo Base Chile 2026
+S17ES16;Enchufe Simple 16A;UN;Artefactos;3011;200;0;Catálogo Base Chile 2026
+S17ED16;Enchufe Doble 16A;UN;Artefactos;4961;200;0;Catálogo Base Chile 2026
+S17ET16;Enchufe Triple 16A;UN;Artefactos;6911;200;0;Catálogo Base Chile 2026
+S17PULS;Zumbador;UN;Artefactos;9563;200;0;Catálogo Base Chile 2026
+S17ZUMB;Pulsador;UN;Artefactos;2216;200;0;Catálogo Base Chile 2026
+S17USB1;Enchufe USB 1 Modulo;UN;Artefactos;13742;200;0;Catálogo Base Chile 2026
+S17USB2;Enchufe USB 2 Modulo;UN;Artefactos;26423;200;0;Catálogo Base Chile 2026
+S17USB3;Enchufe USB 3 Modulo;UN;Artefactos;39104;200;0;Catálogo Base Chile 2026
+S17USBED10;Enchufe 1 USB + 2 ED10;UN;Artefactos;15788;200;0;Catálogo Base Chile 2026
+S229/12;Interruptor 9/12;UN;Artefactos;4704;200;0;Catálogo Base Chile 2026
+S229/15;Interruptor 9/15;UN;Artefactos;6901;200;0;Catálogo Base Chile 2026
+S229/24;Interruptor 9/24;UN;Artefactos;5270;200;0;Catálogo Base Chile 2026
+S229/32;Interruptor 9/32;UN;Artefactos;9098;200;0;Catálogo Base Chile 2026
+S229/24+9/12;Interruptor 9/24+9/12;UN;Artefactos;7467;200;0;Catálogo Base Chile 2026
+S229/24+9/15;Interruptor 9/24+9/15;UN;Artefactos;9664;200;0;Catálogo Base Chile 2026
+S22924D;Interruptor 9/24 Doble;UN;Artefactos;8033;200;0;Catálogo Base Chile 2026
+S22924T;Interruptor 9/24 Triple;UN;Artefactos;10796;200;0;Catálogo Base Chile 2026
+S22ES10;Enchufe Simple 10A;UN;Artefactos;4362;200;0;Catálogo Base Chile 2026
+S22ED10;Enchufe Doble 10A;UN;Artefactos;6217;200;0;Catálogo Base Chile 2026
+S22ET10;Enchufe Triple 10A;UN;Artefactos;8072;200;0;Catálogo Base Chile 2026
+S22ES16;Enchufe Simple 16A;UN;Artefactos;6733;200;0;Catálogo Base Chile 2026
+S22ED16;Enchufe Doble 16A;UN;Artefactos;10959;200;0;Catálogo Base Chile 2026
+S22ET16;Enchufe Triple 16A;UN;Artefactos;15185;200;0;Catálogo Base Chile 2026
+S22PULS;Zumbador;UN;Artefactos;12932;200;0;Catálogo Base Chile 2026
+S22ZUMB;Pulsador;UN;Artefactos;4980;200;0;Catálogo Base Chile 2026
+S22USB1;Enchufe USB 1 Modulo;UN;Artefactos;17183;200;0;Catálogo Base Chile 2026
+S22USB2;Enchufe USB 2 Modulo;UN;Artefactos;31859;200;0;Catálogo Base Chile 2026
+S22USB3;Enchufe USB 3 Modulo;UN;Artefactos;46535;200;0;Catálogo Base Chile 2026
+S22USBED10;Enchufe 1 USB + 2 ED10;UN;Artefactos;20893;200;0;Catálogo Base Chile 2026
+S339/12;Interruptor 9/12;UN;Artefactos;5154;200;0;Catálogo Base Chile 2026
+S339/15;Interruptor 9/15;UN;Artefactos;8007;200;0;Catálogo Base Chile 2026
+S339/24;Interruptor 9/24;UN;Artefactos;5894;200;0;Catálogo Base Chile 2026
+S339/32;Interruptor 9/32;UN;Artefactos;10860;200;0;Catálogo Base Chile 2026
+S339/24+9/12;Interruptor 9/24+9/12;UN;Artefactos;8747;200;0;Catálogo Base Chile 2026
+S339/24+9/15;Interruptor 9/24+9/15;UN;Artefactos;11600;200;0;Catálogo Base Chile 2026
+S33924D;Interruptor 9/24 Doble;UN;Artefactos;9487;200;0;Catálogo Base Chile 2026
+S33924T;Interruptor 9/24 Triple;UN;Artefactos;13080;200;0;Catálogo Base Chile 2026
+S33ES10;Enchufe Simple 10A;UN;Artefactos;4712;200;0;Catálogo Base Chile 2026
+S33ED10;Enchufe Doble 10A;UN;Artefactos;7123;200;0;Catálogo Base Chile 2026
+S33ET10;Enchufe Triple 10A;UN;Artefactos;9534;200;0;Catálogo Base Chile 2026
+S33ES16;Enchufe Simple 16A;UN;Artefactos;7793;200;0;Catálogo Base Chile 2026
+S33ED16;Enchufe Doble 16A;UN;Artefactos;13285;200;0;Catálogo Base Chile 2026
+S33ET16;Enchufe Triple 16A;UN;Artefactos;18777;200;0;Catálogo Base Chile 2026
+S33PULS;Zumbador;UN;Artefactos;15854;200;0;Catálogo Base Chile 2026
+S33ZUMB;Pulsador;UN;Artefactos;5514;200;0;Catálogo Base Chile 2026
+S33USB1;Enchufe USB 1 Modulo;UN;Artefactos;21378;200;0;Catálogo Base Chile 2026
+S33USB2;Enchufe USB 2 Modulo;UN;Artefactos;40455;200;0;Catálogo Base Chile 2026
+S33USB3;Enchufe USB 3 Modulo;UN;Artefactos;59532;200;0;Catálogo Base Chile 2026
+S33USBED10;Enchufe 1 USB + 2 ED10;UN;Artefactos;26200;200;0;Catálogo Base Chile 2026
+S449/12;Interruptor 9/12;UN;Artefactos;8958;200;0;Catálogo Base Chile 2026
+S449/15;Interruptor 9/15;UN;Artefactos;13051;200;0;Catálogo Base Chile 2026
+S449/24;Interruptor 9/24;UN;Artefactos;9945;200;0;Catálogo Base Chile 2026
+S449/32;Interruptor 9/32;UN;Artefactos;17144;200;0;Catálogo Base Chile 2026
+S449/24+9/12;Interruptor 9/24+9/12;UN;Artefactos;14038;200;0;Catálogo Base Chile 2026
+S449/24+9/15;Interruptor 9/24+9/15;UN;Artefactos;18131;200;0;Catálogo Base Chile 2026
+S44924D;Interruptor 9/24 Doble;UN;Artefactos;15025;200;0;Catálogo Base Chile 2026
+S44924T;Interruptor 9/24 Triple;UN;Artefactos;20105;200;0;Catálogo Base Chile 2026
+S44ES10;Enchufe Simple 10A;UN;Artefactos;8273;200;0;Catálogo Base Chile 2026
+S44ED10;Enchufe Doble 10A;UN;Artefactos;11681;200;0;Catálogo Base Chile 2026
+S44ET10;Enchufe Triple 10A;UN;Artefactos;15089;200;0;Catálogo Base Chile 2026
+S44ES16;Enchufe Simple 16A;UN;Artefactos;12632;200;0;Catálogo Base Chile 2026
+S44ED16;Enchufe Doble 16A;UN;Artefactos;20399;200;0;Catálogo Base Chile 2026
+S44ET16;Enchufe Triple 16A;UN;Artefactos;28166;200;0;Catálogo Base Chile 2026
+S44PULS;Zumbador;UN;Artefactos;24033;200;0;Catálogo Base Chile 2026
+S44ZUMB;Pulsador;UN;Artefactos;9411;200;0;Catálogo Base Chile 2026
+S44USB1;Enchufe USB 1 Modulo;UN;Artefactos;31846;200;0;Catálogo Base Chile 2026
+S44USB2;Enchufe USB 2 Modulo;UN;Artefactos;58827;200;0;Catálogo Base Chile 2026
+S44USB3;Enchufe USB 3 Modulo;UN;Artefactos;85808;200;0;Catálogo Base Chile 2026
+S44USBED10;Enchufe 1 USB + 2 ED10;UN;Artefactos;38662;200;0;Catálogo Base Chile 2026
+TERMINAL1;TERMINAL 1 PERF 3/0 MCM 2112047 Artelec;UN;Terminales;1985;300;0;Catálogo Base Chile 2026
+TERMINAL2;TERMINAL 1 PERF 250 MCM 2112047 Artelec;UN;Terminales;3640;300;0;Catálogo Base Chile 2026
+TERMINAL3;TERMINAL 1 PERF 500 MCM 2324047 Artelec;UN;Terminales;13452;300;0;Catálogo Base Chile 2026
+FERRUL;TERMINAL FERRULL;UN;Terminales;100;200;0;Catálogo Base Chile 2026
+3X1600-60KA;1600A 3Ø 60kA;UN;Tableros;7658740;86312;0;Catálogo Base Chile 2026
+3X1250-60KA;1250A 3Ø 60kA;UN;Tableros;5355750;60358;0;Catálogo Base Chile 2026
+3X1000-60KA;1000A 3Ø 60kA;UN;Tableros;4463070;50298;0;Catálogo Base Chile 2026
+3X800-60KA;800A 3Ø 60kA;UN;Tableros;3719450;41917;0;Catálogo Base Chile 2026
+3X630-60KA;630A 3Ø 60kA;UN;Tableros;3576230;40303;0;Catálogo Base Chile 2026
+3X500-60KA;500A 3Ø 60kA;UN;Tableros;2843390;40303;0;Catálogo Base Chile 2026
+3X400-60KA;400A 3Ø 60kA;UN;Tableros;2064310;17687;0;Catálogo Base Chile 2026
+3X320-60KA;320A 3Ø 60kA;UN;Tableros;2064310;17687;0;Catálogo Base Chile 2026
+3X250-60KA;250A 3Ø 60kA;UN;Tableros;2064310;17687;0;Catálogo Base Chile 2026
+3X160-60KA;160A 3Ø 60kA;UN;Tableros;1810036;17687;0;Catálogo Base Chile 2026
+3X160-30KA;160A 3Ø 30kA;UN;Tableros;581640;7492;0;Catálogo Base Chile 2026
+3X125-30KA;125A 3Ø 30kA;UN;Tableros;415460;6247;0;Catálogo Base Chile 2026
+3X100-30KA;100A 3Ø 30kA;UN;Tableros;404100;5111;0;Catálogo Base Chile 2026
+3X80-30KA;80A 3Ø 30kA;UN;Tableros;404100;5274;0;Catálogo Base Chile 2026
+3X63-30KA;63A 3Ø 30kA;UN;Tableros;355090;5111;0;Catálogo Base Chile 2026
+3X60-30KA;60A 3Ø 30kA;UN;Tableros;355090;5111;0;Catálogo Base Chile 2026
+3X40-30KA;40A 3Ø 30kA;UN;Tableros;355090;5111;0;Catálogo Base Chile 2026
+3X25-30KA;25A 3Ø 30kA;UN;Tableros;355090;5274;0;Catálogo Base Chile 2026
+3X16-30KA;16A 3Ø 30kA;UN;Tableros;355090;5274;0;Catálogo Base Chile 2026
+DLP100X50CG;Canaleta Blanca 100x50mm Con Tapa;ML;Bandejas;19338;300;0;Catálogo Base Chile 2026
+DLP100X50C90G;curva (interior,exterior,plana) 100x50;UN;Bandejas;5281;300;0;Catálogo Base Chile 2026
+DLP100X50TG;Tapa final 100x50;UN;Bandejas;2632;100;0;Catálogo Base Chile 2026
+DLP100X50SG;Separador 100x50;UN;Bandejas;7288;100;0;Catálogo Base Chile 2026
+MDL;Montaje de luminaria;un;Luminarias;1800;200;0;Catálogo Base Chile 2026
+MDLLED;Montaje de luminaria led;ml;Luminarias;1700;200;0;Catálogo Base Chile 2026
+STHSELECTRODOS ACTIVOS;ELECTRODOS ACTIVOS;;;0;0;0;Catálogo Base Chile 2026
+AT-70H;ELETRODO GRAFITO 600x150MM;UN;Malla a tierra;232000;5000;0;Catálogo Base Chile 2026
+BETONITA;BETONITA SODICA;UN;Malla a tierra;315;245;0;Catálogo Base Chile 2026
+ARQUETA;ARQUETA REGISTRO;UN;Malla a tierra;66890;1500;0;Catálogo Base Chile 2026
+PUENTE;PUENTE DE COMPROBACION;UN;Malla a tierra;41000;1500;0;Catálogo Base Chile 2026
+CONDUCTIVER;AT-10L CONDUCTIVER PLUS ( Gel Mejorador );UN;Malla a tierra;79564;245;0;Catálogo Base Chile 2026
+STHSDE ILUMINACION;ACCESORIOS PARA MONTAJE DE RIEL Y  EQUIPOS DE ILUMINACION;;;0;0;0;Catálogo Base Chile 2026
+PIOLA;PIOLA ACERO 1/8";ML;Luminarias;150;165;0;Catálogo Base Chile 2026
+CANDADO;PRENSA CANDADO;ML;Luminarias;150;165;0;Catálogo Base Chile 2026
+ESTRIBO;SOPORTE ESTRIBO;UN;Luminarias;1500;180;0;Catálogo Base Chile 2026
+CADENA 4;CADENA  + CANCAMO 1/4";UN;Luminarias;260;200;0;Catálogo Base Chile 2026
+1*10;INTERRUPTOR AUTOMATICO 1x10-25 A 10 KA;UN;Tableros;2200;1520;0;Catálogo Base Chile 2026
+3*10;INTERRUPTOR AUTOMATICO 3x10-25 A 10 KA;UN;Tableros;8500;1520;0;Catálogo Base Chile 2026
+D2*25;PROTECTOR DIFERENCIAL 2*25 A 30 Ma;UN;Tableros;12500;1820;0;Catálogo Base Chile 2026
+D4*25;PROTECTOR DIFERENCIAL 4*25 A 30 Ma;UN;Tableros;0;1821;0;Catálogo Base Chile 2026
+D4*63;PROTECTOR DIFERENCIAL 4*63 A 30 Ma;UN;Tableros;0;1821;0;Catálogo Base Chile 2026
+RIEL RC1/2;ABRAZADERA EN RIEL CON RC 1/2";UN;Soportes;988;20;0;Catálogo Base Chile 2026
+RIEL RC3/4;ABRAZADERA EN RIEL CON RC 3/4";UN;Soportes;1030;25;0;Catálogo Base Chile 2026
+RIEL RC1;ABRAZADERA EN RIEL CON RC 1";UN;Soportes;1076;40;0;Catálogo Base Chile 2026
+RIEL RC11/4;ABRAZADERA EN RIEL CON RC 11/4";UN;Soportes;1133;60;0;Catálogo Base Chile 2026
+RIEL RC11/2;ABRAZADERA EN RIEL CON RC 11/2";UN;Soportes;1334;80;0;Catálogo Base Chile 2026
+RIEL RC2;ABRAZADERA EN RIEL CON RC 2";UN;Soportes;1388;80;0;Catálogo Base Chile 2026
+RIEL RC21/2;ABRAZADERA EN RIEL CON RC 21/2";UN;Soportes;1507;90;0;Catálogo Base Chile 2026
+RIEL RC3;ABRAZADERA EN RIEL CON RC 3";UN;Soportes;1607;120;0;Catálogo Base Chile 2026
+RIEL RC4;ABRAZADERA EN RIEL CON RC 4";UN;Soportes;2080;130;0;Catálogo Base Chile 2026
+TFLH16SG;T. FLEXIBLE LIBRE DE HALOGENO 16MM S/G;ML;Canalizado;304;80;0;Catálogo Base Chile 2026
+TFLH20SG;T. FLEXIBLE LIBRE DE HALOGENO 20MM S/G;ML;Canalizado;539;80;0;Catálogo Base Chile 2026
+TFLH20CG;T. FLEXIBLE LIBRE DE HALOGENO 20MM C/G;ML;Canalizado;674;80;0;Catálogo Base Chile 2026
+TFLH25SG;T. FLEXIBLE LIBRE DE HALOGENO 25MM S/G;ML;Canalizado;727;80;0;Catálogo Base Chile 2026
+TFLH25CG;T. FLEXIBLE LIBRE DE HALOGENO 25MM C/G;ML;Canalizado;903;80;0;Catálogo Base Chile 2026
+TFLH32SG;T. FLEXIBLE LIBRE DE HALOGENO 32MM S/G;ML;Canalizado;1072;107;0;Catálogo Base Chile 2026
+TFLH3CSG;T. FLEXIBLE LIBRE DE HALOGENO 32MM C/G;ML;Canalizado;1250;141;0;Catálogo Base Chile 2026
+TFLH40SG;T. FLEXIBLE LIBRE DE HALOGENO 40MM S/G;ML;Canalizado;1715;141;0;Catálogo Base Chile 2026
+TFLH40CG;T. FLEXIBLE LIBRE DE HALOGENO 40MM C/G;ML;Canalizado;1794;141;0;Catálogo Base Chile 2026
+TFLH50SG;T. FLEXIBLE LIBRE DE HALOGENO 50MM S/G;ML;Canalizado;2297;169;0;Catálogo Base Chile 2026
+TFLH50CG;T. FLEXIBLE LIBRE DE HALOGENO 50MM C/G;ML;Canalizado;3391;169;0;Catálogo Base Chile 2026
+TFLH63 S/G;T. FLEXIBLE LIBRE DE HALOGENO 63MM S/G;ML;Canalizado;6792;168;0;Catálogo Base Chile 2026
+TFLH75;T. FLEXIBLE LIBRE DE HALOGENO 75MM;ML;Canalizado;28268;168;0;Catálogo Base Chile 2026

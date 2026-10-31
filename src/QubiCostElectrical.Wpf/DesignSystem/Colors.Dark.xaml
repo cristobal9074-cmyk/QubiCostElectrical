@@ -56,6 +56,16 @@
     <Color x:Key="Color.DangerBg">#1F0F0F</Color>
     <Color x:Key="Color.DangerBorder">#3D1A1A</Color>
 
+    <!-- ── WCAG AAA Financial Ratio Colors (Contrast > 7:1) ───────────────── -->
+    <Color x:Key="Color.Finance.Direct">#93C5FD</Color>
+    <Color x:Key="Color.Finance.Indirect">#FCD34D</Color>
+    <Color x:Key="Color.Finance.Margin">#86EFAC</Color>
+    <Color x:Key="Color.Finance.DirectSoft">#1E293B</Color>
+    <Color x:Key="Color.Finance.IndirectSoft">#2D2410</Color>
+    <Color x:Key="Color.Finance.MarginSoft">#0F291E</Color>
+    <Color x:Key="Color.Finance.Track">#1E293B</Color>
+    <Color x:Key="Color.Finance.TrackBorder">#334155</Color>
+
     <!-- ── Info / Purple (recurso MO) ──────────────────────────────────────── -->
     <Color x:Key="Color.Info">#5B91FF</Color>
     <Color x:Key="Color.InfoBg">#182A47</Color>
@@ -228,6 +238,16 @@
 
     <SolidColorBrush x:Key="Brush.SaveDot"      Color="{StaticResource Color.SaveDot}" />
     <SolidColorBrush x:Key="Brush.AvatarBg"     Color="{StaticResource Color.AvatarBg}" />
+
+    <!-- ── WCAG AAA Financial Ratio Brushes ──────────────────────────────── -->
+    <SolidColorBrush x:Key="Brush.Finance.Direct"        Color="{StaticResource Color.Finance.Direct}" />
+    <SolidColorBrush x:Key="Brush.Finance.Indirect"      Color="{StaticResource Color.Finance.Indirect}" />
+    <SolidColorBrush x:Key="Brush.Finance.Margin"        Color="{StaticResource Color.Finance.Margin}" />
+    <SolidColorBrush x:Key="Brush.Finance.DirectSoft"    Color="{StaticResource Color.Finance.DirectSoft}" />
+    <SolidColorBrush x:Key="Brush.Finance.IndirectSoft"  Color="{StaticResource Color.Finance.IndirectSoft}" />
+    <SolidColorBrush x:Key="Brush.Finance.MarginSoft"    Color="{StaticResource Color.Finance.MarginSoft}" />
+    <SolidColorBrush x:Key="Brush.Finance.Track"         Color="{StaticResource Color.Finance.Track}" />
+    <SolidColorBrush x:Key="Brush.Finance.TrackBorder"   Color="{StaticResource Color.Finance.TrackBorder}" />
 
     <SolidColorBrush x:Key="Brush.Accent"       Color="{StaticResource Color.Blue2}" />
     <SolidColorBrush x:Key="Brush.Warning"      Color="{StaticResource Color.Amber}" />

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,7 +17,6 @@ public partial class ShellWindow : Window
     private readonly Action _requestRedoAction;
     private readonly ShellFileDropHandler _dropHandler;
     private bool _suppressNextProjectPickerToggle;
-    private bool _undoShortcutBusy;
     private bool _exitFlushCompleted;
 
     // Cerrar sesión (ShellViewModel.Logout) reutiliza Window.Close() sobre ESTA MISMA clase para

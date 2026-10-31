@@ -44,7 +44,7 @@ public sealed class PresentationLetterDocxExporter : IPresentationLetterDocxExpo
 
         bool hasTheme = theme?.Enabled == true;
         string companyName = !string.IsNullOrWhiteSpace(offer.CompanyName) ? offer.CompanyName
-            : (hasTheme && !string.IsNullOrWhiteSpace(theme!.CompanyName) ? theme.CompanyName : "INGELSAM SPA");
+            : (hasTheme && !string.IsNullOrWhiteSpace(theme!.CompanyName) ? theme.CompanyName : "EMPRESA CONTRATISTA");
         string companyRut = Safe(offer.CompanyRut);
         string companyAddress = Safe(offer.CompanyAddress);
         string companyPhone = Safe(offer.CompanyPhone);

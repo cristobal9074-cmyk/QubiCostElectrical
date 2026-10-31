@@ -6,8 +6,21 @@ Las versiones siguen el formato `MAJOR.MINOR.PATCH` y corresponden a `Directory.
 
 ## 1.1.6
 
-### En desarrollo (2026-10-27)
-- Apertura del ciclo de desarrollo v1.1.6.
+### Estados de Pago, Tipologías, Adicionales de Obra y Undo Transaccional (2026-10-31)
+- **Módulo de Estados de Pago Profesional**:
+  - Motor de cálculo desacoplado (`EstadoPagoCalculator`) y calendario multi-año continuo con periodos generables.
+  - Navegación de tabla estilo Excel: navegación vertical continua manteniéndose en la misma columna (`Cant. Mes` y `% Mes`).
+  - Deshacer/Rehacer (Ctrl+Z / Ctrl+Y) transaccional instantáneo en 1 sola pulsación sin recargas zombi ni re-commits por pérdida de foco.
+  - Deducciones automáticas: anticipo contractual, retención de garantía e IVA calculados en vivo.
+  - Reportes certificados listos para firma: exportación a QuestPDF y Excel con desglose por partidas y acumulados.
+- **Tipologías de Canalización y Conductores en Cubicación**:
+  - Catálogo y selector de tipologías eléctricas integradas directamente en el flujo de cubicación.
+- **Gestión Integral de Adicionales de Obra (Change Orders)**:
+  - Rediseño ergonómico con trazabilidad de estados y exportadores certificados en PDF y Excel.
+- **Control de Materiales, EPP y Solicitudes de Faena**:
+  - Agrupación por categorías EPP, trazabilidad de solicitudes de obra y control de consumos.
+- **Instalador Oficial**:
+  - Asistente de instalación nativo WPF con blueprint CAD y sincronización dinámica de versiones.
 
 ## 1.1.5
 

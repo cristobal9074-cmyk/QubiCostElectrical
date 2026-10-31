@@ -10,8 +10,20 @@ namespace QubiCostElectrical.Tests.Wpf;
 /// </summary>
 public sealed class WpfPhase1GateTests
 {
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "QubiCostElectrical.Wpf.sln")))
+                return dir.FullName;
+            dir = dir.Parent;
+        }
+        return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+    }
+
     private static string WpfSourceRoot =>
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "QubiCostElectrical.Wpf"));
+        Path.Combine(FindRepoRoot(), "src", "QubiCostElectrical.Wpf");
 
     [Fact]
     public void WpfSource_HasNoMessageBox()

@@ -1,4 +1,4 @@
-<UserControl x:Class="QubiCostElectrical.Wpf.Features.Project.ProjectHeaderControl"
+﻿<UserControl x:Class="QubiCostElectrical.Wpf.Features.Project.ProjectHeaderControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -88,6 +88,10 @@
                       <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
                       <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}" />
                     </DataTrigger>
+                    <DataTrigger Binding="{Binding IsEstadoAdjudicado}" Value="True">
+                      <Setter Property="Background" Value="#F3E8FF" />
+                      <Setter Property="BorderBrush" Value="#C084FC" />
+                    </DataTrigger>
                   </Style.Triggers>
                 </Style>
               </Border.Style>
@@ -103,6 +107,9 @@
                         <DataTrigger Binding="{Binding IsEstadoAprobado}" Value="True">
                           <Setter Property="Fill" Value="{DynamicResource Brush.Success}" />
                         </DataTrigger>
+                        <DataTrigger Binding="{Binding IsEstadoAdjudicado}" Value="True">
+                          <Setter Property="Fill" Value="#7E22CE" />
+                        </DataTrigger>
                       </Style.Triggers>
                     </Style>
                   </Ellipse.Style>
@@ -117,6 +124,9 @@
                         </DataTrigger>
                         <DataTrigger Binding="{Binding IsEstadoAprobado}" Value="True">
                           <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsEstadoAdjudicado}" Value="True">
+                          <Setter Property="Foreground" Value="#6B21A8" />
                         </DataTrigger>
                       </Style.Triggers>
                     </Style>
@@ -160,6 +170,15 @@
 
       <!-- Acciones de Cabecera (Botones Pro) -->
       <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+        <Button Style="{StaticResource Button.Secondary}"
+                Command="{Binding AdjudicarObraCommand}"
+                Height="32" Padding="12,0" Margin="0,0,8,0" FontSize="11.5"
+                ToolTip="Registrar adjudicación del contrato y congelar la Línea Base Contractual">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="🏆" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
+            <TextBlock Text="Adjudicar Obra" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
         <Button Style="{StaticResource Button.Secondary}"
                 Command="{Binding GenerateFichaPdfCommand}"
                 Height="32" Padding="12,0" Margin="0,0,8,0" FontSize="11.5">

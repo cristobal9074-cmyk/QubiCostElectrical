@@ -40,7 +40,7 @@ public static class FamilyPresentationDefaults
         var clave = ElectricalFamilyCatalog.ClaveCanonica(normalized);
         return clave switch
         {
-        // Canalización y distribución (incluye cajas, soportes y abrazaderas como en matriz Excel Ingelsam M02..M04, M09, M10)
+        // Canalización y distribución (incluye cajas, soportes y abrazaderas M02..M04, M09, M10)
         "CANALIZACION" or "CANALIZACIONES" or "CANALIZADO" or "CANALIZADOS"
             or "BANDEJAS" or "BANDEJA" or "ESCALERILLAS" or "ESCALERILLA"
             or "TUBERIAS" or "TUBERIA" or "CONDUIT" or "TUBERIAS CONDUIT" or "TUBERIA CONDUIT"

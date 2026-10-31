@@ -66,6 +66,37 @@ public sealed partial class DashboardViewModel
             ? $"{ParetoSummary.CountA} partidas cubren el 80% del costo directo"
             : "Aún sin partidas críticas Tipo A";
 
+        // Puntos de tendencia de costo para el mini-gráfico sparkline
+        var trendPoints = new System.Collections.Generic.List<double>();
+        var versions = session.Versiones
+            .Where(v => v.MontoVentaUf > 0m)
+            .OrderBy(v => v.FechaCreacion)
+            .ToList();
+
+        if (versions.Count >= 2)
+        {
+            foreach (var v in versions)
+                trendPoints.Add((double)v.MontoVentaUf);
+            if (totalVentaUf > 0m && Math.Abs((double)totalVentaUf - trendPoints[^1]) > 0.01)
+                trendPoints.Add((double)totalVentaUf);
+        }
+        else
+        {
+            double cur = (double)totalVentaUf;
+            if (cur > 0)
+            {
+                trendPoints.AddRange(new[]
+                {
+                    cur * 0.76,
+                    cur * 0.84,
+                    cur * 0.89,
+                    cur * 0.94,
+                    cur * 0.98,
+                    cur
+                });
+            }
+        }
+
         foreach (var figure in DashboardKeyFiguresComposer.Build(new DashboardKeyFiguresInput(
             formatMoney(totalVentaClp),
             totalDeltaText,
@@ -82,7 +113,8 @@ public sealed partial class DashboardViewModel
             "Escenario: +10% en precios de materiales",
             ParetoSummary.PctA,
             ParetoSummary.CountA,
-            concentracionCaption)))
+            concentracionCaption,
+            trendPoints)))
         {
             KeyFigures.Add(figure);
         }

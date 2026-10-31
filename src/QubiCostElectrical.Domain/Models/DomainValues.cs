@@ -20,6 +20,7 @@ public static class EstadoPartida
     public const string Aprobado = "Aprobado";
     public const string Rechazado = "Rechazado";
     public const string Ofertado = "Ofertado";
+    public const string Adjudicado = "Adjudicado";
 }
 
 public static class ModoRedondeo

@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using QubiCostElectrical.Wpf.Infrastructure;
 
 namespace QubiCostElectrical.Wpf.Features.EstadosPago;
 
@@ -69,7 +70,13 @@ public partial class EstadosPagoView : UserControl
 
     private void OnAvanceCellLostFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
-        if (sender is not TextBox box)
+        if (sender is not TextBox box || !box.IsLoaded || !box.IsVisible)
+            return;
+        if (PresentationSource.FromVisual(box) == null)
+            return;
+        if (box.DataContext is not EstadoPagoPartidaVm partida || partida.IsDisposed)
+            return;
+        if (DataContext is EstadosPagoViewModel vm && (vm.IsLoading || !vm.HasProject || !vm.CanEdit || vm.UndoService?.IsUndoingOrRedoing == true))
             return;
 
         bool hasDigit = false;
@@ -122,38 +129,91 @@ public partial class EstadosPagoView : UserControl
         bool shift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
         bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
 
+        // Escape: cancela edición no confirmada y restaura valor del modelo (estilo Excel)
+        if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            box.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();
+            box.SelectAll();
+            return;
+        }
+
+        // Ctrl+Z: si hay edición pendiente en la celda la descarta en 1 pulsación; si ya está confirmada delega al Undo global
+        if (ctrl && e.Key == Key.Z && !shift)
+        {
+            e.Handled = true;
+            var expr = box.GetBindingExpression(TextBox.TextProperty);
+            string originalText = box.DataContext is EstadoPagoPartidaVm p
+                ? (Grid.GetColumn(box) == 6 ? p.CantidadMes.ToString(CultureInfo.CurrentCulture) : p.AvanceMes.ToString(CultureInfo.CurrentCulture))
+                : "";
+
+            bool isUncommitted = !string.Equals(box.Text?.Trim(), originalText.Trim(), StringComparison.OrdinalIgnoreCase);
+            if (isUncommitted)
+            {
+                expr?.UpdateTarget();
+                box.SelectAll();
+                return;
+            }
+
+            Keyboard.ClearFocus();
+            ShellNotificationService.RequestUndo?.Invoke();
+            return;
+        }
+
+        // Ctrl+Y o Ctrl+Shift+Z: rehace en 1 pulsación
+        if ((ctrl && e.Key == Key.Y && !shift) || (ctrl && shift && e.Key == Key.Z))
+        {
+            e.Handled = true;
+            Keyboard.ClearFocus();
+            ShellNotificationService.RequestRedo?.Invoke();
+            return;
+        }
+
+        // Tab / Shift+Tab: navegación horizontal continua entre celdas (Cant. -> % -> sig. fila)
+        if (e.Key == Key.Tab)
+        {
+            int targetTab = shift ? idx - 1 : idx + 1;
+            if (targetTab >= 0 && targetTab < boxes.Count)
+            {
+                e.Handled = true;
+                MoveAvanceCell(boxes[targetTab]);
+            }
+            return;
+        }
+
+        if (ctrl && e.Key != Key.Home && e.Key != Key.End)
+            return; // Ctrl+C/V/etc.: comportamiento nativo de edición
+
+        // Navegación vertical: SIEMPRE se mantiene en la misma columna (Cant. Mes o % Mes)
+        int currentCol = Grid.GetColumn(box);
+        var colBoxes = boxes.Where(b => Grid.GetColumn(b) == currentCol).ToList();
+        int colIdx = colBoxes.FindIndex(b => ReferenceEquals(b, box));
+        if (colIdx < 0)
+            return;
+
         int target;
         if (ctrl && e.Key == Key.Home)
             target = 0;
         else if (ctrl && e.Key == Key.End)
-            target = boxes.Count - 1;
-        else if (ctrl)
-            return; // Ctrl+C/V/etc.: comportamiento nativo
+            target = colBoxes.Count - 1;
         else if (e.Key == Key.Up)
-            target = idx - 1;
+            target = colIdx - 1;
         else if (e.Key == Key.Down)
-            target = idx + 1;
+            target = colIdx + 1;
         else if (e.Key == Key.Enter)
-            target = shift ? idx - 1 : idx + 1;
-        else if (e.Key == Key.Tab)
-            target = shift ? idx - 1 : idx + 1;
+            target = shift ? colIdx - 1 : colIdx + 1;
         else if (e.Key == Key.PageUp)
-            target = idx - 10;
+            target = Math.Max(0, colIdx - 10);
         else if (e.Key == Key.PageDown)
-            target = idx + 10;
+            target = Math.Min(colBoxes.Count - 1, colIdx + 10);
         else
             return;
 
-        if (target < 0 || target >= boxes.Count)
-        {
-            if (e.Key == Key.Tab)
-                return; // Tab en el borde: salir de la tabla (nativo)
-            e.Handled = true; // Enter/flechas en el borde: permanecer en la celda
-            return;
-        }
-
         e.Handled = true;
-        MoveAvanceCell(boxes[target]);
+        if (target >= 0 && target < colBoxes.Count)
+        {
+            MoveAvanceCell(colBoxes[target]);
+        }
     }
 
     private void OnAvanceCellPreviewTextInput(object sender, TextCompositionEventArgs e)

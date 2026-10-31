@@ -56,14 +56,14 @@ public sealed class QuestPdfOfferSummaryExporter : IOfferSummaryPdfExporter
         byte[]? logoBytes = logoPath != null ? File.ReadAllBytes(logoPath) : null;
 
         string companyName = !string.IsNullOrWhiteSpace(offer.CompanyName) ? offer.CompanyName
-            : (hasTheme && !string.IsNullOrWhiteSpace(theme!.CompanyName) ? theme.CompanyName : "INGELSAM SPA");
+            : (hasTheme && !string.IsNullOrWhiteSpace(theme!.CompanyName) ? theme.CompanyName : "EMPRESA CONTRATISTA");
         string companyRut = !string.IsNullOrWhiteSpace(offer.CompanyRut) ? offer.CompanyRut.Trim() : "";
-        string companyAddress = !string.IsNullOrWhiteSpace(offer.CompanyAddress) ? offer.CompanyAddress.Trim() : "Av. Capellán Benavides 2077. Maipú, Santiago";
-        string companyPhone = !string.IsNullOrWhiteSpace(offer.CompanyPhone) ? offer.CompanyPhone.Trim() : "9 5856 3557";
-        string companyEmail = !string.IsNullOrWhiteSpace(offer.CompanyEmail) ? offer.CompanyEmail.Trim() : "cperez@ingelsam.cl";
+        string companyAddress = !string.IsNullOrWhiteSpace(offer.CompanyAddress) ? offer.CompanyAddress.Trim() : "";
+        string companyPhone = !string.IsNullOrWhiteSpace(offer.CompanyPhone) ? offer.CompanyPhone.Trim() : "";
+        string companyEmail = !string.IsNullOrWhiteSpace(offer.CompanyEmail) ? offer.CompanyEmail.Trim() : "";
 
         var date = offer.OfferDate == default ? DateTime.Today : offer.OfferDate;
-        string folio = !string.IsNullOrWhiteSpace(offer.OfferNumber) ? offer.OfferNumber.Trim() : "PEL024F2026";
+        string folio = !string.IsNullOrWhiteSpace(offer.OfferNumber) ? offer.OfferNumber.Trim() : $"OFT-{date:yyyyMMdd}-01";
 
         decimal valorUf = project.ValorUfClp > 0m ? project.ValorUfClp : PriceConversion.DefaultValorUfClp;
         bool muestraUf = ctx.MuestraUf;
@@ -250,8 +250,9 @@ public sealed class QuestPdfOfferSummaryExporter : IOfferSummaryPdfExporter
                     // Bloque de Firmas
                     col.Item().PaddingTop(24).Row(r =>
                     {
-                        string signName = !string.IsNullOrWhiteSpace(offer.SignatureName) ? offer.SignatureName : "LUIS SAAVEDRA";
-                        string signRole = !string.IsNullOrWhiteSpace(offer.SignatureRole) ? offer.SignatureRole : "GERENTE GENERAL";
+                        string signName = !string.IsNullOrWhiteSpace(offer.SignatureName) ? offer.SignatureName
+                            : (!string.IsNullOrWhiteSpace(project.UsuarioNombre) ? project.UsuarioNombre : "RESPONSABLE TÉCNICO");
+                        string signRole = !string.IsNullOrWhiteSpace(offer.SignatureRole) ? offer.SignatureRole : "JEFE DE PROYECTOS";
 
                         // Firma Emisor
                         r.RelativeItem().PaddingRight(20).Column(s =>

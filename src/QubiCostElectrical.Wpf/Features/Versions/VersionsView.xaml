@@ -14,8 +14,17 @@
     <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando versiones…"
                                  Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
 
+
+    <Grid Margin="20,14,20,14">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+
+      <!-- ════ Cabecera Slim ════ -->
+      <local:VersionsHeaderControl Grid.Row="0" />
     <!-- ═══ Estado vacío ═══ -->
-    <ctrl:EmptyStateControl Panel.ZIndex="10"
+      <ctrl:EmptyStateControl Grid.Row="1" Panel.ZIndex="10"
                             Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
                             IconData="M12 8v4l3 3 M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"
                             Title="{Binding EmptyStateTitle}"
@@ -40,15 +49,6 @@
         </StackPanel>
       </ctrl:EmptyStateControl.Actions>
     </ctrl:EmptyStateControl>
-
-    <Grid Margin="14,2,14,4" Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-      <Grid.RowDefinitions>
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="*" />
-      </Grid.RowDefinitions>
-
-      <!-- ════ Cabecera Slim ════ -->
-      <local:VersionsHeaderControl Grid.Row="0" />
 
       <!-- ════ Pestañas ════ -->
       <TabControl x:Name="MainTabControl" Grid.Row="1" Style="{StaticResource Versions.Tabs}"
@@ -277,10 +277,10 @@
                             <Setter Property="VerticalAlignment" Value="Center" />
                             <Style.Triggers>
                               <DataTrigger Binding="{Binding DeltaKind}" Value="Aumenta">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
+                                <Setter Property="Foreground" Value="#15803D" />
                               </DataTrigger>
                               <DataTrigger Binding="{Binding DeltaKind}" Value="Reduce">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                                <Setter Property="Foreground" Value="#B91C1C" />
                               </DataTrigger>
                             </Style.Triggers>
                           </Style>
@@ -650,10 +650,10 @@
                               <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
                               <Style.Triggers>
                                 <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Aumenta">
-                                  <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
+                                  <Setter Property="Foreground" Value="#15803D" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Reduce">
-                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                                  <Setter Property="Foreground" Value="#B91C1C" />
                                 </DataTrigger>
                               </Style.Triggers>
                             </Style>
@@ -667,10 +667,10 @@
                               <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
                               <Style.Triggers>
                                 <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Aumenta">
-                                  <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
+                                  <Setter Property="Foreground" Value="#15803D" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding ComparisonDeltaKind}" Value="Reduce">
-                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                                  <Setter Property="Foreground" Value="#B91C1C" />
                                 </DataTrigger>
                               </Style.Triggers>
                             </Style>
@@ -759,7 +759,7 @@
                           EnableColumnVirtualization="False"
                           VirtualizingPanel.IsVirtualizing="True"
                           VirtualizingPanel.VirtualizationMode="Recycling"
-                          RowHeight="26"
+                          MinRowHeight="26"
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                           ScrollViewer.VerticalScrollBarVisibility="Visible">
                   <DataGrid.Columns>
@@ -768,7 +768,7 @@
 
                     <!-- 1. Ítem A -->
                     <DataGridTextColumn Header="A · Ítem" Width="46" SortMemberPath="Item"
-                                        Binding="{Binding Item}"
+                                        Binding="{Binding ItemA}"
                                         HeaderStyle="{StaticResource Versions.Header.VersionA}"
                                         CellStyle="{StaticResource Versions.ComparisonCell}">
                       <DataGridTextColumn.ElementStyle>
@@ -783,7 +783,7 @@
 
                     <!-- 2. Partida A -->
                     <DataGridTextColumn Header="A · Descripción" Width="*" MinWidth="160" SortMemberPath="Descripcion"
-                                        Binding="{Binding Descripcion}"
+                                        Binding="{Binding DescripcionA}"
                                         HeaderStyle="{StaticResource Versions.Header.VersionA}"
                                         CellStyle="{StaticResource Versions.ComparisonCell}">
                       <DataGridTextColumn.ElementStyle>
@@ -799,7 +799,7 @@
 
                     <!-- 3. Unidad A -->
                     <DataGridTextColumn Header="Unid" Width="42" SortMemberPath="Unidad"
-                                        Binding="{Binding Unidad}"
+                                        Binding="{Binding UnidadA}"
                                         HeaderStyle="{StaticResource Versions.Header.VersionA.Center}"
                                         CellStyle="{StaticResource Versions.ComparisonCell}">
                       <DataGridTextColumn.ElementStyle>
@@ -814,7 +814,7 @@
 
                     <!-- 4. Cantidad A -->
                     <DataGridTextColumn Header="A · Cant" Width="76" SortMemberPath="CantidadBase"
-                                        Binding="{Binding CantidadBase, StringFormat={}{0:N0}}"
+                                        Binding="{Binding CantidadBaseNumDisplay}"
                                         HeaderStyle="{StaticResource Versions.Header.VersionA.Numeric}"
                                         CellStyle="{StaticResource Versions.ComparisonCell}">
                       <DataGridTextColumn.ElementStyle>
@@ -830,7 +830,7 @@
 
                     <!-- 5. Total A (Divisor derecho) -->
                     <DataGridTextColumn x:Name="TotalColumn" Header="A · Total UF" Width="90" SortMemberPath="TotalBaseUf"
-                                        Binding="{Binding TotalBaseText}"
+                                        Binding="{Binding TotalBaseDisplay}"
                                         HeaderStyle="{StaticResource Versions.Header.VersionA.Divider}"
                                         CellStyle="{StaticResource Versions.ComparisonCell.DividerA}">
                       <DataGridTextColumn.ElementStyle>
@@ -854,20 +854,20 @@
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                           <Border Style="{StaticResource Versions.SemaforoChip}">
-                            <TextBlock Text="{Binding DiffKind}" FontSize="9" FontWeight="Bold"
+                            <TextBlock Text="{Binding DiffStatusBadgeText}" FontSize="9" FontWeight="Bold"
                                        HorizontalAlignment="Center" TextAlignment="Center">
                               <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                   <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
                                   <Style.Triggers>
                                     <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
-                                      <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
+                                      <Setter Property="Foreground" Value="#15803D" />
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
-                                      <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                                      <Setter Property="Foreground" Value="#B91C1C" />
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
-                                      <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                                      <Setter Property="Foreground" Value="#A16207" />
                                     </DataTrigger>
                                   </Style.Triggers>
                                 </Style>
@@ -880,7 +880,7 @@
 
                     <!-- 7. Delta Cantidad -->
                     <DataGridTextColumn Header="Δ Cant" Width="110" SortMemberPath="DeltaCantidad"
-                                        Binding="{Binding DeltaCantidad, StringFormat={}{0:+0.##;-0.##;—}}"
+                                        Binding="{Binding DeltaCantidadNumDisplay}"
                                         HeaderStyle="{StaticResource Versions.Header.Delta.Numeric}"
                                         CellStyle="{StaticResource Versions.ComparisonCell}">
                       <DataGridTextColumn.ElementStyle>
@@ -893,13 +893,13 @@
                           <Setter Property="VerticalAlignment" Value="Center" />
                           <Style.Triggers>
                             <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
-                              <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
+                              <Setter Property="Foreground" Value="#15803D" />
                             </DataTrigger>
                             <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
-                              <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
+                              <Setter Property="Foreground" Value="#B91C1C" />
                             </DataTrigger>
                             <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
-                              <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
+                              <Setter Property="Foreground" Value="#A16207" />
                             </DataTrigger>
                           </Style.Triggers>
                         </Style>
@@ -907,32 +907,46 @@
                     </DataGridTextColumn>
 
                     <!-- 8. Delta Monto UF (Divisor derecho) -->
-                    <DataGridTextColumn x:Name="DeltaUfColumn" Header="Δ Monto UF" Width="135" SortMemberPath="DeltaUf"
-                                        Binding="{Binding DeltaTotalText}"
-                                        HeaderStyle="{StaticResource Versions.Header.Delta.Divider}"
-                                        CellStyle="{StaticResource Versions.ComparisonCell.Divider}">
-                      <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                          <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-                          <Setter Property="FontSize" Value="10" />
-                          <Setter Property="FontWeight" Value="Bold" />
-                          <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
-                          <Setter Property="TextAlignment" Value="Right" />
-                          <Setter Property="VerticalAlignment" Value="Center" />
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
-                              <Setter Property="Foreground" Value="{DynamicResource Brush.SuccessDark}" />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
-                              <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
-                              <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTemplateColumn x:Name="DeltaUfColumn" Header="Δ Monto UF" Width="135" SortMemberPath="DeltaUf"
+                                            HeaderStyle="{StaticResource Versions.Header.Delta.Divider}"
+                                            CellStyle="{StaticResource Versions.ComparisonCell.Divider}">
+                      <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                          <StackPanel VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,4,0">
+                            <TextBlock Text="{Binding DeltaTotalText}"
+                                       FontFamily="{StaticResource Font.Mono}"
+                                       FontSize="10"
+                                       FontWeight="Bold"
+                                       TextAlignment="Right">
+                              <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                  <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
+                                      <Setter Property="Foreground" Value="#15803D" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
+                                      <Setter Property="Foreground" Value="#B91C1C" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
+                                      <Setter Property="Foreground" Value="#B45309" />
+                                    </DataTrigger>
+                                  </Style.Triggers>
+                                </Style>
+                              </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding DeltaPuDisplay}"
+                                       FontFamily="{StaticResource Font.Mono}"
+                                       FontSize="8.5"
+                                       FontWeight="SemiBold"
+                                       Foreground="#B45309"
+                                       TextAlignment="Right"
+                                       Margin="0,1,0,0"
+                                       Visibility="{Binding HasDeltaPu, Converter={StaticResource BoolToVisibility}}" />
+                          </StackPanel>
+                        </DataTemplate>
+                      </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
                     <!-- ═════ GRUPO DERECHO: VERSIÓN B (5 Columnas) ═════ -->
 
@@ -984,7 +998,7 @@
 
                     <!-- 12. Cantidad B -->
                     <DataGridTextColumn Header="B · Cant" Width="76" SortMemberPath="CantidadActual"
-                                        Binding="{Binding CantidadActual, StringFormat={}{0:N0}}"
+                                        Binding="{Binding CantidadActualNumDisplay}"
                                         HeaderStyle="{StaticResource Versions.Header.VersionB.Numeric}"
                                         CellStyle="{StaticResource Versions.ComparisonCell}">
                       <DataGridTextColumn.ElementStyle>
@@ -1000,7 +1014,7 @@
 
                     <!-- 13. Total B -->
                     <DataGridTextColumn x:Name="TotalBColumn" Header="B · Total UF" Width="90" SortMemberPath="TotalActualUf"
-                                        Binding="{Binding TotalActualText}"
+                                        Binding="{Binding TotalActualDisplay}"
                                         HeaderStyle="{StaticResource Versions.Header.VersionB.Numeric}"
                                         CellStyle="{StaticResource Versions.ComparisonCell}">
                       <DataGridTextColumn.ElementStyle>

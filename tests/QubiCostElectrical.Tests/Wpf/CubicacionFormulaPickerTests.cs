@@ -254,4 +254,28 @@ public class CubicacionFormulaPickerTests
         Assert.True(result.Success);
         Assert.Equal(80m, result.Value);
     }
+    [Fact]
+    public void PartidaCantidadFormula_ReevaluatesLive_WhenRowQuantityChanges()
+    {
+        var session = new BudgetProjectSession();
+        var item = new ItemizadoRow { Id = "P1", Item = "1.1", Descripcion = "Test" };
+        var partida = new PartidaListItemVm(item);
+        partida.CantidadFormula = "+C1";
+        partida.Cantidad = 499m;
+
+        Assert.Equal("+C1", item.CantidadFormula);
+
+        var row = new CubicacionRowVm(new CubicacionRow { Cantidad = 406m }, false, () => true);
+        var rows = new List<CubicacionRowVm> { row };
+
+        var vars = CubicacionPartidaHelper.BuildVariables(rows, session);
+        Assert.True(CubicacionPartidaHelper.TryParsePartidaCantidad(partida.CantidadFormula, vars, out decimal parsed, out _));
+        Assert.Equal(406m, parsed);
+
+        // Simular cambio en celda de fila abajo
+        row.Cantidad = 550m;
+        var varsUpdated = CubicacionPartidaHelper.BuildVariables(rows, session);
+        Assert.True(CubicacionPartidaHelper.TryParsePartidaCantidad(partida.CantidadFormula, varsUpdated, out decimal parsedUpdated, out _));
+        Assert.Equal(550m, parsedUpdated);
+    }
 }

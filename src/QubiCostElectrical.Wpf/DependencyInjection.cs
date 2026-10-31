@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.EstadosPago;
 using QubiCostElectrical.Wpf.Infrastructure;
@@ -37,7 +37,8 @@ public static class WpfServiceCollectionExtensions
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<ProjectCollaborationLockService>(),
             sp.GetRequiredService<ProjectAuditRecorder>(),
-            sp.GetRequiredService<IPermissionService>()));
+            sp.GetRequiredService<IPermissionService>(),
+            sp.GetRequiredService<WpfUndoService>()));
 
         return services;
     }

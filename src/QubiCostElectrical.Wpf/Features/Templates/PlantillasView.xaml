@@ -22,7 +22,7 @@
             <Style.Resources>
                 <VisualBrush x:Key="HintBrush" TileMode="None" Stretch="None" AlignmentX="Left" AlignmentY="Center">
                     <VisualBrush.Visual>
-                        <TextBlock Text="Buscar plantilla…" Foreground="{DynamicResource Brush.Muted}" FontSize="12" Margin="30,0,0,0" Opacity="0.8"/>
+                        <TextBlock Text="Buscar plantilla…" Foreground="{DynamicResource Brush.Muted}" FontSize="12" Margin="38,0,0,0" Opacity="0.8"/>
                     </VisualBrush.Visual>
                 </VisualBrush>
             </Style.Resources>
@@ -45,7 +45,7 @@
             <Style.Resources>
                 <VisualBrush x:Key="HintBrush" TileMode="None" Stretch="None" AlignmentX="Left" AlignmentY="Center">
                     <VisualBrush.Visual>
-                        <TextBlock Text="Buscar plantilla APU…" Foreground="{DynamicResource Brush.Muted}" FontSize="12" Margin="30,0,0,0" Opacity="0.8"/>
+                        <TextBlock Text="Buscar plantilla APU…" Foreground="{DynamicResource Brush.Muted}" FontSize="12" Margin="38,0,0,0" Opacity="0.8"/>
                     </VisualBrush.Visual>
                 </VisualBrush>
             </Style.Resources>
@@ -380,7 +380,10 @@
                                 <!-- Buscador -->
                                 <Border Grid.Row="1" Padding="12,8" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
                                     <Grid>
-                                        <TextBox Style="{StaticResource SearchConjunto}"
+                                        <TextBox Style="{StaticResource Form.SearchBox}"
+                                                 Tag="Buscar plantilla…"
+                                                 Padding="26,2,8,2"
+                                                 Height="30"
                                                  Text="{Binding ConjuntoFilter, UpdateSourceTrigger=PropertyChanged}"
                                                  ToolTip="Filtra por nombre o código"/>
                                         <TextBlock Text="🔍" VerticalAlignment="Center" Margin="9,0,0,0" FontSize="11"
@@ -1094,7 +1097,10 @@
 
                                 <Border Grid.Row="1" Padding="12,8" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
                                     <Grid>
-                                        <TextBox Style="{StaticResource SearchApu}"
+                                        <TextBox Style="{StaticResource Form.SearchBox}"
+                                                 Tag="Buscar plantilla APU…"
+                                                 Padding="26,2,8,2"
+                                                 Height="30"
                                                  Text="{Binding TemplateFilter, UpdateSourceTrigger=PropertyChanged}"
                                                  ToolTip="Filtra por nombre o categoría"/>
                                         <TextBlock Text="🔍" VerticalAlignment="Center" Margin="9,0,0,0" FontSize="11"

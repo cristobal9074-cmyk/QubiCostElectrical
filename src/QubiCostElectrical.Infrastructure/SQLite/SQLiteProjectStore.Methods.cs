@@ -166,6 +166,7 @@ public static partial class SQLiteProjectStore
             SqliteStoreHelpers.DeleteMissingKeys(connection, transaction, "mo_projection_tasks", "id", moProjectionTasks.Select(x => x.Id));
 
             SqliteEppStore.Save(connection, transaction, data.Epp ?? EppBudgetData.Default(), now);
+            SqliteTipologiasStore.Save(connection, transaction, data.Tipologias ?? TipologiasEdificioData.Default(), now);
 
             var negotiatedDiscounts = data.NegotiatedDiscounts ?? new List<NegotiatedDiscountRow>();
             SqliteNegotiatedDiscountStore.Save(connection, transaction, negotiatedDiscounts, now);
@@ -382,6 +383,7 @@ public static partial class SQLiteProjectStore
             if (scopes.Contains("epp"))
             {
                 SqliteEppStore.Save(connection, transaction, data.Epp ?? EppBudgetData.Default(), now);
+            SqliteTipologiasStore.Save(connection, transaction, data.Tipologias ?? TipologiasEdificioData.Default(), now);
             }
 
             if (scopes.Contains("negotiated_discounts"))
@@ -479,6 +481,7 @@ public static partial class SQLiteProjectStore
             ClosingPolicy = SqliteClosingPolicyStore.Load(connection),
             EstadoPagoMeses = SqliteEstadoPagoStore.Load(connection),
             EstadoPagoConfig = SqliteEstadoPagoStore.LoadConfig(connection),
+            Tipologias = SqliteTipologiasStore.Load(connection),
             ActiveVersionId = SqliteStoreHelpers.ReadMeta(connection, "active_version_id") ?? ""
         };
 #pragma warning restore CS0618

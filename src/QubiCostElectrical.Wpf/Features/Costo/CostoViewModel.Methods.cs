@@ -137,6 +137,21 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     public string ChainIvaLabel { get => chainIvaLabel; internal set => SetProperty(ref chainIvaLabel, value); }
     public string ChainTotalLabel { get => chainTotalLabel; internal set => SetProperty(ref chainTotalLabel, value); }
 
+    // ─── Ratio Apilado de Segmentación Financiera (WCAG AAA) ───
+    public System.Windows.GridLength FinancialRatioDirectosStar { get => financialRatioDirectosStar; internal set => SetProperty(ref financialRatioDirectosStar, value); }
+    public System.Windows.GridLength FinancialRatioIndirectosStar { get => financialRatioIndirectosStar; internal set => SetProperty(ref financialRatioIndirectosStar, value); }
+    public System.Windows.GridLength FinancialRatioMargenStar { get => financialRatioMargenStar; internal set => SetProperty(ref financialRatioMargenStar, value); }
+    public string FinancialRatioDirectosPct { get => financialRatioDirectosPct; internal set => SetProperty(ref financialRatioDirectosPct, value); }
+    public string FinancialRatioIndirectosPct { get => financialRatioIndirectosPct; internal set => SetProperty(ref financialRatioIndirectosPct, value); }
+    public string FinancialRatioMargenPct { get => financialRatioMargenPct; internal set => SetProperty(ref financialRatioMargenPct, value); }
+    public string FinancialRatioDirectosMonto { get => financialRatioDirectosMonto; internal set => SetProperty(ref financialRatioDirectosMonto, value); }
+    public string FinancialRatioIndirectosMonto { get => financialRatioIndirectosMonto; internal set => SetProperty(ref financialRatioIndirectosMonto, value); }
+    public string FinancialRatioMargenMonto { get => financialRatioMargenMonto; internal set => SetProperty(ref financialRatioMargenMonto, value); }
+    public string FinancialRatioDirectosSub { get => financialRatioDirectosSub; internal set => SetProperty(ref financialRatioDirectosSub, value); }
+    public string FinancialRatioIndirectosSub { get => financialRatioIndirectosSub; internal set => SetProperty(ref financialRatioIndirectosSub, value); }
+    public string FinancialRatioMargenSub { get => financialRatioMargenSub; internal set => SetProperty(ref financialRatioMargenSub, value); }
+    public bool HasFinancialRatioData { get => hasFinancialRatioData; internal set => SetProperty(ref hasFinancialRatioData, value); }
+
     public string Currency
     {
         get => currency;

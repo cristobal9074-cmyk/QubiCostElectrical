@@ -1,4 +1,5 @@
 using System;
+using System.Windows;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -334,16 +335,16 @@ public sealed partial class ManoDeObraViewModel
         var picoDotDir = subDirDots.Length > 0 ? subDirDots.Max() : 0;
 
         KpiTotalMo = Fmt(totalMo);
-        KpiTotalMoSub = $"{n} meses · pico {peakHeadcount} pers.";
+        KpiTotalMoSub = $"{n} meses - pico {peakHeadcount} pers.";
         KpiBase = Fmt(totalBase);
         KpiBasePct = $"{pctBase:N1}% del total MO";
         KpiLeyes = Fmt(totalLeyes);
         KpiLeyesPct = $"{pctLeyes:N1}% del total MO";
         KpiDirecta = Fmt(totalDir);
-        KpiDirectaSub = $"{directa.Length} cargos · variable";
+        KpiDirectaSub = $"{directa.Length} cargos - variable";
         KpiDirectaPct = $"{pctDir:N1}% del total";
         KpiIndirecta = Fmt(totalInd);
-        KpiIndirectaSub = $"{indirecta.Length} roles · fijo";
+        KpiIndirectaSub = $"{indirecta.Length} roles - fijo";
         KpiIndirectaPct = $"{pctInd:N1}% del total";
         KpiBaseTrend = "Base imponible";
         KpiLeyesTrend = $"{Math.Round(leyesSocialesPct)}% leyes";
@@ -358,10 +359,10 @@ public sealed partial class ManoDeObraViewModel
         PeakLabel = $"M{peakInicio} – M{peakFin}";
         ChipMeses = $"{n} meses";
         ChipUf = FmtClp(vUf);
-        CostHint = (viewInUf ? "UF" : "CLP") + $" · incluye {Math.Round(leyesSocialesPct)}% leyes";
+        CostHint = (viewInUf ? "UF" : "CLP") + $" - incluye {Math.Round(leyesSocialesPct)}% leyes";
 
-        TotalBarLabel = $"Costo total mano de obra · {n} meses";
-        TotalBarSub = $"Directa {pctDir:N1}% · Indirecta {pctInd:N1}% · Curva {(curvePreset == "flat" ? "plana" : "campana")} · Pico M{peakInicio}–M{peakFin}";
+        TotalBarLabel = $"Costo total mano de obra - {n} meses";
+        TotalBarSub = $"Directa {pctDir:N1}% - Indirecta {pctInd:N1}% - Curva {(curvePreset == "flat" ? "plana" : "campana")} - Pico M{peakInicio}–M{peakFin}";
         TotalBarValue = Fmt(totalMo);
         TotalBarUf = viewInUf ? FmtClp(totalMo) : (MuestraUf ? FmtUf(totalMo, vUf) : "");
 
@@ -371,11 +372,11 @@ public sealed partial class ManoDeObraViewModel
         SumIndirecta = Fmt(totalInd);
         SumPromMes = Fmt(mesProm);
         SumRight = viewInUf
-            ? $"{FmtUf(totalMo, vUf)}  ·  {FmtClp(mesProm)}/mes"
-            : $"{FmtClp(totalMo)}  ·  {FmtClp(mesProm)}/mes";
+            ? $"{FmtUf(totalMo, vUf)}  -  {FmtClp(mesProm)}/mes"
+            : $"{FmtClp(totalMo)}  -  {FmtClp(mesProm)}/mes";
 
-        FootDir = $"{FmtClp(promSueldoDir)} · {FmtClp(promSueldoDir * (1 + leyes))}";
-        FootInd = $"{FmtClp(promSueldoInd)} · {FmtClp(promSueldoInd * (1 + leyes))}";
+        FootDir = $"{FmtClp(promSueldoDir)} - {FmtClp(promSueldoDir * (1 + leyes))}";
+        FootInd = $"{FmtClp(promSueldoInd)} - {FmtClp(promSueldoInd * (1 + leyes))}";
 
         foreach (var ed in DirectaEditors.Concat(IndirectaEditors))
             ed.UpdateConLeyes(leyes);
@@ -388,22 +389,110 @@ public sealed partial class ManoDeObraViewModel
         OnPropertyChanged(nameof(CostRows));
     }
 
+    private bool isPersonasMode = true;
+    public bool IsPersonasMode
+    {
+        get => isPersonasMode;
+        set
+        {
+            if (SetProperty(ref isPersonasMode, value))
+            {
+                OnPropertyChanged(nameof(IsDiasHombreMode));
+                RebuildChart(Meses);
+            }
+        }
+    }
+
+    public bool IsDiasHombreMode
+    {
+        get => !isPersonasMode;
+        set => IsPersonasMode = !value;
+    }
+
+    private Thickness chartMeanLineMargin;
+    public Thickness ChartMeanLineMargin
+    {
+        get => chartMeanLineMargin;
+        private set => SetProperty(ref chartMeanLineMargin, value);
+    }
+
+    private Thickness chartMeanBadgeMargin;
+    public Thickness ChartMeanBadgeMargin
+    {
+        get => chartMeanBadgeMargin;
+        private set => SetProperty(ref chartMeanBadgeMargin, value);
+    }
+
+    private string chartMeanLabel = "Media: 0 pers.";
+    public string ChartMeanLabel
+    {
+        get => chartMeanLabel;
+        private set => SetProperty(ref chartMeanLabel, value);
+    }
+
+    private bool hasChartData;
+    public bool HasChartData
+    {
+        get => hasChartData;
+        private set => SetProperty(ref hasChartData, value);
+    }
+
     private void RebuildChart(MoMesInfo[] meses)
     {
         ChartBars.Clear();
-        if (meses.Length == 0)
-            return;
-
-        var maxDot = Math.Max(1, meses.Max(m => m.DotTotal));
-        foreach (var m in meses)
+        if (meses == null || meses.Length == 0)
         {
-            ChartBars.Add(new MoChartBarVm
-            {
-                Label = $"M{m.Numero}",
-                DirPct = 100.0 * m.DotDir / maxDot,
-                IndPct = 100.0 * m.DotInd / maxDot,
-                Tip = $"Mes {m.Numero} · {m.DotTotal} pers. · {Fmt(m.CostoTotal)}",
-            });
+            HasChartData = false;
+            return;
         }
+
+        HasChartData = true;
+        const double DhFactor = 22.0;
+        double avgDot = meses.Average(m => (double)m.DotTotal);
+        int maxDot = Math.Max(1, meses.Max(m => m.DotTotal));
+
+        double meanY = maxDot > 0 ? (100.0 * avgDot / maxDot) : 0;
+        meanY = Math.Max(4, Math.Min(116, meanY));
+
+        ChartMeanLineMargin = new Thickness(0, 0, 0, meanY);
+        ChartMeanBadgeMargin = new Thickness(0, 0, 4, Math.Max(0, meanY - 8));
+
+        if (IsPersonasMode)
+        {
+            ChartMeanLabel = $"Media: {avgDot:F1} pers.";
+            foreach (var m in meses)
+            {
+                ChartBars.Add(new MoChartBarVm
+                {
+                    Label = $"M{m.Numero}",
+                    DirPct = 100.0 * m.DotDir / maxDot,
+                    IndPct = 100.0 * m.DotInd / maxDot,
+                    Tip = $"Mes {m.Numero} - {m.DotTotal} pers. ({m.DotDir} dir + {m.DotInd} ind) - {Fmt(m.CostoTotal)}",
+                });
+            }
+        }
+        else
+        {
+            double avgDh = avgDot * DhFactor;
+            ChartMeanLabel = $"Media: {avgDh:F0} DH";
+            foreach (var m in meses)
+            {
+                double dirDh = m.DotDir * DhFactor;
+                double indDh = m.DotInd * DhFactor;
+                double totDh = m.DotTotal * DhFactor;
+                ChartBars.Add(new MoChartBarVm
+                {
+                    Label = $"M{m.Numero}",
+                    DirPct = 100.0 * m.DotDir / maxDot,
+                    IndPct = 100.0 * m.DotInd / maxDot,
+                    Tip = $"Mes {m.Numero} - {totDh:N0} DH ({dirDh:N0} dir + {indDh:N0} ind) - {Fmt(m.CostoTotal)}",
+                });
+            }
+        }
+
+        OnPropertyChanged(nameof(ChartMeanLabel));
+        OnPropertyChanged(nameof(ChartMeanLineMargin));
+        OnPropertyChanged(nameof(ChartMeanBadgeMargin));
+        OnPropertyChanged(nameof(HasChartData));
     }
 }

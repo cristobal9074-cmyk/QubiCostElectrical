@@ -6,6 +6,7 @@ namespace QubiCostElectrical;
 
 public sealed class OfferClienteRow
 {
+    public string Id { get; set; } = "";
     public string Item { get; set; } = "";
     public string Descripcion { get; set; } = "";
     public string Unidad { get; set; } = "";
@@ -73,6 +74,7 @@ public static class OfferClienteRowBuilder
             {
                 rows.Add(new OfferClienteRow
                 {
+                    Id = item.Id ?? "",
                     Item = item.Item,
                     Descripcion = item.Descripcion,
                     Unidad = item.Unidad,
@@ -86,6 +88,7 @@ public static class OfferClienteRowBuilder
             acumulado += total;
             var row = new OfferClienteRow
             {
+                Id = item.Id ?? "",
                 Item = item.Item,
                 Descripcion = item.Descripcion,
                 Unidad = item.Unidad,
@@ -113,6 +116,7 @@ public static class OfferClienteRowBuilder
         {
             rows.Add(new OfferClienteRow
             {
+                Id = "",
                 Item = "1",
                 Descripcion = fallbackProjectTitle,
                 Unidad = "GL",

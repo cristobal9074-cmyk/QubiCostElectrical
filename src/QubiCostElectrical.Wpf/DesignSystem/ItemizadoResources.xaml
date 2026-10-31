@@ -206,6 +206,16 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
     <Style.Triggers>
+      <DataTrigger Binding="{Binding IsTitleRow}" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.ChapterRowBg}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+      </DataTrigger>
+      <DataTrigger Binding="{Binding IsChapterStyle}" Value="True">
+        <Setter Property="Background" Value="{DynamicResource Brush.ChapterRowBg}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+      </DataTrigger>
       <Trigger Property="IsReadOnly" Value="True">
         <Setter Property="Background" Value="{DynamicResource Brush.CellFormulaBg}" />
       </Trigger>

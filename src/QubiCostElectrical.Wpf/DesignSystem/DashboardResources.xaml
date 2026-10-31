@@ -87,8 +87,23 @@
   </Style>
   <Style x:Key="Dashboard.FigCell" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-    <Setter Property="Padding" Value="15,14,15,15" />
-    <Setter Property="Margin" Value="0,0,1,0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="15,14,15,14" />
+    <Setter Property="Margin" Value="2,2,2,2" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
+    <Setter Property="UseLayoutRounding" Value="True" />
+    <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+    <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
+    <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#2563EB" />
+        <Setter Property="Panel.ZIndex" Value="10" />
+        <Setter Property="Cursor" Value="Hand" />
+      </Trigger>
+    </Style.Triggers>
   </Style>
 
   <!-- Barra de avance de 3 px para las cifras con micro-barra. -->
@@ -138,17 +153,17 @@
 
   <!-- Medidor de preparación de la fila de estado. -->
   <Style x:Key="Dashboard.StatusMeter" TargetType="Border">
-    <Setter Property="Height" Value="4" />
-    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="Height" Value="6" />
+    <Setter Property="CornerRadius" Value="3" />
     <Setter Property="Background" Value="{DynamicResource Brush.Line}" />
     <Setter Property="Width" Value="170" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
   <Style x:Key="Dashboard.StatusSquare" TargetType="Rectangle">
-    <Setter Property="Width" Value="8" />
-    <Setter Property="Height" Value="8" />
-    <Setter Property="RadiusX" Value="2" />
-    <Setter Property="RadiusY" Value="2" />
+    <Setter Property="Width" Value="10" />
+    <Setter Property="Height" Value="10" />
+    <Setter Property="RadiusX" Value="5" />
+    <Setter Property="RadiusY" Value="5" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 

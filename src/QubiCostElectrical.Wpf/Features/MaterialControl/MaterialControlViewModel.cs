@@ -30,10 +30,14 @@ public sealed class MaterialControlRowVm : ViewModelBase
     public double PorcentajeAvance => Model.PorcentajeAvance;
     public string EstadoControl => Model.EstadoControl;
     public bool TieneSobrepedido => Model.TieneSobrepedido;
+    public bool TieneSobreconsumo => Model.TieneSobreconsumo;
     public bool EstaCompleto => Model.EstaCompleto;
     public bool EstaEnProceso => Model.EstaEnProceso;
     public bool SinPedir => Model.SinPedir;
     public IReadOnlyList<MaterialSolicitudUso> Solicitudes => Model.Solicitudes;
+    public IReadOnlyList<MaterialPisoDesglose> DesglosePisos => Model.DesglosePisosList;
+    public string PisosResumen => Model.PisosResumen;
+    public int CantidadPisos => Model.DesglosePisosList.Count;
 
     public double ProgressWidthPct => Math.Clamp(PorcentajeAvance, 0.0, 100.0);
 
@@ -53,11 +57,14 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
 
     private readonly ObservableCollection<MaterialControlRowVm> rows = new();
     private readonly ObservableCollection<MaterialSolicitudUso> selectedSolicitudes = new();
+    private readonly ObservableCollection<MaterialPisoDesglose> selectedDesglosePisos = new();
+    private readonly ObservableCollection<string> pisosOptions = new();
     private readonly ICollectionView rowsView;
     private readonly System.Windows.Threading.DispatcherTimer searchDebounceTimer;
 
     private string searchText = "";
     private string filterMode = "all"; // all | alert | pending | completed
+    private string selectedPiso = "Todos los pisos";
     private decimal toleranciaPct = 5m;
     private MaterialControlRowVm? selectedRow;
     private bool showEmptyState = true;
@@ -93,6 +100,8 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
         RefreshCommand = new RelayCommand(Refresh);
         ExportExcelCommand = new RelayCommand(ExportExcel, () => HasProject && rows.Count > 0);
         SetFilterCommand = new RelayCommand<string>(SetFilter);
+        ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => HasSearchText);
+        ResetFiltersCommand = new RelayCommand(ResetFilters, () => HasActiveFilters);
         GoToSolicitudesCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Solicitudes));
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
 
@@ -116,6 +125,8 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
     public ObservableCollection<MaterialControlRowVm> Rows => rows;
     public ICollectionView FilteredRows => rowsView;
     public ObservableCollection<MaterialSolicitudUso> SelectedSolicitudes => selectedSolicitudes;
+    public ObservableCollection<MaterialPisoDesglose> SelectedDesglosePisos => selectedDesglosePisos;
+    public ObservableCollection<string> PisosOptions => pisosOptions;
 
     public bool HasProject => workspace.HasOpenProject;
     public bool ShowEmptyState
@@ -131,6 +142,8 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
         {
             if (SetProperty(ref searchText, value))
             {
+                OnPropertyChanged(nameof(HasSearchText));
+                OnPropertyChanged(nameof(HasActiveFilters));
                 if (System.Windows.Application.Current == null)
                 {
                     rowsView.Refresh();
@@ -145,6 +158,8 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
         }
     }
 
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(searchText);
+
     public string FilterMode
     {
         get => filterMode;
@@ -158,6 +173,7 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
                 OnPropertyChanged(nameof(IsFilterAlert));
                 OnPropertyChanged(nameof(IsFilterPending));
                 OnPropertyChanged(nameof(IsFilterCompleted));
+                OnPropertyChanged(nameof(HasActiveFilters));
             }
         }
     }
@@ -166,6 +182,28 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
     public bool IsFilterAlert => filterMode == "alert";
     public bool IsFilterPending => filterMode == "pending";
     public bool IsFilterCompleted => filterMode == "completed";
+
+    public string SelectedPiso
+    {
+        get => selectedPiso;
+        set
+        {
+            if (SetProperty(ref selectedPiso, value))
+            {
+                rowsView.Refresh();
+                UpdateCountText();
+                OnPropertyChanged(nameof(HasActiveFilters));
+                OnPropertyChanged(nameof(SelectedPisoLabel));
+            }
+        }
+    }
+
+    public string SelectedPisoLabel => string.IsNullOrWhiteSpace(selectedPiso) ? "Todos los pisos" : selectedPiso;
+
+    public bool HasActiveFilters =>
+        HasSearchText ||
+        FilterMode != "all" ||
+        (!string.IsNullOrWhiteSpace(selectedPiso) && !string.Equals(selectedPiso, "Todos los pisos", StringComparison.OrdinalIgnoreCase));
 
     public decimal ToleranciaPct
     {
@@ -206,19 +244,26 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
     public string SelectedCodigo => SelectedRow?.Codigo ?? "—";
     public string SelectedDescripcion => SelectedRow?.Descripcion ?? "Seleccione un material";
     public string SelectedUnidad => SelectedRow?.Unidad ?? "UN";
+    public string SelectedCategoria => SelectedRow?.Categoria ?? "General";
     public decimal SelectedCubicado => SelectedRow?.CantidadCubicada ?? 0m;
     public decimal SelectedSolicitado => SelectedRow?.CantidadSolicitada ?? 0m;
     public decimal SelectedSaldo => SelectedRow?.TieneSobrepedido == true ? SelectedRow.CantidadExceso : (SelectedRow?.CantidadPendiente ?? 0m);
-    public string SelectedSaldoLabel => SelectedRow?.TieneSobrepedido == true ? "Exceso en Faena" : "Falta por Pedir";
+    public string SelectedSaldoLabel => SelectedRow?.TieneSobreconsumo == true ? "Sobreconsumo en Faena" : "Falta por Pedir";
     public bool SelectedEsSobrepedido => SelectedRow?.TieneSobrepedido == true;
+    public bool SelectedTieneSobreconsumo => SelectedRow?.TieneSobreconsumo == true;
     public string SelectedBadgeStatus => SelectedRow == null ? "SIN SELECCIÓN" : SelectedRow.EstadoControl.ToUpperInvariant();
     public string SelectedPctText => SelectedRow == null ? "" : $"{SelectedRow.PorcentajeAvance:N1}% {(SelectedRow.TieneSobrepedido ? "(Excedido)" : "solicitado")}";
     public double SelectedBarWidthPct => SelectedRow == null ? 0.0 : Math.Clamp(SelectedRow.PorcentajeAvance, 0.0, 100.0);
     public string SelectedSolicitudesCountText => $"{selectedSolicitudes.Count} pedidos registrados";
+    public string SelectedPisosResumen => SelectedRow?.PisosResumen ?? "General";
+    public int SelectedCantidadPisos => SelectedRow?.CantidadPisos ?? 0;
+    public bool HasDesglosePisos => selectedDesglosePisos.Count > 0;
 
     public ICommand RefreshCommand { get; }
     public ICommand ExportExcelCommand { get; }
     public ICommand SetFilterCommand { get; }
+    public ICommand ClearSearchCommand { get; }
+    public ICommand ResetFiltersCommand { get; }
     public ICommand GoToSolicitudesCommand { get; }
     public ICommand OpenProjectCommand { get; }
 
@@ -233,6 +278,7 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
     {
         rows.Clear();
         selectedSolicitudes.Clear();
+        selectedDesglosePisos.Clear();
 
         if (HasProject)
         {
@@ -251,6 +297,18 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
             PorcentajeGlobal = summary.PorcentajeGlobal;
             OnPropertyChanged(nameof(TieneAlertas));
 
+            // Poblar lista de opciones de pisos / áreas disponibles
+            pisosOptions.Clear();
+            pisosOptions.Add("Todos los pisos");
+            var distinctPisos = rows
+                .SelectMany(r => r.DesglosePisos)
+                .Select(p => p.PisoNombre)
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(p => p);
+            foreach (var p in distinctPisos)
+                pisosOptions.Add(p);
+
             ShowEmptyState = rows.Count == 0;
             if (rows.Count > 0)
                 SelectedRow = rows[0];
@@ -266,6 +324,8 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
             CantidadPendientes = 0;
             CantidadCompletos = 0;
             PorcentajeGlobal = 0.0;
+            pisosOptions.Clear();
+            pisosOptions.Add("Todos los pisos");
             OnPropertyChanged(nameof(TieneAlertas));
         }
 
@@ -280,6 +340,24 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
         FilterMode = mode.ToLowerInvariant();
     }
 
+    private void ResetFilters()
+    {
+        searchText = string.Empty;
+        filterMode = "all";
+        selectedPiso = "Todos los pisos";
+        OnPropertyChanged(nameof(SearchText));
+        OnPropertyChanged(nameof(FilterMode));
+        OnPropertyChanged(nameof(SelectedPiso));
+        OnPropertyChanged(nameof(HasSearchText));
+        OnPropertyChanged(nameof(HasActiveFilters));
+        OnPropertyChanged(nameof(IsFilterAll));
+        OnPropertyChanged(nameof(IsFilterAlert));
+        OnPropertyChanged(nameof(IsFilterPending));
+        OnPropertyChanged(nameof(IsFilterCompleted));
+        rowsView.Refresh();
+        UpdateCountText();
+    }
+
     private bool FilterItem(object obj)
     {
         if (obj is not MaterialControlRowVm item) return false;
@@ -289,6 +367,13 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
         if (FilterMode == "pending" && (!item.EstaEnProceso && !item.SinPedir)) return false;
         if (FilterMode == "completed" && !item.EstaCompleto) return false;
 
+        // Filtro por piso / área
+        if (!string.IsNullOrWhiteSpace(selectedPiso) && !string.Equals(selectedPiso, "Todos los pisos", StringComparison.OrdinalIgnoreCase))
+        {
+            bool matchesPiso = item.DesglosePisos.Any(p => string.Equals(p.PisoNombre, selectedPiso, StringComparison.OrdinalIgnoreCase));
+            if (!matchesPiso) return false;
+        }
+
         // Filtro por texto
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
@@ -296,7 +381,8 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
             bool matchCode = (item.Codigo ?? "").Contains(q, StringComparison.OrdinalIgnoreCase);
             bool matchDesc = (item.Descripcion ?? "").Contains(q, StringComparison.OrdinalIgnoreCase);
             bool matchCat = (item.Categoria ?? "").Contains(q, StringComparison.OrdinalIgnoreCase);
-            if (!matchCode && !matchDesc && !matchCat) return false;
+            bool matchPiso = item.DesglosePisos.Any(p => p.PisoNombre.Contains(q, StringComparison.OrdinalIgnoreCase));
+            if (!matchCode && !matchDesc && !matchCat && !matchPiso) return false;
         }
 
         return true;
@@ -311,16 +397,21 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
     private void UpdateSelectedDetails()
     {
         selectedSolicitudes.Clear();
+        selectedDesglosePisos.Clear();
         if (SelectedRow != null)
         {
             foreach (var uso in SelectedRow.Solicitudes)
                 selectedSolicitudes.Add(uso);
+
+            foreach (var piso in SelectedRow.DesglosePisos)
+                selectedDesglosePisos.Add(piso);
         }
 
         OnPropertyChanged(nameof(HasSelection));
         OnPropertyChanged(nameof(SelectedCodigo));
         OnPropertyChanged(nameof(SelectedDescripcion));
         OnPropertyChanged(nameof(SelectedUnidad));
+        OnPropertyChanged(nameof(SelectedCategoria));
         OnPropertyChanged(nameof(SelectedCubicado));
         OnPropertyChanged(nameof(SelectedSolicitado));
         OnPropertyChanged(nameof(SelectedSaldo));
@@ -330,6 +421,9 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
         OnPropertyChanged(nameof(SelectedPctText));
         OnPropertyChanged(nameof(SelectedBarWidthPct));
         OnPropertyChanged(nameof(SelectedSolicitudesCountText));
+        OnPropertyChanged(nameof(SelectedPisosResumen));
+        OnPropertyChanged(nameof(SelectedCantidadPisos));
+        OnPropertyChanged(nameof(HasDesglosePisos));
     }
 
     private void ExportExcel()
@@ -368,14 +462,15 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
                 ws.Cell(r, 2).Value = "Descripción";
                 ws.Cell(r, 3).Value = "Unidad";
                 ws.Cell(r, 4).Value = "Categoría";
-                ws.Cell(r, 5).Value = "Cubicado (Presupuesto)";
-                ws.Cell(r, 6).Value = "Solicitado (Faena)";
-                ws.Cell(r, 7).Value = "Falta por Pedir";
-                ws.Cell(r, 8).Value = "Exceso / Sobrepedido";
-                ws.Cell(r, 9).Value = "% Avance";
-                ws.Cell(r, 10).Value = "Estado";
+                ws.Cell(r, 5).Value = "Pisos / Sectores";
+                ws.Cell(r, 6).Value = "Cubicado (Presupuesto)";
+                ws.Cell(r, 7).Value = "Solicitado (Faena)";
+                ws.Cell(r, 8).Value = "Falta por Pedir";
+                ws.Cell(r, 9).Value = "Exceso / Sobrepedido";
+                ws.Cell(r, 10).Value = "% Avance";
+                ws.Cell(r, 11).Value = "Estado";
 
-                var headerRange = ws.Range(r, 1, r, 10);
+                var headerRange = ws.Range(r, 1, r, 11);
                 headerRange.Style.Font.Bold = true;
                 headerRange.Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromTheme(ClosedXML.Excel.XLThemeColor.Accent1);
                 headerRange.Style.Font.FontColor = ClosedXML.Excel.XLColor.White;
@@ -387,25 +482,26 @@ public sealed class MaterialControlViewModel : SessionAwareViewModelBase, IRefre
                     ws.Cell(r, 2).Value = row.Descripcion;
                     ws.Cell(r, 3).Value = row.Unidad;
                     ws.Cell(r, 4).Value = row.Categoria;
-                    ws.Cell(r, 5).Value = row.CantidadCubicada;
-                    ws.Cell(r, 6).Value = row.CantidadSolicitada;
-                    ws.Cell(r, 7).Value = row.CantidadPendiente;
-                    ws.Cell(r, 8).Value = row.CantidadExceso;
-                    ws.Cell(r, 9).Value = row.PorcentajeAvance / 100.0;
-                    ws.Cell(r, 10).Value = row.EstadoControl;
+                    ws.Cell(r, 5).Value = row.PisosResumen;
+                    ws.Cell(r, 6).Value = row.CantidadCubicada;
+                    ws.Cell(r, 7).Value = row.CantidadSolicitada;
+                    ws.Cell(r, 8).Value = row.CantidadPendiente;
+                    ws.Cell(r, 9).Value = row.CantidadExceso;
+                    ws.Cell(r, 10).Value = row.PorcentajeAvance / 100.0;
+                    ws.Cell(r, 11).Value = row.EstadoControl;
 
                     if (row.TieneSobrepedido)
                     {
-                        ws.Range(r, 1, r, 10).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromHtml("#FEE2E2");
-                        ws.Cell(r, 10).Style.Font.FontColor = ClosedXML.Excel.XLColor.Red;
-                        ws.Cell(r, 10).Style.Font.Bold = true;
+                        ws.Range(r, 1, r, 11).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromHtml("#FEE2E2");
+                        ws.Cell(r, 11).Style.Font.FontColor = ClosedXML.Excel.XLColor.Red;
+                        ws.Cell(r, 11).Style.Font.Bold = true;
                     }
 
                     r++;
                 }
 
-                ws.Range(6, 5, r - 1, 8).Style.NumberFormat.Format = "#,##0.00";
-                ws.Range(6, 9, r - 1, 9).Style.NumberFormat.Format = "0.0%";
+                ws.Range(6, 6, r - 1, 9).Style.NumberFormat.Format = "#,##0.00";
+                ws.Range(6, 10, r - 1, 10).Style.NumberFormat.Format = "0.0%";
 
                 ws.Columns().AdjustToContents();
                 wb.SaveAs(sfd.FileName);

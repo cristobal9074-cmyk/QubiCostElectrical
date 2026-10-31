@@ -16,6 +16,7 @@ public sealed class ItemizadoRow
 
     [System.Text.Json.Serialization.JsonPropertyName("CantidadCubicada")]
     public decimal Cantidad { get; set; } = 0;
+    public string CantidadFormula { get; set; } = string.Empty;
     public bool EsTitulo { get; set; }
     public bool ExcluidoCubicacion { get; set; }
 

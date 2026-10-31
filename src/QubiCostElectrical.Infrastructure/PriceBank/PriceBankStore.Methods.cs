@@ -184,6 +184,30 @@ public sealed partial class PriceBankStore : IPriceBankStore
             throw;
         }
     }
+    /// <summary>Elimina los materiales cuyo origen coincida (ej. "Catálogo Base Chile 2026") sin tocar los demás.</summary>
+    public int DeleteByOrigen(string origen)
+    {
+        if (string.IsNullOrWhiteSpace(origen)) return 0;
+        using var cn = Open();
+        using var tx = cn.BeginTransaction();
+        try
+        {
+            using var cmd = cn.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = "DELETE FROM price_bank WHERE origen_precio = @origen;";
+            cmd.Parameters.AddWithValue("@origen", origen);
+            int rows = cmd.ExecuteNonQuery();
+            tx.Commit();
+            allEntriesCache = null;
+            return rows;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("BancoPrecios", $"Falló al eliminar entradas con origen '{origen}'", ex);
+            tx.Rollback();
+            throw;
+        }
+    }
 
     /// <summary>Upsert masivo en una sola transacción (importar un proyecto/archivo al banco).
     /// Asigna a cada entrada un "orden" creciente en el mismo orden en que aparece en

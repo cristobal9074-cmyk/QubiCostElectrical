@@ -23,12 +23,14 @@ public sealed class PartidaListItemVm : ViewModelBase
         motivoNoCubicar = row.MotivoNoCubicar ?? "";
         RecursoCount = recursoCount;
         HasIssues = hasIssues;
+        cantidadFormula = row.CantidadFormula ?? string.Empty;
     }
 
     private string codigo;
     private string descripcion;
 
-    public string Id { get; }
+    public ItemizadoRow Source => source;
+ public string Id { get; }
     public string Codigo
     {
         get => codigo;
@@ -126,7 +128,10 @@ public sealed class PartidaListItemVm : ViewModelBase
         set
         {
             if (SetProperty(ref cantidadFormula, value ?? ""))
+            {
+                source.CantidadFormula = value ?? "";
                 OnPropertyChanged(nameof(CantidadToolTip));
+            }
         }
     }
 

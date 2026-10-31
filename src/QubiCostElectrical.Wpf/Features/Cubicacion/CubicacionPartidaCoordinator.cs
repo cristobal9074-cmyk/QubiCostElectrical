@@ -238,8 +238,16 @@ internal sealed class CubicacionPartidaCoordinator
                 return;
             }
 
-            if (!string.IsNullOrEmpty(formula)) parent.SelectedPartida.CantidadFormula = formula;
-            else if (parent.SelectedPartida.Cantidad != parsed || string.IsNullOrEmpty(parent.SelectedPartida.CantidadFormula)) parent.SelectedPartida.CantidadFormula = "";
+            if (!string.IsNullOrEmpty(formula))
+            {
+                parent.SelectedPartida.CantidadFormula = formula;
+                parent.SelectedPartida.Source.CantidadFormula = formula;
+            }
+            else if (parent.SelectedPartida.Cantidad != parsed || string.IsNullOrEmpty(parent.SelectedPartida.CantidadFormula))
+            {
+                parent.SelectedPartida.CantidadFormula = "";
+                parent.SelectedPartida.Source.CantidadFormula = "";
+            }
 
             using (parent.SuppressSessionReload())
             {
@@ -288,6 +296,47 @@ internal sealed class CubicacionPartidaCoordinator
         parent.NotifyProperty(nameof(parent.AlertaSinValorizacionGlobalBadgeText));
         parent.NotifyProperty(nameof(parent.IsPartidaUnidadMissing));
         parent.NotifyProperty(nameof(parent.IsPartidaCantidadMissing));
+    }
+
+    private bool isReevaluatingFormula;
+    public bool TryReevaluatePartidaCantidadFormula()
+    {
+        if (isReevaluatingFormula) return false;
+        if (session.IsReadOnly || parent.SelectedPartida == null) return false;
+        string formula = parent.SelectedPartida.CantidadFormula;
+        if (string.IsNullOrWhiteSpace(formula)) return false;
+
+        isReevaluatingFormula = true;
+        try
+        {
+            var vars = BuildPartidaCantidadVariables();
+            if (CubicacionPartidaHelper.TryParsePartidaCantidad(formula, vars, out decimal parsed, out _))
+            {
+                if (parent.SelectedPartida.Cantidad != parsed)
+                {
+                    parent.SelectedPartida.Cantidad = parsed;
+                    parent.SelectedPartida.Source.Cantidad = parsed;
+                    parent.NotifyProperty(nameof(parent.PartidaCantidadText));
+                    parent.NotifyProperty(nameof(parent.PartidaCantidadToolTip));
+                    NotifyGlobalValorizacionChanged();
+                    parent.MarkDirty();
+                    session.MarkDirty(ProjectDirtyScope.Itemizado);
+                    parent.ScheduleRefreshTotals();
+                    parent.SaveStatusText = $"Cantidad de la partida: {parsed:G29} ({formula}).";
+                    return true;
+                }
+                else
+                {
+                    parent.NotifyProperty(nameof(parent.PartidaCantidadText));
+                    parent.NotifyProperty(nameof(parent.PartidaCantidadToolTip));
+                }
+            }
+            return false;
+        }
+        finally
+        {
+            isReevaluatingFormula = false;
+        }
     }
 
     public Dictionary<string, decimal> BuildPartidaCantidadVariables()

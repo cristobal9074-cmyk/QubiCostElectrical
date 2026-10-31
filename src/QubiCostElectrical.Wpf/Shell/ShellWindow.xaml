@@ -5,7 +5,7 @@
         xmlns:nav="clr-namespace:QubiCostElectrical.Wpf.Navigation"
         xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
         Title="{Binding WindowTitleText, Mode=OneWay, FallbackValue='QUBI COST Electrical'}"
-        Icon="pack://application:,,,/Assets/QubiCostElectrical.ico"
+        Icon="pack://application:,,,/QubiCostElectrical;component/Assets/QubiCostElectrical.ico"
         MinWidth="{StaticResource Layout.MinWindowWidth}"
         MinHeight="{StaticResource Layout.MinWindowHeight}"
         Width="1280"

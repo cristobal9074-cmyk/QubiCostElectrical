@@ -39,6 +39,14 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
         GoToExportCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.OfferDocuments));
         GoToBudgetCommand = new RelayCommand(() => shell.RequestNavigate(ShellRoute.Itemized));
         OpenProjectCommand = new RelayCommand(() => _ = shell.OpenProjectAsync());
+        toggleSeverityFilterCommand = new RelayCommand<string>(param =>
+        {
+            var target = param ?? "Todas";
+            if (string.Equals(SelectedSeverity, target, StringComparison.OrdinalIgnoreCase))
+                SelectedSeverity = "Todas";
+            else
+                SelectedSeverity = target;
+        });
 
         issuesView = CollectionViewSource.GetDefaultView(issues);
         issuesView.Filter = FilterIssue;
@@ -172,6 +180,10 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
         }
     }
 
+    public ICommand ToggleSeverityFilterCommand => toggleSeverityFilterCommand;
+    public bool IsBlockerFilterActive => string.Equals(selectedSeverity, "Bloqueante", StringComparison.OrdinalIgnoreCase);
+    public bool IsWarningFilterActive => string.Equals(selectedSeverity, "Advertencia", StringComparison.OrdinalIgnoreCase) || string.Equals(selectedSeverity, "Advertencias", StringComparison.OrdinalIgnoreCase);
+
     public string SelectedSeverity
     {
         get => selectedSeverity;
@@ -180,6 +192,8 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
             if (!SetProperty(ref selectedSeverity, value))
                 return;
             OnPropertyChanged(nameof(HasActiveFilters));
+            OnPropertyChanged(nameof(IsBlockerFilterActive));
+            OnPropertyChanged(nameof(IsWarningFilterActive));
             resetFilterCommand.RaiseCanExecuteChanged();
             issuesView.Refresh();
             UpdateSummary();
@@ -196,6 +210,9 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     public bool HasActiveFilter => activeCategoryFilter.HasValue;
     public bool HasActiveFilters => HasSearchText || !string.Equals(selectedSeverity, "Todas", StringComparison.OrdinalIgnoreCase) || activeCategoryFilter.HasValue;
     public int BlockerCount => Math.Max(0, issues.Count(x => x.Severity == FinalReviewSeverity.Blocker && !locallyResolvedIds.Contains(x.Source.Id)));
+    public bool HasBlockers => BlockerCount > 0;
+    public int WarningCount => Math.Max(0, issues.Count(x => (x.Severity == FinalReviewSeverity.Warning || x.Severity == FinalReviewSeverity.Critical) && !locallyResolvedIds.Contains(x.Source.Id)));
+    public int TotalIssueCount => Math.Max(0, issues.Count(x => !locallyResolvedIds.Contains(x.Source.Id)));
     public bool HasZeroIssues => issues.Count == 0;
 
     public string SummaryText
@@ -331,6 +348,8 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
         OnPropertyChanged(nameof(HasSearchText));
         OnPropertyChanged(nameof(HasActiveFilter));
         OnPropertyChanged(nameof(HasActiveFilters));
+        OnPropertyChanged(nameof(IsBlockerFilterActive));
+        OnPropertyChanged(nameof(IsWarningFilterActive));
         clearSearchCommand.RaiseCanExecuteChanged();
         resetFilterCommand.RaiseCanExecuteChanged();
         issuesView.Refresh();
@@ -505,6 +524,7 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
         OnPropertyChanged(nameof(WarRoomProgressText));
         OnPropertyChanged(nameof(FocusIssueSummary));
         OnPropertyChanged(nameof(BlockerCount));
+        OnPropertyChanged(nameof(HasBlockers));
         OnPropertyChanged(nameof(HasZeroIssues));
         OnPropertyChanged(nameof(HasActiveFilters));
         resetFilterCommand.RaiseCanExecuteChanged();
@@ -518,9 +538,19 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
         if (locallyResolvedIds.Contains(issue.Source.Id))
             return false;
 
-        if (!string.Equals(SelectedSeverity, "Todas", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(issue.SeverityText, SelectedSeverity, StringComparison.OrdinalIgnoreCase))
-            return false;
+        if (!string.Equals(SelectedSeverity, "Todas", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.Equals(SelectedSeverity, "Advertencia", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(SelectedSeverity, "Advertencias", StringComparison.OrdinalIgnoreCase))
+            {
+                if (issue.Severity != FinalReviewSeverity.Warning && issue.Severity != FinalReviewSeverity.Critical)
+                    return false;
+            }
+            else if (!string.Equals(issue.SeverityText, SelectedSeverity, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
 
         if (activeCategoryFilter.HasValue && issue.Source.Category != activeCategoryFilter.Value)
             return false;

@@ -170,6 +170,19 @@
             <TextBlock Text="{Binding TotalMoSubLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="10"
                        Foreground="{DynamicResource Brush.Ink4}" Margin="0,2,0,0" />
             <TextBlock Text="{Binding GoComposeHint}" Style="{StaticResource CierreHint}" Margin="0,6,0,0" />
+            <!-- Componente de ratio apilado de categorías GO (WCAG AAA) -->
+            <ItemsControl ItemsSource="{Binding GoComposeSegments}" Margin="0,4,0,0">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" Height="6" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Width="{Binding WidthUnits}" Background="{Binding Fill}" CornerRadius="2" Margin="0,0,1,0" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
             <TextBlock Text="La planilla de viáticos alimenta la categoría 3.3 de gastos operacionales."
                        Style="{StaticResource CierreHint}" Margin="0,4,0,0" />
           </StackPanel>

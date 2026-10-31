@@ -75,16 +75,16 @@ public sealed class IngelsamOfferSummaryExcelExporter : IIngelsamOfferSummaryExc
 
         bool hasTheme = theme?.Enabled == true;
         string companyName = !string.IsNullOrWhiteSpace(offer.CompanyName) ? offer.CompanyName
-            : (hasTheme && !string.IsNullOrWhiteSpace(theme!.CompanyName) ? theme.CompanyName : "INGELSAM SPA");
-        string companyAddress = !string.IsNullOrWhiteSpace(offer.CompanyAddress) ? offer.CompanyAddress.Trim() : "Av. Capellán Benavides 2077. Maipú, Santiago";
-        string companyPhone = !string.IsNullOrWhiteSpace(offer.CompanyPhone) ? offer.CompanyPhone.Trim() : "9 5856 3557";
-        string companyEmail = !string.IsNullOrWhiteSpace(offer.CompanyEmail) ? offer.CompanyEmail.Trim() : "cperez@ingelsam.cl";
+            : (hasTheme && !string.IsNullOrWhiteSpace(theme!.CompanyName) ? theme.CompanyName : "EMPRESA CONTRATISTA");
+        string companyAddress = !string.IsNullOrWhiteSpace(offer.CompanyAddress) ? offer.CompanyAddress.Trim() : "";
+        string companyPhone = !string.IsNullOrWhiteSpace(offer.CompanyPhone) ? offer.CompanyPhone.Trim() : "";
+        string companyEmail = !string.IsNullOrWhiteSpace(offer.CompanyEmail) ? offer.CompanyEmail.Trim() : "";
 
         string? logoPath = !string.IsNullOrWhiteSpace(offer.LogoPath) && File.Exists(offer.LogoPath) ? offer.LogoPath
             : (hasTheme && !string.IsNullOrWhiteSpace(theme!.LogoPath) && File.Exists(theme.LogoPath) ? theme.LogoPath : null);
 
         var date = offer.OfferDate == default ? DateTime.Today : offer.OfferDate;
-        string folio = !string.IsNullOrWhiteSpace(offer.OfferNumber) ? offer.OfferNumber.Trim() : "PEL024F2026";
+        string folio = !string.IsNullOrWhiteSpace(offer.OfferNumber) ? offer.OfferNumber.Trim() : $"OFT-{date:yyyyMMdd}-01";
 
         decimal valorUf = project.ValorUfClp > 0m ? project.ValorUfClp : PriceConversion.DefaultValorUfClp;
         bool muestraUf = ctx.MuestraUf;
@@ -532,8 +532,11 @@ public sealed class IngelsamOfferSummaryExcelExporter : IIngelsamOfferSummaryExc
         ws.Row(signRow).Height = 35;
 
         // Intentar insertar stamps de firma si existen
-        InsertSignatureImage(ws, $"B{signRow}", "QubiCostElectrical.Assets.ingelsam_firma.png", 220, 77);
-        InsertSignatureImage(ws, $"G{signRow}", "QubiCostElectrical.Assets.ingelsam_cliente_firma.png", 220, 65);
+        if (!string.IsNullOrWhiteSpace(offer.SignatureImagePath) && File.Exists(offer.SignatureImagePath))
+        {
+            InsertCustomSignatureImage(ws, $"B{signRow}", offer.SignatureImagePath, 220, 77);
+        }
+        // Firma mandante queda libre para suscripción física o electrónica del cliente
 
         // Línea de firma Emisor (Col B a E)
         ws.Range(signRow, 2, signRow, 5).Merge();
@@ -546,8 +549,9 @@ public sealed class IngelsamOfferSummaryExcelExporter : IIngelsamOfferSummaryExc
         ws.Range(signRow, 7, signRow, 11).Style.Border.BottomBorderColor = XLColor.Black;
 
         row++;
-        string signName = !string.IsNullOrWhiteSpace(offer.SignatureName) ? offer.SignatureName : "LUIS SAAVEDRA";
-        string signRole = !string.IsNullOrWhiteSpace(offer.SignatureRole) ? offer.SignatureRole : "GERENTE GENERAL";
+        string signName = !string.IsNullOrWhiteSpace(offer.SignatureName) ? offer.SignatureName
+            : (!string.IsNullOrWhiteSpace(project.UsuarioNombre) ? project.UsuarioNombre : "RESPONSABLE TÉCNICO");
+        string signRole = !string.IsNullOrWhiteSpace(offer.SignatureRole) ? offer.SignatureRole : "JEFE DE PROYECTOS";
 
         ws.Range(row, 2, row, 5).Merge();
         ws.Cell(row, 2).Value = signName;
@@ -593,7 +597,7 @@ public sealed class IngelsamOfferSummaryExcelExporter : IIngelsamOfferSummaryExc
         if (stream == null)
         {
             var asm = typeof(IngelsamOfferSummaryExcelExporter).Assembly;
-            stream = asm.GetManifestResourceStream("QubiCostElectrical.Assets.ingelsam_logo.png");
+            stream = null;
         }
 
         if (stream != null)
@@ -602,7 +606,7 @@ public sealed class IngelsamOfferSummaryExcelExporter : IIngelsamOfferSummaryExc
             {
                 using (stream)
                 {
-                    var pic = ws.AddPicture(stream, "LogoIngelsam");
+                    var pic = ws.AddPicture(stream, "LogoPresupuesto");
                     pic.MoveTo(ws.Cell(cellRef), 8, 4);
                     pic.WithSize(354, 89);
                     return;
@@ -620,6 +624,21 @@ public sealed class IngelsamOfferSummaryExcelExporter : IIngelsamOfferSummaryExc
         cell.Style.Font.FontColor = navyColor;
         cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
         cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+    }
+
+    private static void InsertCustomSignatureImage(IXLWorksheet ws, string cellRef, string filePath, int width, int height)
+    {
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                using var stream = File.OpenRead(filePath);
+                var pic = ws.AddPicture(stream);
+                pic.MoveTo(ws.Cell(cellRef), 8, 2);
+                pic.WithSize(width, height);
+            }
+        }
+        catch { }
     }
 
     private static void InsertSignatureImage(IXLWorksheet ws, string cellRef, string resourceName, int width, int height)

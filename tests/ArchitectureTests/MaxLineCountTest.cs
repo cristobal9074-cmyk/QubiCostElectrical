@@ -48,6 +48,7 @@ public sealed class MaxLineCountTest
         // + Implementación de IPageWithPendingChanges e IPageWithCommitChanges para evitar pérdida silenciosa de dotación al navegar o guardar (17-10).
         // Descompresión Ola Arquitectónica: extracción de proyección y curvas a ManoDeObraProjectionCoordinator (-420 líneas netas).
         ["src/QubiCostElectrical.Wpf/Features/ManoDeObra/ManoDeObraViewModel"] = 1645,
+        ["src/QubiCostElectrical.Wpf/Features/CubicacionSc/CubicacionScViewModel"] = 1270,
     };
 
     [Fact]

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Auth;
 using QubiCostElectrical.Wpf.Infrastructure.Diagnostics;
@@ -74,7 +74,8 @@ public sealed class WpfAppHost
         IAuthService auth,
         ProjectCollaborationLockService projectLock,
         ProjectAuditRecorder audit,
-        IPermissionService permissions)
+        IPermissionService permissions,
+        WpfUndoService? undoService = null)
     {
         Session = session;
         Services = services;
@@ -89,7 +90,7 @@ public sealed class WpfAppHost
         Currency = services.CurrencyConversion;
         FileDialog = fileDialog;
         FileOpener = fileOpener;
-        UndoService = new WpfUndoService();
+        UndoService = undoService ?? new WpfUndoService();
         Auth = auth;
         ProjectLock = projectLock;
         Audit = audit;
@@ -115,12 +116,14 @@ public sealed class WpfAppHost
         IAuthService auth,
         ProjectCollaborationLockService projectLock,
         ProjectAuditRecorder audit,
-        IPermissionService permissions)
+        IPermissionService permissions,
+        WpfUndoService? undoService = null)
     {
         Current = new WpfAppHost(
             session, services, projectWorkspace, documents, projectEdit,
             dashboard, itemizado, cubicacion, export, itemizadoWorkspace,
-            fileDialog, fileOpener, auth, projectLock, audit, permissions);
+            fileDialog, fileOpener, auth, projectLock, audit, permissions,
+            undoService);
         return Current;
     }
 

@@ -54,6 +54,8 @@ public sealed partial class AppMessageDialog : Window, INotifyPropertyChanged
         }
     }
 
+    public static Func<string, string, AppMessageDialogResult>? DialogHandlerForTesting { get; set; }
+
     public static AppMessageDialogResult Show(
         string title,
         string message,
@@ -63,6 +65,9 @@ public sealed partial class AppMessageDialog : Window, INotifyPropertyChanged
         bool isWarning = false,
         bool isError = false)
     {
+        if (DialogHandlerForTesting != null)
+            return DialogHandlerForTesting(title, message);
+
         if (!ShellWindow.CanShowModalDialog)
             return AppMessageDialogResult.Cancel;
 

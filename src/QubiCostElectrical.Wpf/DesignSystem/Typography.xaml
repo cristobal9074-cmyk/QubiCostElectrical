@@ -102,6 +102,12 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
+  <Style x:Key="Text.Center" TargetType="TextBlock">
+    <Setter Property="TextAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
   <Style x:Key="Text.Cell.Formula" TargetType="TextBlock" BasedOn="{StaticResource Text.Numeric.Right}">
     <Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" />
     <Setter Property="FontWeight" Value="SemiBold" />

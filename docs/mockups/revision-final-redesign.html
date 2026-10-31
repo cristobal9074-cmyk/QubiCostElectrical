@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qubi Cost Electrical — Rediseño Revisión Final & Pre-Flight Gate</title>
+  <style>
+    :root {
+      --bg-canvas: #0b132b;
+      --bg-shell: #090f20;
+      --bg-card: #ffffff;
+      --bg-card-alt: #f8fafc;
+      --bg-card-subtle: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-subtle: #94a3b8;
+      --line: #e2e8f0;
+      --line-strong: #cbd5e1;
+      
+      --blue-primary: #2563eb;
+      --blue-hover: #1d4ed8;
+      --blue-soft: #eff6ff;
+      --blue-border: #bfdbfe;
+      
+      --danger-base: #dc2626;
+      --danger-soft: #fef2f2;
+      --danger-border: #fecaca;
+      --danger-text: #991b1b;
+      
+      --warning-base: #d97706;
+      --warning-soft: #fffbeb;
+      --warning-border: #fde68a;
+      --warning-text: #92400e;
+      
+      --success-base: #10b981;
+      --success-soft: #ecfdf5;
+      --success-border: #a7f3d0;
+      --success-text: #065f46;
+      
+      --indigo-base: #6366f1;
+      --indigo-soft: #eef2ff;
+      --indigo-border: #c7d2fe;
+      
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family);
+      background: #f1f5f9;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Application Shell Header (Dark Chrome) */
+    .app-shell-header {
+      background: #090f20;
+      color: #fff;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 13px;
+    }
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo-cube {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 14px;
+      box-shadow: 0 0 12px rgba(59,130,246,0.5);
+    }
+    .brand-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+    }
+    .brand-sub {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: #94a3b8;
+    }
+    .project-chip {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px;
+      padding: 5px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .project-chip:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.25);
+    }
+    .project-chip-label {
+      font-size: 9.5px;
+      text-transform: uppercase;
+      color: #60a5fa;
+      font-weight: 700;
+    }
+    .project-chip-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+    .top-search-bar {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 6px 14px;
+      width: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+    .shell-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-shell-save {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-shell-close-offer {
+      background: #dc2626;
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(220,38,38,0.4);
+    }
+    .btn-shell-close-offer .badge-count {
+      background: rgba(0,0,0,0.3);
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-size: 10px;
+    }
+
+    /* Horizontal Module Navigation */
+    .module-nav-bar {
+      background: #0d1527;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-tab {
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #94a3b8;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .nav-tab:hover {
+      color: #f8fafc;
+      background: rgba(255,255,255,0.03);
+    }
+    .nav-tab.active {
+      color: #60a5fa;
+      font-weight: 700;
+      border-bottom: 2px solid #3b82f6;
+      background: rgba(59,130,246,0.08);
+    }
+    .interactive-demo-pill {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+      cursor: pointer;
+    }
+
+    /* Main Container */
+    .main-workspace {
+      flex: 1;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 1750px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Executive Quality Gate Hero */
+    .hero-audit-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-audit-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, #dc2626, #f59e0b, #3b82f6);
+    }
+    .hero-audit-card.state-passed::before {
+      background: linear-gradient(90deg, #10b981, #059669);
+    }
+    .hero-top-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .hero-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .hero-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 2px;
+    }
+    .preflight-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .preflight-pill.danger {
+      background: var(--danger-soft);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+    }
+    .preflight-pill.success {
+      background: var(--success-soft);
+      color: var(--success-text);
+      border: 1px solid var(--success-border);
+    }
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 0 rgba(220,38,38,0.7);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220,38,38,0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 7px rgba(220,38,38,0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+    }
+    .project-code-tag {
+      font-family: var(--font-mono);
+      background: #f1f5f9;
+      border: 1px solid var(--line);
+      color: #334155;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 11px;
+    }
+    .hero-main-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hero-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Executive KPI Grid */
+    .kpi-metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+    .kpi-card {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .kpi-card:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+    .kpi-card.alert-blocker {
+      border-left: 4px solid var(--danger-base);
+    }
+    .kpi-card.alert-warning {
+      border-left: 4px solid var(--warning-base);
+    }
+    .kpi-card.alert-confidence {
+      border-left: 4px solid var(--blue-primary);
+    }
+    .kpi-card.alert-status {
+      border-left: 4px solid #64748b;
+    }
+    .kpi-icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .kpi-icon-box.red { background: var(--danger-soft); color: var(--danger-base); border: 1px solid var(--danger-border); }
+    .kpi-icon-box.amber { background: var(--warning-soft); color: var(--warning-base); border: 1px solid var(--warning-border); }
+    .kpi-icon-box.blue { background: var(--blue-soft); color: var(--blue-primary); border: 1px solid var(--blue-border); }
+    .kpi-icon-box.slate { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .kpi-icon-box.green { background: var(--success-soft); color: var(--success-base); border: 1px solid var(--success-border); }
+    .kpi-data {
+      display: flex;
+      flex-direction: column;
+    }
+    .kpi-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.1;
+    }
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .kpi-desc {
+      font-size: 10.5px;
+      color: #94a3b8;
+    }
+
+    /* 3-Column Studio Grid Layout */
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 290px 1fr 340px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    /* Common Card Box */
+    .panel-box {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fafbfc;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-header-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-header-badge {
+      font-size: 11px;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    .panel-body {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Left Sidebar: Filter & Quality Checklist */
+    .search-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-input-wrap input {
+      width: 100%;
+      padding: 8px 30px 8px 32px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      font-size: 12px;
+      background: #fff;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.15s;
+    }
+    .search-input-wrap input:focus {
+      border-color: var(--blue-primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      font-size: 12px;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+    .search-shortcut-badge {
+      position: absolute;
+      right: 8px;
+      font-size: 10px;
+      background: #f1f5f9;
+      color: #64748b;
+      padding: 1px 5px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      font-family: var(--font-mono);
+      pointer-events: none;
+    }
+
+    /* Severity Segment Buttons */
+    .severity-chips-group {
+      display: flex;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 8px;
+      gap: 3px;
+      border: 1px solid var(--line);
+    }
+    .severity-chip {
+      flex: 1;
+      padding: 6px 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .severity-chip:hover {
+      color: #0f172a;
+    }
+    .severity-chip.active {
+      background: #fff;
+      color: #0f172a;
+      box-shadow: var(--shadow-sm);
+    }
+    .severity-chip.active.danger {
+      color: var(--danger-base);
+    }
+    .chip-counter {
+      font-size: 10px;
+      padding: 0 5px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.06);
+    }
+
+    /* Interactive Quality Checklist */
+    .checklist-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      background: #fafbfc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .checklist-item:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      transform: translateX(2px);
+    }
+    .checklist-item.selected {
+      background: var(--blue-soft);
+      border-color: var(--blue-border);
+    }
+    .checklist-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+    .check-status-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .check-status-icon.fail { background: var(--danger-soft); color: var(--danger-base); border: 1px solid var(--danger-border); }
+    .check-status-icon.warn { background: var(--warning-soft); color: var(--warning-base); border: 1px solid var(--warning-border); }
+    .check-status-icon.pass { background: var(--success-soft); color: var(--success-base); border: 1px solid var(--success-border); }
+    .checklist-filter-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: #64748b;
+      background: #e2e8f0;
+    }
+    .checklist-item:hover .checklist-filter-tag {
+      background: var(--blue-primary);
+      color: #fff;
+    }
+
+    /* Center Matrix / DataGrid */
+    .matrix-toolbar {
+      padding: 12px 16px;
+      background: #fafbfc;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .matrix-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .matrix-counter-pill {
+      background: #e2e8f0;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .matrix-actions-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-smart-action {
+      background: linear-gradient(135deg, #4f46e5, #4338ca);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(79,70,229,0.3);
+      transition: all 0.15s;
+    }
+    .btn-smart-action:hover {
+      background: linear-gradient(135deg, #4338ca, #3730a3);
+      transform: translateY(-1px);
+    }
+    .btn-outline-action {
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      color: #334155;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .btn-outline-action:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+    }
+
+    /* Table Matrix */
+    .table-container {
+      overflow-x: auto;
+      max-height: 580px;
+    }
+    .review-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+    .review-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 10px 12px;
+      border-bottom: 2px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .review-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+      color: #1e293b;
+      vertical-align: middle;
+    }
+    .review-table tr {
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .review-table tr:hover {
+      background: #f8fafc;
+    }
+    .review-table tr.selected {
+      background: #eff6ff !important;
+      position: relative;
+    }
+    .review-table tr.selected td:first-child {
+      border-left: 3px solid var(--blue-primary);
+    }
+
+    /* Badges inside table */
+    .badge-severity {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+    .badge-severity.blocker {
+      background: var(--danger-soft);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+    }
+    .badge-severity.warning {
+      background: var(--warning-soft);
+      color: var(--warning-text);
+      border: 1px solid var(--warning-border);
+    }
+    .badge-severity.info {
+      background: var(--blue-soft);
+      color: var(--blue-primary);
+      border: 1px solid var(--blue-border);
+    }
+    .item-mono-code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: #f1f5f9;
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: #334155;
+      font-weight: 600;
+    }
+    .apu-code-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--blue-primary);
+      background: #eff6ff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #bfdbfe;
+    }
+    .problem-bold {
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .recommendation-text {
+      color: #64748b;
+      font-size: 11.5px;
+    }
+    .btn-row-action {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--blue-primary);
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 10.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-row-action:hover {
+      background: var(--blue-primary);
+      color: #fff;
+      border-color: var(--blue-primary);
+    }
+
+    /* Right Sidebar: Inspector & Pre-Flight Gate */
+    .inspector-card {
+      background: #fafbfc;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .inspector-header-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .inspector-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .inspector-location {
+      font-size: 11.5px;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .inspector-callout {
+      background: #fff;
+      border-left: 3px solid var(--danger-base);
+      border-top: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .inspector-callout.warning {
+      border-left-color: var(--warning-base);
+    }
+    .inspector-fix-box {
+      background: var(--blue-soft);
+      border: 1px dashed var(--blue-border);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 11px;
+      color: #1e3a8a;
+    }
+    .btn-inspector-jump {
+      background: #fff;
+      border: 1px solid var(--blue-primary);
+      color: var(--blue-primary);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-inspector-jump:hover {
+      background: var(--blue-primary);
+      color: #fff;
+    }
+
+    /* Circular Confidence Gauge */
+    .gauge-wrapper {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+    }
+    .gauge-circle-container {
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+    .gauge-svg {
+      transform: rotate(-90deg);
+      width: 100px;
+      height: 100px;
+    }
+    .gauge-bg {
+      fill: none;
+      stroke: #f1f5f9;
+      stroke-width: 9;
+    }
+    .gauge-fill {
+      fill: none;
+      stroke: #2563eb;
+      stroke-width: 9;
+      stroke-linecap: round;
+      stroke-dasharray: 264;
+      stroke-dashoffset: 264; /* 0% */
+      transition: stroke-dashoffset 1s ease-out, stroke 0.5s;
+    }
+    .gauge-center-text {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .gauge-number {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .gauge-unit {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .gauge-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .gauge-sublabel {
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    /* Bottom Gate Decision Footer */
+    .gate-footer-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+    }
+    .gate-footer-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .gate-status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+    .gate-status-pill.blocked {
+      background: var(--danger-soft);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+    }
+    .gate-status-pill.ready {
+      background: var(--success-soft);
+      color: var(--success-text);
+      border: 1px solid var(--success-border);
+    }
+    .gate-footer-message {
+      font-size: 12px;
+      color: #475569;
+    }
+    .gate-footer-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-return-budget {
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      color: #334155;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-return-budget:hover {
+      background: #f1f5f9;
+    }
+    .btn-primary-export {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+      transition: all 0.2s;
+    }
+    .btn-primary-export:hover:not(:disabled) {
+      background: #1d4ed8;
+      box-shadow: 0 6px 16px rgba(37,99,235,0.35);
+      transform: translateY(-1px);
+    }
+    .btn-primary-export:disabled {
+      background: #cbd5e1;
+      color: #94a3b8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* Modal / Toast Notification */
+    .toast-box {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 100;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast-box.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top App Shell Bar -->
+  <header class="app-shell-header">
+    <div class="brand-section">
+      <div class="brand-logo-cube">⚡</div>
+      <div>
+        <div class="brand-title">QUBI COST</div>
+        <div class="brand-sub">ELECTRICAL</div>
+      </div>
+      <div class="project-chip" title="Proyecto Activo">
+        <span class="project-chip-label">PROYECTO ACTIVO</span>
+        <span class="project-chip-name" id="projectChipName">PEL039A2026 PRUEBA NUMERO 2</span>
+        <span style="font-size: 10px; color: #94a3b8;">▼</span>
+      </div>
+    </div>
+
+    <div class="top-search-bar">
+      <span>🔍 Buscar en todo el proyecto...</span>
+      <span style="font-family: var(--font-mono); font-size: 10px; background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 4px;">Ctrl+P / Ctrl+K</span>
+    </div>
+
+    <div class="shell-actions">
+      <span style="font-size: 11px; color: #f59e0b; display: flex; align-items: center; gap: 4px;">● Sin guardar</span>
+      <button class="btn-shell-save">Guardar</button>
+      <button class="btn-shell-close-offer" id="topCloseOfferBtn">
+        Cerrar oferta <span class="badge-count" id="topBlockerCount">5</span>
+      </button>
+      <span style="color: #64748b; font-size: 12px; margin-left: 6px;">PR | ─ ▢ ✕</span>
+    </div>
+  </header>
+
+  <!-- Horizontal Module Navigation -->
+  <nav class="module-nav-bar">
+    <div class="nav-tabs">
+      <div class="nav-tab">Resumen</div>
+      <div class="nav-tab">Proyecto</div>
+      <div class="nav-tab">Itemizado</div>
+      <div class="nav-tab">Cubicación ▾</div>
+      <div class="nav-tab">Precios ▾</div>
+      <div class="nav-tab active">Cierre y Costos ▾ (Revisión)</div>
+      <div class="nav-tab">Solicitudes Faena</div>
+      <div class="nav-tab">Órdenes de Cambio</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="interactive-demo-pill" id="btnSimulateResolution" onclick="toggleSimulateResolution()">
+        ✨ Probar Simulación: Resolver Todo
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Workspace -->
+  <main class="main-workspace">
+
+    <!-- Executive Quality Gate Hero Banner -->
+    <section class="hero-audit-card" id="heroAuditCard">
+      <div class="hero-top-row">
+        <div class="hero-title-group">
+          <div class="hero-badge-row">
+            <span class="preflight-pill danger" id="heroPreflightPill">
+              <span class="pulse-dot"></span> Pre-Flight Gate: Bloqueado
+            </span>
+            <span class="project-code-tag">PEL039A2026</span>
+            <span style="font-size: 11px; color: #64748b; font-weight: 600;">Auditoría de Cumplimiento Técnico & Comercial</span>
+          </div>
+          <h1 class="hero-main-title" id="heroProjectTitle">
+            PEL039A2026 PRUEBA NUMERO 2 <span style="font-size: 15px; color: #64748b; font-weight: 400;">— 71 partidas — APU / Costo directo con factores comerciales</span>
+          </h1>
+          <p class="hero-subtitle" id="heroSubtitle">
+            ⛔ Existen <strong>5 inconsistencias bloqueantes</strong> que deben subsanarse para garantizar la integridad del presupuesto antes de emitir la oferta.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-smart-action" onclick="simulateFixEquipment()" id="btnAutoFixHero">
+            🪄 Auto-corregir 9 Equipos
+          </button>
+          <button class="btn-outline-action" onclick="reAudit()">
+            ↻ Re-auditar (F5)
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Executive Row -->
+      <div class="kpi-metrics-row">
+        <div class="kpi-card alert-blocker">
+          <div class="kpi-icon-box red" id="kpiBlockerIcon">⛔</div>
+          <div class="kpi-data">
+            <span class="kpi-value" id="kpiBlockerValue" style="color: #dc2626;">5</span>
+            <span class="kpi-label">Bloqueantes</span>
+            <span class="kpi-desc">Impiden exportación oficial</span>
+          </div>
+        </div>
+
+        <div class="kpi-card alert-warning">
+          <div class="kpi-icon-box amber" id="kpiWarnIcon">⚠️</div>
+          <div class="kpi-data">
+            <span class="kpi-value" id="kpiWarnValue" style="color: #d97706;">52</span>
+            <span class="kpi-label">Advertencias</span>
+            <span class="kpi-desc">Optimización y control de margen</span>
+          </div>
+        </div>
+
+        <div class="kpi-card alert-confidence">
+          <div class="kpi-icon-box blue" id="kpiConfIcon">📊</div>
+          <div class="kpi-data">
+            <span class="kpi-value" id="kpiConfValue" style="color: #2563eb;">0%</span>
+            <span class="kpi-label">Score de Confianza</span>
+            <span class="kpi-desc" id="kpiConfDesc">Baja confianza / Atención</span>
+          </div>
+        </div>
+
+        <div class="kpi-card alert-status">
+          <div class="kpi-icon-box slate" id="kpiStateIcon">🔒</div>
+          <div class="kpi-data">
+            <span class="kpi-value" id="kpiStateValue" style="color: #475569;">Bloqueado</span>
+            <span class="kpi-label">Estado de Emisión</span>
+            <span class="kpi-desc">Requiere aprobación previa</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3-Column Studio Grid -->
+    <div class="studio-grid">
+
+      <!-- LEFT COLUMN: Filters & Automated Quality Checklist -->
+      <aside class="panel-box">
+        <div class="panel-header">
+          <span class="panel-header-title">
+            <span>🛡️</span> Reglas de Auditoría
+          </span>
+          <span class="panel-header-badge" id="lblTotalChecklistRules">8 reglas</span>
+        </div>
+        <div class="panel-body">
+          
+          <!-- Search Box -->
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="txtSearch" placeholder="Buscar categoría, ítem o problema..." oninput="filterTable()">
+            <span class="search-shortcut-badge">Ctrl+F</span>
+          </div>
+
+          <!-- Severity Quick Filters -->
+          <div class="severity-chips-group">
+            <button class="severity-chip active" id="chipAll" onclick="setSeverityFilter('Todas')">
+              Todas <span class="chip-counter" id="countAll">57</span>
+            </button>
+            <button class="severity-chip danger" id="chipBlockers" onclick="setSeverityFilter('Bloqueante')">
+              ⛔ Bloqueos <span class="chip-counter" id="countBlockers" style="background: #fee2e2; color: #991b1b;">5</span>
+            </button>
+            <button class="severity-chip" id="chipWarnings" onclick="setSeverityFilter('Advertencia')">
+              ⚠️ Avisos <span class="chip-counter" id="countWarnings">52</span>
+            </button>
+          </div>
+
+          <!-- Quality Control Matrix List -->
+          <div>
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;">
+              Checklist de Control de Calidad
+            </div>
+            
+            <div class="checklist-container">
+              
+              <div class="checklist-item" onclick="filterByCategory('Sin valorización global')" id="chkRule1">
+                <div class="checklist-item-left">
+                  <span class="check-status-icon fail">✗</span>
+                  <span>Sin valorización global</span>
+                </div>
+                <span class="checklist-filter-tag">1 partida</span>
+              </div>
+
+              <div class="checklist-item" onclick="filterByCategory('Cantidad cero')" id="chkRule2">
+                <div class="checklist-item-left">
+                  <span class="check-status-icon fail">✗</span>
+                  <span>Cubicaciones con metraje cero</span>
+                </div>
+                <span class="checklist-filter-tag">4 partidas</span>
+              </div>
+
+              <div class="checklist-item" onclick="filterByCategory('Partida vacía')" id="chkRule3">
+                <div class="checklist-item-left">
+                  <span class="check-status-icon warn">▲</span>
+                  <span>Partidas aún sin cubicación</span>
+                </div>
+                <span class="checklist-filter-tag">22 partidas</span>
+              </div>
+
+              <div class="checklist-item" onclick="filterByCategory('Equipo sin clasificar')" id="chkRule4">
+                <div class="checklist-item-left">
+                  <span class="check-status-icon warn">▲</span>
+                  <span>Equipos sin clasificar</span>
+                </div>
+                <span class="checklist-filter-tag">9 equipos</span>
+              </div>
+
+              <div class="checklist-item" onclick="filterByCategory('Área no asignada')" id="chkRule5">
+                <div class="checklist-item-left">
+                  <span class="check-status-icon warn">▲</span>
+                  <span>Áreas no asignadas</span>
+                </div>
+                <span class="checklist-filter-tag">17 partidas</span>
+              </div>
+
+              <div class="checklist-item" onclick="filterByCategory('Fórmulas íntegras')">
+                <div class="checklist-item-left">
+                  <span class="check-status-icon pass">✓</span>
+                  <span>Fórmulas matemáticas íntegras</span>
+                </div>
+                <span class="checklist-filter-tag" style="background: #dcfce7; color: #166534;">100% OK</span>
+              </div>
+
+              <div class="checklist-item" onclick="filterByCategory('Precios completos')">
+                <div class="checklist-item-left">
+                  <span class="check-status-icon pass">✓</span>
+                  <span>Precios unitarios completos</span>
+                </div>
+                <span class="checklist-filter-tag" style="background: #dcfce7; color: #166534;">100% OK</span>
+              </div>
+
+              <div class="checklist-item" onclick="filterByCategory('Factores definidos')">
+                <div class="checklist-item-left">
+                  <span class="check-status-icon pass">✓</span>
+                  <span>Factores de presentación</span>
+                </div>
+                <span class="checklist-filter-tag" style="background: #dcfce7; color: #166534;">OK</span>
+              </div>
+
+            </div>
+          </div>
+
+          <button class="btn-outline-action" style="width: 100%; justify-content: center;" onclick="resetAllFilters()">
+            Restablecer todos los filtros (Esc)
+          </button>
+
+        </div>
+      </aside>
+
+      <!-- CENTER COLUMN: Diagnostic Findings Matrix (DataGrid) -->
+      <section class="panel-box" style="min-height: 600px;">
+        <div class="matrix-toolbar">
+          <div class="matrix-title-group">
+            <span style="font-size: 14px; font-weight: 800; color: #0f172a;">Matriz de Hallazgos y Diagnóstico</span>
+            <span class="matrix-counter-pill" id="lblTableCounter">57 visibles — 57 total</span>
+          </div>
+
+          <div class="matrix-actions-group">
+            <button class="btn-smart-action" onclick="simulateFixEquipment()" title="Marca como EQUIPO las 9 líneas de Tableros/Equipos que siguen como material">
+              ✨ Auto-corregir clasificación (9)
+            </button>
+            <button class="btn-outline-action" onclick="reAudit()">
+              Actualizar (F5)
+            </button>
+            <button class="btn-outline-action" onclick="openSelectedInWorkspace()" style="color: #2563eb; font-weight: 700;">
+              Ir a corregir (Enter) ↗
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="review-table" id="findingsTable">
+            <thead>
+              <tr>
+                <th style="width: 100px;">Severidad</th>
+                <th style="width: 120px;">Categoría</th>
+                <th style="width: 75px;">Ítem</th>
+                <th style="width: 180px;">Partida</th>
+                <th style="width: 80px;">Código</th>
+                <th>Diagnóstico del Problema</th>
+                <th>Recomendación Resolutiva</th>
+                <th style="width: 85px; text-align: center;">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Dynamically rendered rows -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: War Room Inspector & Gate Decision -->
+      <aside style="display: flex; flex-direction: column; gap: 16px;">
+        
+        <!-- Live Inspector Card -->
+        <div class="panel-box">
+          <div class="panel-header">
+            <span class="panel-header-title">
+              <span>🔍</span> Inspector de Incidencia
+            </span>
+            <span class="panel-header-badge" id="inspectorBadge">Seleccionada</span>
+          </div>
+          <div class="panel-body" id="inspectorBody">
+            <div class="inspector-card">
+              <div class="inspector-header-badge">
+                <span class="badge-severity blocker" id="inspSeverityBadge">● Bloqueante</span>
+                <span class="item-mono-code" id="inspItemCode">1.0.00001</span>
+              </div>
+              <div class="inspector-title" id="inspPartidaTitle">Partida 1.- Instalación de Faenas</div>
+              <div class="inspector-location">
+                <span>📍 Ubicación:</span> <strong id="inspLocation">Itemizado General</strong>
+              </div>
+              
+              <div class="inspector-callout" id="inspCallout">
+                <strong style="display: block; color: #991b1b; margin-bottom: 3px;">Diagnóstico técnico:</strong>
+                <span id="inspProblemText">La partida tiene materiales cubicados pero no cuenta con unidad ni cantidad global en el encabezado.</span>
+              </div>
+
+              <div class="inspector-fix-box" id="inspFixBox">
+                <strong style="display: block; color: #1e40af; margin-bottom: 2px;">💡 Recomendación sugerida:</strong>
+                <span id="inspRecommendationText">Completar la Unidad y Cantidad en el Itemizado para valorizar la partida en la oferta.</span>
+              </div>
+
+              <button class="btn-inspector-jump" onclick="openSelectedInWorkspace()">
+                Abrir en Módulo de Corrección ↗
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Confidence Radial Gauge Card -->
+        <div class="panel-box">
+          <div class="panel-header">
+            <span class="panel-header-title">
+              <span>🎯</span> Nivel de Confianza de Oferta
+            </span>
+          </div>
+          <div class="panel-body">
+            <div class="gauge-wrapper">
+              <div class="gauge-circle-container">
+                <svg class="gauge-svg" viewBox="0 0 100 100">
+                  <circle class="gauge-bg" cx="50" cy="50" r="42"></circle>
+                  <circle class="gauge-fill" id="gaugeCircle" cx="50" cy="50" r="42"></circle>
+                </svg>
+                <div class="gauge-center-text">
+                  <span class="gauge-number" id="gaugeNumber">0</span>
+                  <span class="gauge-unit">% SCORE</span>
+                </div>
+              </div>
+              <div class="gauge-label" id="gaugeLabel">Baja Confianza</div>
+              <div class="gauge-sublabel" id="gaugeSublabel">Presupuesto con bloqueos técnicos críticos. No apto para licitación.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export Pre-flight Gate Checklist -->
+        <div class="panel-box">
+          <div class="panel-header">
+            <span class="panel-header-title">
+              <span>📋</span> Requisitos de Emisión
+            </span>
+          </div>
+          <div class="panel-body" style="gap: 8px; font-size: 11.5px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line);">
+              <span>Bloqueos resueltos</span>
+              <strong style="color: #dc2626;" id="gateBlockerStatus">5 pendientes ✗</strong>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line);">
+              <span>Integridad de fórmulas</span>
+              <strong style="color: #10b981;">100% Verificado ✓</strong>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line);">
+              <span>Clasificación de tableros</span>
+              <strong style="color: #d97706;" id="gateEquipStatus">9 sugerencias ▲</strong>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0;">
+              <span>Precios unitarios congelados</span>
+              <strong style="color: #10b981;">Completos ✓</strong>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+
+    <!-- Bottom Action Dock Bar -->
+    <footer class="gate-footer-bar">
+      <div class="gate-footer-left">
+        <div class="gate-status-pill blocked" id="bottomGateStatusPill">
+          <span>⛔</span> <span id="bottomGateStatusText">Oferta Bloqueada (5 críticos)</span>
+        </div>
+        <div class="gate-footer-message" id="bottomGateMessage">
+          Resuelva los 5 problemas bloqueantes para autorizar la generación oficial de la oferta económica.
+        </div>
+      </div>
+
+      <div class="gate-footer-actions">
+        <button class="btn-return-budget" onclick="showToast('Navegando a Itemizado...')">
+          Volver al presupuesto
+        </button>
+        <button class="btn-primary-export" id="btnBottomExport" disabled onclick="exportOffer()">
+          Generar oferta y exportar →
+        </button>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Interactive Toast Notification -->
+  <div class="toast-box" id="toastBox">
+    <span id="toastIcon">✨</span>
+    <span id="toastMsg">Mensaje de notificación</span>
+  </div>
+
+  <script>
+    // Initial Dataset based on real project data from user screenshot
+    const rawIssues = [
+      { id: 1, severity: 'Bloqueante', category: 'Sin valorización global', item: '1.0.00001', partida: '1.- Instalación de Faenas', codigo: '', problem: 'La partida tiene materiales cubicados pero no cuenta con unidad ni cantidad global en el encabezado.', recommendation: 'Completar la Unidad y Cantidad en el Itemizado.' },
+      { id: 2, severity: 'Bloqueante', category: 'Cantidad cero', item: '1.0.00039', partida: '1.38 Tablero Fuerza Climatización', codigo: 'S229/15', problem: 'Existe una línea con código pero con cantidad cero o metraje nulo en cubicación.', recommendation: 'Corregir cantidad o eliminar línea residual.' },
+      { id: 3, severity: 'Bloqueante', category: 'Cantidad cero', item: '1.0.00043', partida: '1.42 Tablero Alumbrado Subterráneo', codigo: 'S229/15', problem: 'Existe una línea con código pero con cantidad cero en cubicación.', recommendation: 'Corregir cantidad o eliminar línea residual.' },
+      { id: 4, severity: 'Bloqueante', category: 'Cantidad cero', item: '1.0.00043', partida: '1.42 Tablero Alumbrado Subterráneo', codigo: 'S229/32', problem: 'Existe una línea con código pero con cantidad cero en cubicación.', recommendation: 'Corregir cantidad o eliminar línea residual.' },
+      { id: 5, severity: 'Bloqueante', category: 'Cantidad cero', item: '1.0.00054', partida: '2.8 Canalización Alimentadores', codigo: 'A11', problem: 'Existe una línea con código pero con cantidad cero en cubicación.', recommendation: 'Corregir cantidad o eliminar línea residual.' },
+      
+      { id: 6, severity: 'Advertencia', category: 'Partida vacía', item: '1.0.00008', partida: '1.8 Malla a Tierra', codigo: '', problem: '22 partidas del itemizado todavía no tienen materiales cubicados.', recommendation: 'Cubique las partidas que entran en la oferta.' },
+      { id: 7, severity: 'Advertencia', category: 'Equipo sin clasificar', item: '1.0.00012', partida: '1.12 Tablero General TGBT', codigo: 'Equipos', problem: '9 línea(s) de familia Tableros/Equipos siguen como material ordinario.', recommendation: 'Usar botón «Corregir clasificación de equipos» para aplicar markup correcto.' },
+      { id: 8, severity: 'Advertencia', category: 'Área no asignada', item: '1.0.00001', partida: '1.- Instalación de Faenas', codigo: '', problem: '2 línea(s) cubicadas siguen en área sin asignar.', recommendation: 'Asignar un área real: Servicios Comunes, Dptos, Subterráneo.' },
+      { id: 9, severity: 'Advertencia', category: 'Área no asignada', item: '1.0.00002', partida: '1.1 Empalme Provisorio', codigo: '', problem: '7 línea(s) cubicadas siguen en área sin asignar.', recommendation: 'Asignar un área real: Servicios Comunes, Dptos, Subterráneo.' },
+      { id: 10, severity: 'Advertencia', category: 'Área no asignada', item: '1.0.00003', partida: '1.2 Alimentador Provisorio', codigo: '', problem: '9 línea(s) cubicadas siguen en área sin asignar.', recommendation: 'Asignar un área real: Servicios Comunes, Dptos, Subterráneo.' },
+      { id: 11, severity: 'Advertencia', category: 'Área no asignada', item: '1.0.00004', partida: '1.3 Protecciones Provisorias', codigo: '', problem: '6 línea(s) cubicadas siguen en área sin asignar.', recommendation: 'Asignar un área real: Servicios Comunes, Dptos, Subterráneo.' },
+      { id: 12, severity: 'Advertencia', category: 'Área no asignada', item: '1.0.00005', partida: '1.4 Conexión de Obra', codigo: '', problem: '7 línea(s) cubicadas siguen en área sin asignar.', recommendation: 'Asignar un área real: Servicios Comunes, Dptos, Subterráneo.' },
+      { id: 13, severity: 'Advertencia', category: 'Área no asignada', item: '1.0.00006', partida: '1.5 Medición y Ensayos', codigo: '', problem: '2 línea(s) cubicadas siguen en área sin asignar.', recommendation: 'Asignar un área real: Servicios Comunes, Dptos, Subterráneo.' }
+    ];
+
+    let currentIssues = [...rawIssues];
+    let selectedIssueId = 1;
+    let activeSeverity = 'Todas';
+    let activeCategory = null;
+    let isSimulationActive = false;
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      const query = document.getElementById('txtSearch').value.toLowerCase().trim();
+
+      const filtered = currentIssues.filter(item => {
+        const matchesSeverity = activeSeverity === 'Todas' || item.severity === activeSeverity;
+        const matchesCategory = !activeCategory || item.category === activeCategory;
+        const matchesQuery = !query || 
+          item.item.toLowerCase().includes(query) ||
+          item.partida.toLowerCase().includes(query) ||
+          item.codigo.toLowerCase().includes(query) ||
+          item.problem.toLowerCase().includes(query) ||
+          item.category.toLowerCase().includes(query);
+        return matchesSeverity && matchesCategory && matchesQuery;
+      });
+
+      document.getElementById('lblTableCounter').textContent = `${filtered.length} visibles — ${currentIssues.length} total`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 40px; color: #64748b;">
+              <div style="font-size: 28px; margin-bottom: 8px;">✓</div>
+              <strong style="color: #0f172a; font-size: 14px;">No se encontraron problemas con los filtros actuales</strong>
+              <div style="font-size: 12px; margin-top: 4px;">Modifique los términos de búsqueda o limpie los filtros.</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach(row => {
+        const tr = document.createElement('tr');
+        if (row.id === selectedIssueId) tr.classList.add('selected');
+
+        tr.onclick = () => selectIssue(row.id);
+
+        const sevClass = row.severity === 'Bloqueante' ? 'blocker' : (row.severity === 'Advertencia' ? 'warning' : 'info');
+        const sevIcon = row.severity === 'Bloqueante' ? '⛔' : '⚠️';
+
+        tr.innerHTML = `
+          <td>
+            <span class="badge-severity ${sevClass}">
+              <span>${sevIcon}</span> ${row.severity}
+            </span>
+          </td>
+          <td><span style="font-weight: 600; color: #475569;">${row.category}</span></td>
+          <td><span class="item-mono-code">${row.item}</span></td>
+          <td><strong style="color: #0f172a;">${row.partida}</strong></td>
+          <td>${row.codigo ? `<span class="apu-code-pill">${row.codigo}</span>` : '<span style="color:#cbd5e1;">—</span>'}</td>
+          <td><span class="problem-bold">${row.problem}</span></td>
+          <td><span class="recommendation-text">${row.recommendation}</span></td>
+          <td style="text-align: center;">
+            <button class="btn-row-action" onclick="event.stopPropagation(); openSelectedInWorkspace(${row.id})">
+              Corregir ↗
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function selectIssue(id) {
+      selectedIssueId = id;
+      const issue = currentIssues.find(x => x.id === id);
+      if (!issue) return;
+
+      document.querySelectorAll('#tableBody tr').forEach(r => r.classList.remove('selected'));
+      renderTable();
+
+      // Update Inspector panel
+      const sevBadge = document.getElementById('inspSeverityBadge');
+      sevBadge.className = `badge-severity ${issue.severity === 'Bloqueante' ? 'blocker' : 'warning'}`;
+      sevBadge.textContent = `${issue.severity === 'Bloqueante' ? '● Bloqueante' : '● Advertencia'}`;
+
+      document.getElementById('inspItemCode').textContent = issue.item;
+      document.getElementById('inspPartidaTitle').textContent = issue.partida;
+      document.getElementById('inspProblemText').textContent = issue.problem;
+      document.getElementById('inspRecommendationText').textContent = issue.recommendation;
+      document.getElementById('inspLocation').textContent = issue.category;
+
+      const callout = document.getElementById('inspCallout');
+      callout.className = `inspector-callout ${issue.severity === 'Bloqueante' ? '' : 'warning'}`;
+    }
+
+    function setSeverityFilter(sev) {
+      activeSeverity = sev;
+      document.getElementById('chipAll').classList.toggle('active', sev === 'Todas');
+      document.getElementById('chipBlockers').classList.toggle('active', sev === 'Bloqueante');
+      document.getElementById('chipWarnings').classList.toggle('active', sev === 'Advertencia');
+      renderTable();
+    }
+
+    function filterByCategory(cat) {
+      activeCategory = (activeCategory === cat) ? null : cat;
+      document.querySelectorAll('.checklist-item').forEach(el => el.classList.remove('selected'));
+      if (activeCategory) {
+        showToast(`Filtrando por categoría: ${cat}`);
+      } else {
+        showToast('Filtro de categoría liberado');
+      }
+      renderTable();
+    }
+
+    function filterTable() {
+      renderTable();
+    }
+
+    function resetAllFilters() {
+      document.getElementById('txtSearch').value = '';
+      activeSeverity = 'Todas';
+      activeCategory = null;
+      document.getElementById('chipAll').classList.add('active');
+      document.getElementById('chipBlockers').classList.remove('active');
+      document.getElementById('chipWarnings').classList.remove('active');
+      renderTable();
+      showToast('Filtros restablecidos');
+    }
+
+    function simulateFixEquipment() {
+      // Fix equipment issues
+      currentIssues = currentIssues.filter(x => x.category !== 'Equipo sin clasificar');
+      document.getElementById('kpiWarnValue').textContent = '43';
+      document.getElementById('countWarnings').textContent = '43';
+      document.getElementById('countAll').textContent = currentIssues.length;
+      document.getElementById('gateEquipStatus').textContent = 'Clasificados ✓';
+      document.getElementById('gateEquipStatus').style.color = '#10b981';
+      document.getElementById('chkRule4').style.display = 'none';
+
+      // Update Gauge from 0% to 28%
+      updateGauge(28, 'Confianza Inicial', '9 equipos clasificados correctamente a valor agregado.');
+
+      showToast('✨ 9 líneas de tableros marcadas como EQUIPO. Base de costos recalculada.');
+      renderTable();
+    }
+
+    function toggleSimulateResolution() {
+      const btn = document.getElementById('btnSimulateResolution');
+      if (!isSimulationActive) {
+        // Resolve everything!
+        isSimulationActive = true;
+        btn.textContent = '↺ Restaurar Datos de Prueba';
+        btn.style.background = '#475569';
+
+        currentIssues = [];
+        renderTable();
+
+        // Update KPIs
+        document.getElementById('kpiBlockerValue').textContent = '0';
+        document.getElementById('kpiBlockerValue').style.color = '#10b981';
+        document.getElementById('kpiBlockerIcon').textContent = '✓';
+        document.getElementById('kpiBlockerIcon').className = 'kpi-icon-box green';
+
+        document.getElementById('kpiWarnValue').textContent = '0';
+        document.getElementById('kpiWarnValue').style.color = '#10b981';
+        document.getElementById('kpiWarnIcon').textContent = '✓';
+        document.getElementById('kpiWarnIcon').className = 'kpi-icon-box green';
+
+        document.getElementById('kpiStateValue').textContent = 'Certificado';
+        document.getElementById('kpiStateValue').style.color = '#10b981';
+        document.getElementById('kpiStateIcon').textContent = '✓';
+        document.getElementById('kpiStateIcon').className = 'kpi-icon-box green';
+
+        document.getElementById('topBlockerCount').textContent = '0';
+        document.getElementById('topBlockerCount').style.background = '#10b981';
+        document.getElementById('topCloseOfferBtn').style.background = '#10b981';
+
+        // Hero card styling
+        const hero = document.getElementById('heroAuditCard');
+        hero.classList.add('state-passed');
+
+        const pill = document.getElementById('heroPreflightPill');
+        pill.className = 'preflight-pill success';
+        pill.innerHTML = '<span>✓</span> Pre-Flight Gate: Aprobado';
+
+        document.getElementById('heroSubtitle').innerHTML = '✓ <strong>Presupuesto 100% verificado y validado.</strong> Todas las auditorías técnicas, de metrajes y precios unitarios están certificadas para exportación.';
+
+        // Bottom dock
+        const bottomPill = document.getElementById('bottomGateStatusPill');
+        bottomPill.className = 'gate-status-pill ready';
+        bottomPill.innerHTML = '<span>✓</span> <span>Aprobado para Exportar</span>';
+
+        document.getElementById('bottomGateMessage').textContent = 'Presupuesto completamente validado. Puede emitir el documento oficial a licitación.';
+
+        const btnExport = document.getElementById('btnBottomExport');
+        btnExport.disabled = false;
+        btnExport.style.background = '#10b981';
+
+        document.getElementById('gateBlockerStatus').textContent = '0 pendientes ✓';
+        document.getElementById('gateBlockerStatus').style.color = '#10b981';
+
+        updateGauge(100, 'Alta Confianza (Certificado)', 'Sin riesgo de metrajes ni fórmulas.');
+
+        showToast('🎉 ¡Todos los bloqueos subsanados! La oferta está lista para emitirse.');
+      } else {
+        // Reset back
+        location.reload();
+      }
+    }
+
+    function updateGauge(pct, label, sublabel) {
+      document.getElementById('gaugeNumber').textContent = pct;
+      document.getElementById('gaugeLabel').textContent = label;
+      document.getElementById('gaugeSublabel').textContent = sublabel;
+
+      const circle = document.getElementById('gaugeCircle');
+      const circumference = 264;
+      const offset = circumference - (pct / 100 * circumference);
+      circle.style.strokeDashoffset = offset;
+
+      if (pct === 100) {
+        circle.style.stroke = '#10b981';
+        document.getElementById('kpiConfValue').textContent = '100%';
+        document.getElementById('kpiConfValue').style.color = '#10b981';
+        document.getElementById('kpiConfDesc').textContent = 'Presupuesto Certificado';
+      } else {
+        circle.style.stroke = '#2563eb';
+        document.getElementById('kpiConfValue').textContent = `${pct}%`;
+        document.getElementById('kpiConfValue').style.color = '#2563eb';
+        document.getElementById('kpiConfDesc').textContent = 'En corrección';
+      }
+    }
+
+    function reAudit() {
+      showToast('↻ Re-auditando presupuesto y recalcula fórmulas (F5)...');
+    }
+
+    function openSelectedInWorkspace() {
+      const issue = currentIssues.find(x => x.id === selectedIssueId);
+      if (!issue) return;
+      showToast(`↗ Navegando a partida ${issue.partida} en módulo Cubicación...`);
+    }
+
+    function exportOffer() {
+      showToast('🚀 Iniciando asistente oficial de Cierre y Oferta (Documentos / PDF / Excel)...');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastBox');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // Initialize
+    window.onload = () => {
+      renderTable();
+      selectIssue(1);
+    };
+  </script>
+</body>
+</html>

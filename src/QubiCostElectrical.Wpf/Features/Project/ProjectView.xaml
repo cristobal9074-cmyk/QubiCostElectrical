@@ -11,6 +11,20 @@
     <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
   </UserControl.InputBindings>
 
+  <UserControl.Resources>
+    <!-- Estilo Inspector Label: alineacion fija de etiquetas estilo AutoCAD / Xcode -->
+    <Style x:Key="Inspector.Label" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="TextAlignment" Value="Left" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+      <Setter Property="Margin" Value="0,0,10,0" />
+    </Style>
+  </UserControl.Resources>
+
   <Grid>
     <!-- Overlay de carga / Estado vacío -->
     <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando proyecto…"
@@ -57,7 +71,7 @@
 
         <!-- ── WORKSPACE DE CONTENIDO (Scrollable, Aireado, Alta Densidad) ── -->
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24,16,24,32">
-          <StackPanel MaxWidth="1100" HorizontalAlignment="Left">
+          <StackPanel HorizontalAlignment="Stretch">
 
             <!-- ───────────────────────────────────────────────────────────── -->
             <!-- SECCIÓN 1: PROYECTO & FINANZAS                                 -->
@@ -195,48 +209,65 @@
                       <TextBlock Text="DATOS DE LA OBRA &amp; MANDANTE" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center" />
                     </StackPanel>
 
-                    <!-- Fila: Mandante y Tipo de Proyecto -->
-                    <Grid Margin="0,0,0,10">
+                    <!-- Inspector Layout: Filas con etiqueta alineada a 120px -->
+                    <!-- 1. Nombre de la Obra / Proyecto -->
+                    <Grid Margin="0,0,0,8">
                       <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="120" />
                         <ColumnDefinition Width="*" />
                       </Grid.ColumnDefinitions>
-                      <StackPanel Grid.Column="0">
-                        <TextBlock Text="MANDANTE / CLIENTE" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding Cliente, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="80" />
-                      </StackPanel>
-                      <StackPanel Grid.Column="2">
-                        <TextBlock Text="TIPO DE INSTALACIÓN SEC" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding TipoProyecto, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="60" />
-                      </StackPanel>
+                      <TextBlock Grid.Column="0" Text="Nombre proyecto" Style="{StaticResource Inspector.Label}" />
+                      <TextBox Grid.Column="1" Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="100" />
                     </Grid>
 
-                    <!-- Fila: Ubicación de la Obra -->
-                    <StackPanel Margin="0,0,0,10">
-                      <TextBlock Text="DIRECCIÓN O UBICACIÓN GEOGRÁFICA" Style="{StaticResource Form.Label}" />
-                      <TextBox Text="{Binding Ubicacion, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="120" />
-                    </StackPanel>
-
-                    <!-- Fila: Superficie y Validez -->
-                    <Grid Margin="0,0,0,14">
+                    <!-- 2. Mandante / Cliente -->
+                    <Grid Margin="0,0,0,8">
                       <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="120" />
                         <ColumnDefinition Width="*" />
                       </Grid.ColumnDefinitions>
+                      <TextBlock Grid.Column="0" Text="Mandante / Cliente" Style="{StaticResource Inspector.Label}" />
+                      <TextBox Grid.Column="1" Text="{Binding Cliente, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="80" />
+                    </Grid>
 
-                      <!-- Superficie m² -->
-                      <StackPanel Grid.Column="0">
-                        <TextBlock Text="SUPERFICIE CONSTRUIDA (m²)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding SuperficieM2Text, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
-                      </StackPanel>
+                    <!-- 2. Tipo de Instalacion SEC -->
+                    <Grid Margin="0,0,0,8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Grid.Column="0" Text="Instalaci&#243;n SEC" Style="{StaticResource Inspector.Label}" />
+                      <TextBox Grid.Column="1" Text="{Binding TipoProyecto, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="60" />
+                    </Grid>
 
-                      <!-- Validez Oferta -->
-                      <StackPanel Grid.Column="2">
-                        <TextBlock Text="VALIDEZ DE LA OFERTA (DÍAS)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding ValidezOfertaDiasText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
-                      </StackPanel>
+                    <!-- 3. Direccion o Ubicacion Geografica -->
+                    <Grid Margin="0,0,0,8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Grid.Column="0" Text="Ubicaci&#243;n obra" Style="{StaticResource Inspector.Label}" />
+                      <TextBox Grid.Column="1" Text="{Binding Ubicacion, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" MaxLength="120" />
+                    </Grid>
+
+                    <!-- 4. Superficie Construida (m2) -->
+                    <Grid Margin="0,0,0,8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Grid.Column="0" Text="Superficie (m&#178;)" Style="{StaticResource Inspector.Label}" />
+                      <TextBox Grid.Column="1" Text="{Binding SuperficieM2Text, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
+                    </Grid>
+
+                    <!-- 5. Validez de la Oferta (dias) -->
+                    <Grid Margin="0,0,0,14">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Grid.Column="0" Text="Validez (d&#237;as)" Style="{StaticResource Inspector.Label}" />
+                      <TextBox Grid.Column="1" Text="{Binding ValidezOfertaDiasText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
                     </Grid>
 
                     <!-- Footer Metadatos Inline y Limpio -->
@@ -273,9 +304,13 @@
                     </StackPanel>
 
                     <!-- Selector de Moneda Base -->
-                    <StackPanel Margin="0,0,0,10">
-                      <TextBlock Text="MONEDA BASE DE LA PROPUESTA" Style="{StaticResource Form.Label}" />
-                      <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="2">
+                    <Grid Margin="0,0,0,8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Grid.Column="0" Text="Moneda base" Style="{StaticResource Inspector.Label}" />
+                      <Border Grid.Column="1" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="2">
                         <UniformGrid Columns="4">
                           <Button Content="CLP ($)" Command="{Binding SelectMonedaCommand}" CommandParameter="CLP" Margin="1">
                             <Button.Style>
@@ -283,7 +318,7 @@
                                 <Style.Triggers>
                                   <DataTrigger Binding="{Binding IsMonedaClp}" Value="True">
                                     <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
                                     <Setter Property="FontWeight" Value="Bold" />
                                   </DataTrigger>
                                 </Style.Triggers>
@@ -295,7 +330,7 @@
                               <Style TargetType="Button" BasedOn="{StaticResource ProSegBtn}">
                                 <Style.Triggers>
                                   <DataTrigger Binding="{Binding IsMonedaUf}" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
                                     <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
                                     <Setter Property="FontWeight" Value="Bold" />
                                   </DataTrigger>
@@ -309,20 +344,20 @@
                                 <Style.Triggers>
                                   <DataTrigger Binding="{Binding IsMonedaUsd}" Value="True">
                                     <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
                                     <Setter Property="FontWeight" Value="Bold" />
                                   </DataTrigger>
                                 </Style.Triggers>
                               </Style>
                             </Button.Style>
                           </Button>
-                          <Button Content="EUR (€)" Command="{Binding SelectMonedaCommand}" CommandParameter="EUR" Margin="1">
+                          <Button Content="EUR (&#8364;)" Command="{Binding SelectMonedaCommand}" CommandParameter="EUR" Margin="1">
                             <Button.Style>
                               <Style TargetType="Button" BasedOn="{StaticResource ProSegBtn}">
                                 <Style.Triggers>
                                   <DataTrigger Binding="{Binding IsMonedaEur}" Value="True">
                                     <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
                                     <Setter Property="FontWeight" Value="Bold" />
                                   </DataTrigger>
                                 </Style.Triggers>
@@ -331,106 +366,92 @@
                           </Button>
                         </UniformGrid>
                       </Border>
-                    </StackPanel>
-
-                    <!-- Fila: Paridades de Moneda -->
-                    <Grid Margin="0,0,0,10">
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="10" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="10" />
-                        <ColumnDefinition Width="*" />
-                      </Grid.ColumnDefinitions>
-
-                      <!-- Valor UF -->
-                      <StackPanel Grid.Column="0">
-                        <TextBlock Text="VALOR UF ($)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding ValorUfText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
-                      </StackPanel>
-
-                      <!-- Dólar -->
-                      <StackPanel Grid.Column="2">
-                        <TextBlock Text="DÓLAR ($)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding ValorDolarText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
-                      </StackPanel>
-
-                      <!-- Euro -->
-                      <StackPanel Grid.Column="4">
-                        <TextBlock Text="EURO ($)" Style="{StaticResource Form.Label}" />
-                        <TextBox Text="{Binding ValorEuroText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
-                      </StackPanel>
                     </Grid>
 
-                    <!-- Fila: Márgenes Principales (GG y Utilidad) -->
+                    <!-- Paridad UF -->
+                    <Grid Margin="0,0,0,8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Grid.Column="0" Text="Valor UF ($)" Style="{StaticResource Inspector.Label}" />
+                      <TextBox Grid.Column="1" Text="{Binding ValorUfText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
+                    </Grid>
+
+                    <!-- Paridades Dolar y Euro -->
+                    <Grid Margin="0,0,0,10">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="55" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Grid.Column="0" Text="D&#243;lar ($)" Style="{StaticResource Inspector.Label}" />
+                      <TextBox Grid.Column="1" Text="{Binding ValorDolarText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
+                      <TextBlock Grid.Column="3" Text="Euro ($)" Style="{StaticResource Inspector.Label}" />
+                      <TextBox Grid.Column="4" Text="{Binding ValorEuroText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
+                    </Grid>
+
+                    <!-- Margenes Operacionales -->
                     <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,10">
                       <StackPanel>
                         <DockPanel LastChildFill="True" Margin="0,0,0,8">
-                          <TextBlock Text="MÁRGENES OPERACIONALES" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
+                          <TextBlock Text="M&#193;RGENES OPERACIONALES" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                           <TextBlock DockPanel.Dock="Right" Text="{Binding MarkupRatioText, StringFormat='{}Markup Multiplicador: {0}'}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Right" />
                         </DockPanel>
 
-                        <Grid Margin="0,0,0,10">
+                        <!-- Gastos Generales -->
+                        <Grid Margin="0,0,0,8">
                           <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="105" />
                             <ColumnDefinition Width="*" />
                           </Grid.ColumnDefinitions>
-
-                          <!-- Gastos Generales -->
-                          <StackPanel Grid.Column="0">
-                            <TextBlock Text="GASTOS GENERALES (%)" Style="{StaticResource Form.Label}" />
-                            <TextBox Text="{Binding PorcentajeGastosGeneralesText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold" />
-                          </StackPanel>
-
-                          <!-- Utilidad -->
-                          <StackPanel Grid.Column="2">
-                            <TextBlock Text="UTILIDAD NETA (%)" Style="{StaticResource Form.Label}" />
-                            <TextBox Text="{Binding PorcentajeUtilidadText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold" />
-                          </StackPanel>
+                          <TextBlock Grid.Column="0" Text="Gastos Generales" Style="{StaticResource Inspector.Label}" />
+                          <TextBox Grid.Column="1" Text="{Binding PorcentajeGastosGeneralesText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold" />
                         </Grid>
 
-                        <!-- Fila: Impuestos y Ajustes (IVA, Riesgo, Descuento) -->
-                        <Grid Margin="0,0,0,10">
+                        <!-- Utilidad Neta -->
+                        <Grid Margin="0,0,0,8">
                           <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="10" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="105" />
                             <ColumnDefinition Width="*" />
                           </Grid.ColumnDefinitions>
+                          <TextBlock Grid.Column="0" Text="Utilidad Neta" Style="{StaticResource Inspector.Label}" />
+                          <TextBox Grid.Column="1" Text="{Binding PorcentajeUtilidadText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold" />
+                        </Grid>
 
-                          <!-- IVA -->
-                          <StackPanel Grid.Column="0">
-                            <TextBlock Text="IVA (%)" Style="{StaticResource Form.Label}" />
-                            <TextBox Text="{Binding PorcentajeIvaText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
-                          </StackPanel>
-
-                          <!-- Riesgo -->
-                          <StackPanel Grid.Column="2">
-                            <TextBlock Text="RIESGO (%)" Style="{StaticResource Form.Label}" />
-                            <TextBox Text="{Binding PorcentajeRiesgoText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
-                          </StackPanel>
-
-                          <!-- Descuento -->
-                          <StackPanel Grid.Column="4">
-                            <TextBlock Text="DESCUENTO (%)" Style="{StaticResource Form.Label}" />
-                            <TextBox Text="{Binding PorcentajeDescuentoText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
-                          </StackPanel>
+                        <!-- IVA, Riesgo, Descuento -->
+                        <Grid Margin="0,0,0,8">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="105" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="45" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="50" />
+                            <ColumnDefinition Width="*" />
+                          </Grid.ColumnDefinitions>
+                          <TextBlock Grid.Column="0" Text="IVA (%)" Style="{StaticResource Inspector.Label}" />
+                          <TextBox Grid.Column="1" Text="{Binding PorcentajeIvaText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
+                          <TextBlock Grid.Column="3" Text="Riesgo" Style="{StaticResource Inspector.Label}" />
+                          <TextBox Grid.Column="4" Text="{Binding PorcentajeRiesgoText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
+                          <TextBlock Grid.Column="6" Text="Desc. %" Style="{StaticResource Inspector.Label}" />
+                          <TextBox Grid.Column="7" Text="{Binding PorcentajeDescuentoText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Form.TextBox}" FontFamily="{StaticResource Font.Mono}" />
                         </Grid>
 
                         <!-- Live Formula Chip -->
                         <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="10,6">
                           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{DynamicResource Brush.Ink4}" Margin="0,0,6,0" VerticalAlignment="Center" />
-                            <TextBlock Text="Fórmula: Precio Venta = Costo Directo × (1 + GG%) × (1 + Util%)"
+                            <TextBlock Text="F&#243;rmula: Precio Venta = Costo Directo &#215; (1 + GG%) &#215; (1 + Util%)"
                                        FontSize="10" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" />
                           </StackPanel>
                         </Border>
                       </StackPanel>
                     </Border>
 
-                    <!-- Opción de presentación GG y Utilidad en el resumen -->
                     <CheckBox Style="{StaticResource Form.CheckBox}"
                               Content="Desglosar GG y Utilidad en cuadro resumen de oferta"
                               IsChecked="{Binding MostrarDetalleGgUtilidad, Mode=TwoWay}"
@@ -440,7 +461,7 @@
               </Grid>
 
               <!-- PARÁMETROS AVANZADOS DE COSTEO (COLAPSABLE / EXPANDER ELEGANTE) -->
-              <Expander IsExpanded="False" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+              <Expander IsExpanded="True" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
                         BorderThickness="1" Margin="0,0,0,12">
                 <Expander.Header>
                   <StackPanel Orientation="Horizontal">

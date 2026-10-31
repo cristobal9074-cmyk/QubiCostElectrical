@@ -37,17 +37,9 @@ public static class StartupSeeder
                 return;
             }
 
-            // 4. Fallback final: recurso embebido
-            var embedded = PriceBankSeeder.GetEmbeddedEntries();
-            if (embedded.Count > 0)
-            {
-                int inserted = store.SeedIfEmpty(embedded);
-                if (inserted > 0)
-                {
-                    AppLog.Info("BancoPrecios", $"Banco de precios sembrado con {inserted} materiales desde banco inicial embebido.");
-                    TryBackup(store);
-                }
-            }
+            // 4. Catalogo Base Chile: No se siembra automaticamente al inicio para permitir que
+            // empresas con listas de precios propias comiencen con el banco limpio.
+            // La carga se realiza a peticion del usuario desde el Banco de Precios (boton "Cargar Catalogo Base Chile 2026").
         }
         catch (Exception ex)
         {

@@ -181,7 +181,10 @@
         <DataGrid ItemsSource="{Binding FilteredCockpitPartidas}" AutoGenerateColumns="False" IsReadOnly="True"
                   HeadersVisibility="Column" Style="{StaticResource DataGrid.Workspace}"
                   CanUserAddRows="False" SelectionMode="Single" VerticalAlignment="Stretch"
-                  MaxHeight="420" MouseDoubleClick="OnTopPartidaDoubleClick">
+                  ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  PreviewMouseWheel="OnDataGridPreviewMouseWheel"
+                  MouseDoubleClick="OnTopPartidaDoubleClick">
           <DataGrid.Columns>
             <DataGridTextColumn Header="#" Binding="{Binding Rank}" Width="36">
               <DataGridTextColumn.ElementStyle>

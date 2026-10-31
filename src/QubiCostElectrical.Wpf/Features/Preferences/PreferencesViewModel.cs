@@ -22,7 +22,8 @@ public sealed partial class PreferencesViewModel : WorkspacePageViewModelBase, I
     private readonly IFileOpenService fileOpener;
     private UserPreferences _saved;
     private UserPreferences _draft = new();
-    private BitmapImage? _logoImageSource;
+    internal BitmapImage? _logoImageSource;
+    internal BitmapImage? _signatureImageSource;
     private readonly ObservableCollection<AuthUserSummary> _users = new();
     private readonly List<AuthUserSummary> _allUsers = new();
     private readonly ObservableCollection<string> _userAuditEntries = new();

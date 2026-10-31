@@ -126,7 +126,7 @@ public sealed class EstadosPagoExportCoordinator
             }
             else
             {
-                partidas.Add(new EstadoPagoPartidaInput(row.Id, row.Item, row.Descripcion, row.TotalUf));
+                partidas.Add(new EstadoPagoPartidaInput(row.Id, row.Item, row.Descripcion, row.TotalUf, row.Unidad, row.Cantidad, row.UnitPriceUf));
             }
         }
 

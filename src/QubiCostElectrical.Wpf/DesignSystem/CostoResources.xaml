@@ -108,21 +108,29 @@
     <Setter Property="Width" Value="14" />
     <Setter Property="Height" Value="14" />
     <Setter Property="CornerRadius" Value="7" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line2}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Margin" Value="5,0,0,0" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="Cursor" Value="Help" />
+    <Setter Property="Opacity" Value="0.45" />
     <Setter Property="ToolTipService.InitialShowDelay" Value="50" />
     <Setter Property="ToolTipService.ShowDuration" Value="35000" />
+    <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Opacity" Value="1.0" />
+        <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+      </Trigger>
+    </Style.Triggers>
   </Style>
 
   <Style x:Key="CostoHelpBadgeText" TargetType="TextBlock">
-    <Setter Property="Text" Value="?" />
-    <Setter Property="FontFamily" Value="{StaticResource Font.Ui}" />
-    <Setter Property="FontSize" Value="9.5" />
-    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Text" Value="i" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+    <Setter Property="FontSize" Value="9" />
+    <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Center" />

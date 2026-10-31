@@ -19,6 +19,7 @@ public sealed class ChangeOrderLineRow
     public string TipoCambio { get; set; } = "Modificación";
     public string Unidad { get; set; } = "UN";
     public bool EsContractual { get; set; } = true;
+    public bool EsTitulo { get; set; } = false;
     public decimal CantidadBase { get; set; }
     public decimal CantidadAdicional { get; set; }
     public decimal CantidadNueva { get; set; }

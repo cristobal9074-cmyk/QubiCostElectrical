@@ -117,6 +117,17 @@ public sealed class MaterialControlService : IMaterialControlService
                 }
             }
 
+            var desglosePisos = (cubRows ?? Enumerable.Empty<CubicacionRow>())
+                .GroupBy(r => string.IsNullOrWhiteSpace(r.Area) ? "General" : r.Area.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Select(g =>
+                {
+                    decimal cantArea = Math.Round(g.Sum(r => r.Cantidad) * factor, 2);
+                    double pctArea = cantidadCubicada > 0m ? (double)Math.Round((cantArea / cantidadCubicada) * 100m, 1) : 0.0;
+                    return new MaterialPisoDesglose(g.Key, cantArea, pctArea, unidad);
+                })
+                .OrderByDescending(d => d.Cantidad)
+                .ToList();
+
             result.Add(new MaterialControlRow(
                 codeKey,
                 descripcion,
@@ -129,7 +140,8 @@ public sealed class MaterialControlService : IMaterialControlService
                 porcentajeAvance,
                 estadoControl,
                 tieneSobrepedido,
-                usosList));
+                usosList,
+                desglosePisos));
         }
 
         return result

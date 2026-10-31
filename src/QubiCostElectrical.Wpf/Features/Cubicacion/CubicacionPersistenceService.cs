@@ -153,6 +153,7 @@ internal sealed class CubicacionPersistenceService
         }
         row.RefreshDisplayProperties();
         cubicacionPresenter.AfterRowEdited(row.Source);
+        parent.TryReevaluatePartidaCantidadFormula();
         if (ReferenceEquals(parent.SelectedRow, row))
             parent.RightPanel.LoadRow(row);
         parent.ScheduleRefreshTotals();

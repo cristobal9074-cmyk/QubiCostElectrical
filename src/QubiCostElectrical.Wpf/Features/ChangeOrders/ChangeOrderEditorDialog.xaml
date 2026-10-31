@@ -2,125 +2,101 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:infra="clr-namespace:QubiCostElectrical.Wpf.Infrastructure"
+        xmlns:ctrl="clr-namespace:QubiCostElectrical.Wpf.Controls"
         Style="{StaticResource Dialog.Window}"
         Title="Espacio de Trabajo — Adicional de Obra &amp; Cubicación"
-        Width="1280" Height="820"
-        MinWidth="1050" MinHeight="660"
+        Width="1220" Height="720"
+        MinWidth="960" MinHeight="540"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="CanResizeWithGrip"
-        ShowInTaskbar="False"
-        FontFamily="{StaticResource Font.Ui}">
-  <Border Style="{StaticResource Dialog.Chrome}">
+        ResizeMode="CanResize"
+        ShowInTaskbar="True"
+        FontFamily="{StaticResource Font.Ui}"
+        KeyDown="OnWindowKeyDown">
+  <Border Style="{StaticResource Dialog.Chrome}" Padding="16,10,16,10">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
-        <RowDefinition Height="240"/>
+        <RowDefinition x:Name="PartidasRow" Height="*" MinHeight="140"/>
         <RowDefinition Height="6"/>
-        <RowDefinition Height="*"/>
+        <RowDefinition x:Name="CubicacionRow" Height="253" MinHeight="100"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
-      <!-- ── 1. Cabecera y Datos del Adicional ── -->
-      <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
-              BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
-        <Grid>
-          <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-          </Grid.RowDefinitions>
-
-          <!-- Fila Superior: Título y Botones Principales -->
-          <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,8">
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-              <Border Background="{DynamicResource Brush.BlueFaint}" BorderBrush="{DynamicResource Brush.BlueFocus}"
-                      BorderThickness="1" CornerRadius="4" Padding="8,3" Margin="0,0,10,0">
-                <TextBlock x:Name="NumeroBadge" Text="{Binding Numero}" FontWeight="Bold"
-                           FontFamily="{StaticResource Font.Mono}" FontSize="13"
-                           Foreground="{DynamicResource Brush.Accent}"/>
-              </Border>
-              <TextBlock x:Name="TitleBlock" Text="Adicional de Obra &amp; Cubicación"
-                         Style="{StaticResource Dialog.HeaderTitle}" FontSize="15" VerticalAlignment="Center"/>
-              <Border Background="{DynamicResource Brush.AmberSoft}" BorderBrush="{DynamicResource Brush.AmberBorder}"
-                      BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
-                <TextBlock Text="🔒 Precios Contractuales Congelados" FontSize="10" FontWeight="SemiBold"
-                           Foreground="{DynamicResource Brush.Amber}"/>
-              </Border>
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-              <Button Content="🔒 + Partida de Contrato" Style="{StaticResource Button.Primary}"
-                      Height="30" Padding="14,0" Margin="0,0,8,0" FontSize="11"
-                      ToolTip="Seleccionar partida del contrato original con P.U. congelado"
-                      Click="OnAddContractPartidaClick"/>
-              <Button Content="✨ + Partida Extraordinaria" Style="{StaticResource Button.Secondary}"
-                      Height="30" Padding="14,0" Margin="0,0,8,0" FontSize="11"
-                      ToolTip="Crear nueva partida no contemplada en contrato"
-                      Click="OnAddExtraPartidaClick"/>
-              <Button Content="📦 Lista Consolidada" Style="{StaticResource Button.Secondary}"
-                      Height="30" Padding="12,0" FontSize="11"
-                      ToolTip="Ver resumen acumulado de todos los materiales a comprar para este adicional"
-                      Click="OnVerResumenMaterialesClick"/>
-            </StackPanel>
-          </DockPanel>
-
-          <!-- Fila Inferior: Inputs de Número, Título y Responsable -->
-          <Grid Grid.Row="1">
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto"/>
-              <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="130"/>
-              <ColumnDefinition Width="*"/>
-              <ColumnDefinition Width="200"/>
-              <ColumnDefinition Width="220"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- N° Orden -->
-            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,0">
-              <TextBlock Text="N° Adicional:" Style="{StaticResource Form.Label}" FontSize="10"/>
+      <!-- ── 1. CABECERA EJECUTIVA SOBRIA Y PROFESIONAL ── -->
+      <Border Grid.Row="0" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+              BorderThickness="1" CornerRadius="8" Padding="14,8" Margin="0,0,0,8">
+        <DockPanel LastChildFill="False">
+          <!-- Left: N° OC editable (1er cuadro), Nombre Adicional editable (2do cuadro) y Badge Contractual -->
+          <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+            <!-- 1er Cuadro: N° Adicional / OC editable -->
+            <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+              <TextBlock Text="N° ADICIONAL / OC:" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" Margin="1,0,0,2"/>
               <TextBox x:Name="NumeroBox" Text="{Binding Numero, UpdateSourceTrigger=PropertyChanged}"
-                       FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" Height="26" FontSize="11"/>
+                       FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" FontSize="12.5"
+                       Width="110" Height="28" VerticalContentAlignment="Center"
+                       PreviewKeyDown="OnNumeroBoxPreviewKeyDown"
+                       ToolTip="Número de la orden de cambio / adicional (editable)"/>
             </StackPanel>
 
-            <!-- Título / Justificación -->
-            <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,8,0">
-              <TextBlock Text="Título del adicional / Justificación técnica:" Style="{StaticResource Form.Label}" FontSize="10"/>
+            <!-- 2do Cuadro: Nombre / Título del Adicional editable -->
+            <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+              <TextBlock x:Name="TitleBlock" Text="NOMBRE / TÍTULO DEL ADICIONAL:" FontSize="9" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Muted}" Margin="1,0,0,2"/>
               <TextBox x:Name="TituloBox" Text="{Binding Titulo, UpdateSourceTrigger=PropertyChanged}"
-                       FontWeight="SemiBold" Height="26" FontSize="11"/>
+                       FontWeight="SemiBold" FontSize="12"
+                       Width="380" Height="28" VerticalContentAlignment="Center"
+                       PreviewKeyDown="OnTituloBoxPreviewKeyDown"
+                       ToolTip="Nombre o descripción técnica del adicional (editable)"/>
             </StackPanel>
 
-            <!-- Creado Por -->
-            <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,8,0">
-              <TextBlock Text="Estimador / Responsable:" Style="{StaticResource Form.Label}" FontSize="10"/>
-              <TextBox Text="{Binding CreadoPor, UpdateSourceTrigger=PropertyChanged}" Height="26" FontSize="11"/>
-            </StackPanel>
-
-            <!-- Total Venta Adicional -->
-            <Border Grid.Row="0" Grid.Column="3" Grid.RowSpan="2" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.SuccessBorder}"
-                    BorderThickness="1" CornerRadius="6" Padding="10,4">
-              <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="TOTAL VENTA ADICIONAL:" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}"/>
-                <TextBlock Text="{Binding TotalAdicionalDisplay}" FontSize="15" FontWeight="Bold"
-                           FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Success}"/>
+            <!-- Badge de Blindaje Contractual -->
+            <Border Background="{DynamicResource Brush.AmberSoft}" BorderBrush="{DynamicResource Brush.AmberBorder}"
+                    BorderThickness="1" CornerRadius="6" Padding="8,4" Margin="4,12,0,0" VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="🔒 " FontSize="10" VerticalAlignment="Center"/>
+                <TextBlock Text="Precios Contractuales Congelados" FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Amber}" VerticalAlignment="Center"/>
               </StackPanel>
             </Border>
+          </StackPanel>
 
-            <!-- Nota / Observaciones -->
-            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,6,8,0">
-              <TextBlock Text="📝 Nota / Observaciones:" Style="{StaticResource Form.Label}" FontSize="10"/>
-              <TextBox x:Name="NotaBox"
-                       Text="{Binding Nota, UpdateSourceTrigger=PropertyChanged}"
-                       Height="26" FontSize="11"
-                       ToolTip="Observaciones internas del adicional (no se exportan a la oferta)"
-                       AcceptsReturn="False"
-                       TextWrapping="NoWrap"/>
+          <!-- Right: Métricas Financieras Sobrias -->
+          <Border DockPanel.Dock="Right" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                  BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <!-- Subtotal Contractual -->
+              <StackPanel Margin="0,0,14,0" VerticalAlignment="Center">
+                <TextBlock Text="BASE CONTRATO" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Slate}"/>
+                <TextBlock Text="{Binding SubtotalContractualDisplay}" FontSize="12.5" FontWeight="Bold"
+                           FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink2}"/>
+              </StackPanel>
+
+              <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="0,2,14,2"/>
+
+              <!-- Subtotal Extraordinario -->
+              <StackPanel Margin="0,0,14,0" VerticalAlignment="Center">
+                <TextBlock Text="EXTRAORDINARIAS" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Slate}"/>
+                <TextBlock Text="{Binding SubtotalExtraordinarioDisplay}" FontSize="12.5" FontWeight="Bold"
+                           FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Ink2}"/>
+              </StackPanel>
+
+              <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="0,2,14,2"/>
+
+              <!-- Total Venta Adicional -->
+              <Border Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}"
+                      BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Text="TOTAL VENTA ADICIONAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}"/>
+                  <TextBlock Text="{Binding TotalAdicionalDisplay}" FontSize="14" FontWeight="Bold"
+                             FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Success}"/>
+                </StackPanel>
+              </Border>
             </StackPanel>
-          </Grid>
-        </Grid>
+          </Border>
+        </DockPanel>
       </Border>
 
-      <!-- ── 2. Panel Superior: Partidas del Adicional (Master) ── -->
+      <!-- ── 2. PANEL SUPERIOR: PARTIDAS DEL ADICIONAL (MASTER TABLE) ── -->
       <Border Grid.Row="1" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
               BorderThickness="1" CornerRadius="8" Padding="0" Margin="0,0,0,4">
         <Grid>
@@ -131,17 +107,38 @@
 
           <!-- Cabecera de la sección de partidas -->
           <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
-                  BorderThickness="0,0,0,1" Padding="10,6">
+                  BorderThickness="0,0,0,1" Padding="12,6">
             <DockPanel LastChildFill="False">
               <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
                 <TextBlock Text="📋 PARTIDAS DEL ADICIONAL" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"/>
                 <TextBlock Text=" (Seleccione una partida para ver y cubicar sus zonas abajo)"
-                           FontSize="11" Foreground="{DynamicResource Brush.Muted}"/>
+                           FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="4,0,0,0"/>
               </StackPanel>
 
               <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-                <TextBlock Text="{Binding Lineas.Count, StringFormat={}{0} partidas en adicional}"
-                           FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}"/>
+                <Button Content="📑 + Título" Style="{StaticResource Button.Secondary}"
+                        Height="26" Padding="10,0" Margin="0,0,6,0" FontSize="11" FontWeight="Bold"
+                        Foreground="{DynamicResource Brush.Ink}"
+                        ToolTip="Agregar un título, sección o texto organizador al adicional"
+                        Click="OnAddTituloClick"/>
+                <Button Content="🔒 + Partida de Contrato" Style="{StaticResource Button.Primary}"
+                        Height="26" Padding="12,0" Margin="0,0,6,0" FontSize="11" FontWeight="Bold"
+                        ToolTip="Seleccionar partida del contrato original con P.U. congelado"
+                        Click="OnAddContractPartidaClick"/>
+                <Button Content="★ + Partida Extraordinaria" Style="{StaticResource Button.Secondary}"
+                        Height="26" Padding="12,0" Margin="0,0,6,0" FontSize="11" FontWeight="Bold"
+                        Foreground="{DynamicResource Brush.Accent}"
+                        ToolTip="Crear nueva partida no contemplada en contrato con APU propio"
+                        Click="OnAddExtraPartidaClick"/>
+                <Button Content="📦 Lista Consolidada" Style="{StaticResource Button.Secondary}"
+                        Height="26" Padding="10,0" Margin="0,0,10,0" FontSize="11"
+                        ToolTip="Ver resumen acumulado de todos los materiales a comprar para este adicional"
+                        Click="OnVerResumenMaterialesClick"/>
+                <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+                        BorderThickness="1" CornerRadius="12" Padding="8,2">
+                  <TextBlock Text="{Binding PartidasCountBadgeText}"
+                             FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}"/>
+                </Border>
               </StackPanel>
             </DockPanel>
           </Border>
@@ -159,129 +156,40 @@
                     BorderThickness="0">
             <DataGrid.Columns>
               <!-- Tipo -->
-              <DataGridTemplateColumn Header="Tipo" Width="105">
+              <DataGridTemplateColumn Header="Tipo Contrato" Width="95">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
-                    <Border CornerRadius="4" Padding="5,2" Margin="2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <Border CornerRadius="4" Padding="5,2" Margin="3,1" HorizontalAlignment="Left" VerticalAlignment="Center" BorderThickness="1">
                       <Border.Style>
                         <Style TargetType="Border">
-                          <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}"/>
+                          <Setter Property="Background" Value="#FFFBEB"/>
+                          <Setter Property="BorderBrush" Value="#FDE68A"/>
                           <Style.Triggers>
                             <DataTrigger Binding="{Binding EsContractual}" Value="False">
-                              <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}"/>
+                              <Setter Property="Background" Value="#FAF5FF"/>
+                              <Setter Property="BorderBrush" Value="#E9D5FF"/>
                             </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </Border.Style>
-                      <TextBlock Text="{Binding TipoEtiqueta}" FontSize="10" FontWeight="SemiBold">
-                        <TextBlock.Style>
-                          <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/>
-                            <Style.Triggers>
-                              <DataTrigger Binding="{Binding EsContractual}" Value="False">
-                                <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
-                              </DataTrigger>
-                            </Style.Triggers>
-                          </Style>
-                        </TextBlock.Style>
-                      </TextBlock>
-                    </Border>
-                  </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-              </DataGridTemplateColumn>
-
-              <!-- Ítem -->
-              <DataGridTextColumn Header="Ítem" Binding="{Binding Item}" Width="65" IsReadOnly="True">
-                <DataGridTextColumn.ElementStyle>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="FontWeight" Value="SemiBold"/>
-                    <Setter Property="VerticalAlignment" Value="Center"/>
-                    <Setter Property="Padding" Value="4,0"/>
-                  </Style>
-                </DataGridTextColumn.ElementStyle>
-              </DataGridTextColumn>
-
-              <!-- Descripción -->
-              <DataGridTemplateColumn Header="Descripción de la partida" Width="*">
-                <DataGridTemplateColumn.CellTemplate>
-                  <DataTemplate>
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="4,0">
-                      <TextBlock Text="{Binding DescripcionPartida}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                      <TextBlock Text="{Binding MaterialesBadgeText}" FontSize="10" Foreground="{DynamicResource Brush.Accent}"/>
-                    </StackPanel>
-                  </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-              </DataGridTemplateColumn>
-
-              <!-- Unidad -->
-              <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="55" IsReadOnly="True">
-                <DataGridTextColumn.ElementStyle>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="HorizontalAlignment" Value="Center"/>
-                    <Setter Property="VerticalAlignment" Value="Center"/>
-                  </Style>
-                </DataGridTextColumn.ElementStyle>
-              </DataGridTextColumn>
-
-              <!-- Cant. Contrato Base -->
-              <DataGridTextColumn Header="Cant. Base" Binding="{Binding CantidadBase, StringFormat={}{0:N0}}" Width="75" IsReadOnly="True">
-                <DataGridTextColumn.ElementStyle>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="HorizontalAlignment" Value="Right"/>
-                    <Setter Property="VerticalAlignment" Value="Center"/>
-                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
-                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/>
-                    <Setter Property="Padding" Value="0,0,4,0"/>
-                  </Style>
-                </DataGridTextColumn.ElementStyle>
-              </DataGridTextColumn>
-
-              <!-- Δ Cantidad Adicional (Cubipada) -->
-              <DataGridTemplateColumn Header="Δ Cant. Adicional" Width="110">
-                <DataGridTemplateColumn.CellTemplate>
-                  <DataTemplate>
-                    <Border Background="{DynamicResource Brush.BlueFaint}" CornerRadius="4" Padding="6,2" Margin="2">
-                      <TextBlock Text="{Binding CantidadAdicionalText}" FontWeight="Bold"
-                                 FontFamily="{StaticResource Font.Mono}" HorizontalAlignment="Right"
-                                 VerticalAlignment="Center" Foreground="{DynamicResource Brush.Accent}"/>
-                    </Border>
-                  </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-                <DataGridTemplateColumn.CellEditingTemplate>
-                  <DataTemplate>
-                    <TextBox Text="{Binding CantidadAdicionalText, UpdateSourceTrigger=LostFocus}"
-                             FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
-                             TextAlignment="Right" VerticalContentAlignment="Center"/>
-                  </DataTemplate>
-                </DataGridTemplateColumn.CellEditingTemplate>
-              </DataGridTemplateColumn>
-
-              <!-- P.U. Venta (Contractual 🔒 o Extraordinaria ✨) -->
-              <DataGridTemplateColumn Header="P.U. Venta" Width="115">
-                <DataGridTemplateColumn.CellTemplate>
-                  <DataTemplate>
-                    <Border CornerRadius="4" Padding="6,2" Margin="2" HorizontalAlignment="Right">
-                      <Border.Style>
-                        <Style TargetType="Border">
-                          <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}"/>
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding EsContractual}" Value="False">
-                              <Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}"/>
+                            <DataTrigger Binding="{Binding EsTitulo}" Value="True">
+                              <Setter Property="Background" Value="#F1F5F9"/>
+                              <Setter Property="BorderBrush" Value="#CBD5E1"/>
                             </DataTrigger>
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
                       <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="🔒 " FontSize="9" VerticalAlignment="Center"
-                                   Visibility="{Binding EsContractual, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="{Binding PrecioUnitarioText}" FontWeight="SemiBold"
-                                   FontFamily="{StaticResource Font.Mono}" VerticalAlignment="Center">
+                        <TextBlock FontSize="10" FontWeight="SemiBold">
                           <TextBlock.Style>
                             <Style TargetType="TextBlock">
-                              <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/>
+                              <Setter Property="Text" Value="🔒 Contractual"/>
+                              <Setter Property="Foreground" Value="#B45309"/>
                               <Style.Triggers>
                                 <DataTrigger Binding="{Binding EsContractual}" Value="False">
-                                  <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+                                  <Setter Property="Text" Value="★ Extraordinaria"/>
+                                  <Setter Property="Foreground" Value="#7E22CE"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding EsTitulo}" Value="True">
+                                  <Setter Property="Text" Value="📑 Título"/>
+                                  <Setter Property="Foreground" Value="#475569"/>
                                 </DataTrigger>
                               </Style.Triggers>
                             </Style>
@@ -291,39 +199,281 @@
                     </Border>
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- Ítem -->
+              <DataGridTemplateColumn Header="Ítem" Width="68">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <TextBox Tag="Col_Item"
+                             Text="{Binding Item, UpdateSourceTrigger=PropertyChanged}"
+                             FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
+                             FontSize="11" Foreground="{DynamicResource Brush.Accent}"
+                             Background="Transparent" BorderThickness="1"
+                             BorderBrush="Transparent"
+                             VerticalContentAlignment="Center"
+                             Padding="2,0"
+                             ToolTip="Editar identificador de ítem"
+                             PreviewKeyDown="OnLineasGridCellPreviewKeyDown"
+                             GotFocus="OnLineasGridCellGotFocus">
+                      <TextBox.Style>
+                        <Style TargetType="TextBox">
+                          <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                              <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
+                              <Setter Property="Background" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                              <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                              <Setter Property="Background" Value="White"/>
+                            </Trigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBox.Style>
+                    </TextBox>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- Descripción -->
+              <DataGridTemplateColumn Header="Descripción de la partida" Width="*">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Grid VerticalAlignment="Center" Margin="2,0">
+                      <!-- Si es Título -->
+                      <TextBox Tag="Col_Desc"
+                               Text="{Binding DescripcionPartida, UpdateSourceTrigger=PropertyChanged}"
+                               FontWeight="Bold" FontSize="11.5"
+                               Foreground="{DynamicResource Brush.Ink}"
+                               Background="Transparent" BorderThickness="1" BorderBrush="Transparent"
+                               VerticalContentAlignment="Center" Padding="4,0"
+                               ToolTip="Escribir título o descripción de la sección"
+                               PreviewKeyDown="OnLineasGridCellPreviewKeyDown"
+                               GotFocus="OnLineasGridCellGotFocus"
+                               Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox.Style>
+                          <Style TargetType="TextBox">
+                            <Style.Triggers>
+                              <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
+                                <Setter Property="Background" Value="White"/>
+                              </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                                <Setter Property="Background" Value="White"/>
+                              </Trigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBox.Style>
+                      </TextBox>
+
+                      <!-- Si es Partida (Contractual o Extraordinaria) -->
+                      <StackPanel Orientation="Vertical" VerticalAlignment="Center"
+                                  Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+                        <TextBox Tag="Col_Desc"
+                                 Text="{Binding DescripcionPartida, UpdateSourceTrigger=PropertyChanged}"
+                                 FontWeight="SemiBold" FontSize="11"
+                                 Foreground="{DynamicResource Brush.Ink}"
+                                 Background="Transparent" BorderThickness="1" BorderBrush="Transparent"
+                                 VerticalContentAlignment="Center" Padding="2,0"
+                                 ToolTip="Descripción de la partida"
+                                 PreviewKeyDown="OnLineasGridCellPreviewKeyDown"
+                                 GotFocus="OnLineasGridCellGotFocus">
+                          <TextBox.Style>
+                            <Style TargetType="TextBox">
+                              <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}"/>
+                                  <Setter Property="Background" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsFocused" Value="True">
+                                  <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                                  <Setter Property="Background" Value="White"/>
+                                </Trigger>
+                              </Style.Triggers>
+                            </Style>
+                          </TextBox.Style>
+                        </TextBox>
+                        <TextBlock Text="{Binding MaterialesBadgeText}" FontSize="10" Foreground="{DynamicResource Brush.Accent}" Margin="2,1,0,0"/>
+                      </StackPanel>
+                    </Grid>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- Unidad -->
+              <DataGridTemplateColumn Header="Unidad" Width="45">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Grid>
+                      <TextBlock Text="&#x2014;" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}"
+                                 Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}}"/>
+                      <TextBlock Text="{Binding Unidad}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}"
+                                 Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"/>
+                    </Grid>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- Cant. Contrato Base -->
+              <DataGridTemplateColumn Header="Cant. Base" Width="55">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Grid>
+                      <TextBlock Text="&#x2014;" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}" Padding="0,0,4,0"
+                                 Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}}"/>
+                      <TextBlock Text="{Binding CantidadBase, StringFormat={}{0:N0}}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}" Padding="0,0,4,0"
+                                 Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"/>
+                    </Grid>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- Δ Cantidad Adicional (Cubicada) -->
+              <DataGridTemplateColumn Header="Δ Cant. Adicional" Width="85">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Grid>
+                      <TextBlock Text="&#x2014;" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}"
+                                 Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}}"/>
+                      <TextBox Tag="Col_Cant"
+                               Text="{Binding CantidadAdicionalText, UpdateSourceTrigger=LostFocus}"
+                               FontFamily="{StaticResource Font.Mono}" FontWeight="Bold"
+                               FontSize="11" Foreground="{DynamicResource Brush.Accent}"
+                               Background="{DynamicResource Brush.BlueFaint}"
+                               BorderThickness="1" BorderBrush="{DynamicResource Brush.BlueFocus}"
+                               Padding="4,1" Margin="2"
+                               TextAlignment="Right" VerticalContentAlignment="Center"
+                               ToolTip="Ingresar cantidad o fórmula (ej. =50*2)"
+                               PreviewKeyDown="OnLineasGridCellPreviewKeyDown"
+                               GotFocus="OnLineasGridCellGotFocus"
+                               LostFocus="OnLineasGridCantLostFocus"
+                               Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+                        <TextBox.Style>
+                          <Style TargetType="TextBox">
+                            <Style.Triggers>
+                              <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}"/>
+                              </Trigger>
+                              <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+                                <Setter Property="Background" Value="White"/>
+                              </Trigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBox.Style>
+                      </TextBox>
+                    </Grid>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- P.U. Venta (Contractual 🔒 o Extraordinaria ★) -->
+              <DataGridTemplateColumn Header="P.U. Venta" Width="88">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Grid>
+                      <TextBlock Text="&#x2014;" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}"
+                                 Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}}"/>
+                      <Border CornerRadius="4" Padding="5,2" Margin="2" HorizontalAlignment="Right" BorderThickness="1"
+                              Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFFBEB"/>
+                            <Setter Property="BorderBrush" Value="#FDE68A"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding EsContractual}" Value="False">
+                                <Setter Property="Background" Value="#FAF5FF"/>
+                                <Setter Property="BorderBrush" Value="#E9D5FF"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="🔒 " FontSize="9" VerticalAlignment="Center"
+                                     Visibility="{Binding EsContractual, Converter={StaticResource BoolToVisibility}}"/>
+                          <TextBlock Text="{Binding PrecioUnitarioText}" FontWeight="Bold"
+                                     FontFamily="{StaticResource Font.Mono}" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                              <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#B45309"/>
+                                <Style.Triggers>
+                                  <DataTrigger Binding="{Binding EsContractual}" Value="False">
+                                    <Setter Property="Foreground" Value="#7E22CE"/>
+                                  </DataTrigger>
+                                </Style.Triggers>
+                              </Style>
+                            </TextBlock.Style>
+                          </TextBlock>
+                        </StackPanel>
+                      </Border>
+                    </Grid>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
                 <DataGridTemplateColumn.CellEditingTemplate>
                   <DataTemplate>
-                    <TextBox Text="{Binding PrecioUnitarioText, UpdateSourceTrigger=LostFocus}"
-                             FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold"
-                             TextAlignment="Right" VerticalContentAlignment="Center"
-                             IsEnabled="{Binding EsContractual, Converter={StaticResource InverseBool}}"/>
+                    <Grid>
+                      <TextBlock Text="&#x2014;" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}"
+                                 Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}}"/>
+                      <TextBox Text="{Binding PrecioUnitarioText, UpdateSourceTrigger=LostFocus}"
+                               FontFamily="{StaticResource Font.Mono}" FontWeight="SemiBold"
+                               TextAlignment="Right" VerticalContentAlignment="Center"
+                               IsEnabled="{Binding EsContractual, Converter={StaticResource InverseBool}}"
+                               Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"/>
+                    </Grid>
                   </DataTemplate>
                 </DataGridTemplateColumn.CellEditingTemplate>
               </DataGridTemplateColumn>
 
               <!-- Subtotal Venta -->
-              <DataGridTextColumn Header="Subtotal Venta" Binding="{Binding SubtotalDisplay}" Width="120" IsReadOnly="True">
-                <DataGridTextColumn.ElementStyle>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="HorizontalAlignment" Value="Right"/>
-                    <Setter Property="VerticalAlignment" Value="Center"/>
-                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
-                    <Setter Property="FontWeight" Value="Bold"/>
-                    <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
-                    <Setter Property="Padding" Value="0,0,6,0"/>
-                  </Style>
-                </DataGridTextColumn.ElementStyle>
-              </DataGridTextColumn>
-
-              <!-- Quitar botón -->
-              <DataGridTemplateColumn Width="45">
+              <DataGridTemplateColumn Header="Subtotal Venta" Width="95">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
-                    <Button Content="✕" ToolTip="Quitar partida del adicional"
+                    <Grid>
+                      <TextBlock Text="&#x2014;" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}"
+                                 Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}}"/>
+                      <TextBlock Text="{Binding SubtotalDisplay}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                 FontFamily="{StaticResource Font.Mono}" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}"
+                                 Padding="0,0,4,0"
+                                 Visibility="{Binding EsTitulo, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"/>
+                    </Grid>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- Observaciones -->
+              <DataGridTemplateColumn Header="Observaciones" Width="200" MinWidth="140">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <TextBox Text="{Binding Nota, UpdateSourceTrigger=PropertyChanged}"
+                             FontSize="11" Height="24"
+                             VerticalContentAlignment="Center"
+                             Padding="4,1"
+                             Background="White"
+                             BorderBrush="{DynamicResource Brush.Line}"
+                             BorderThickness="1"
+                             ToolTip="{Binding Nota}"/>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+
+              <!-- Quitar botón (Papelera) -->
+              <DataGridTemplateColumn Width="35">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Button Content="✕" ToolTip="Quitar partida de este adicional"
                             Click="OnRemoveLineClick"
                             Foreground="{DynamicResource Brush.Danger}" Background="Transparent"
-                            BorderThickness="0" FontWeight="Bold" FontSize="12"
-                            Width="26" Height="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            BorderThickness="0" FontWeight="Bold" FontSize="11"
+                            Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
               </DataGridTemplateColumn>
@@ -333,80 +483,117 @@
       </Border>
 
       <!-- Separador Divisor -->
-      <GridSplitter Grid.Row="2" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                    Background="{DynamicResource Brush.Line}"/>
+      <GridSplitter Grid.Row="2" Height="6" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                    ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"
+                    Background="{DynamicResource Brush.Line}" Cursor="SizeNS"/>
 
-      <!-- ── 3. Panel Inferior: EL CUBICADOR DE ZONAS (Detail - Idéntico a la Foto) ── -->
+      <!-- ── 3. PANEL INFERIOR: EL CUBICADOR DE ZONAS (DETAIL WORKBENCH) ── -->
       <Border Grid.Row="3" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
-              BorderThickness="1" CornerRadius="8" Padding="0" Margin="0,4,0,8">
+              BorderThickness="1" CornerRadius="8" Padding="0" Margin="0,2,0,4">
         <Grid>
           <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
 
+          <!-- Observación de la Partida (Colapsable) -->
+          <Expander Grid.Row="0" Margin="10,4,10,2" IsExpanded="False"
+                    Visibility="{Binding IsSelectedLinePartida, Converter={StaticResource BoolToVisibility}}">
+            <Expander.Header>
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Observación" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
+                <TextBlock Text=" · Justificación formal de la partida (visible en oferta)" FontSize="10" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+              </StackPanel>
+            </Expander.Header>
+            <Border Margin="0,4,0,4" Padding="8,5" CornerRadius="6" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1">
+              <DockPanel LastChildFill="True">
+                <TextBlock DockPanel.Dock="Left" Text="Justificación:" FontSize="10.5" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource Brush.Ink}"/>
+                <TextBox Text="{Binding SelectedLine.Nota, UpdateSourceTrigger=PropertyChanged}"
+                         VerticalContentAlignment="Center" Padding="6,3" FontSize="11" MinHeight="24"
+                         BorderThickness="1" BorderBrush="{DynamicResource Brush.Line}" Background="White"
+                         ToolTip="Observación o justificación formal de la partida"/>
+              </DockPanel>
+            </Border>
+          </Expander>
+
           <!-- Cabecera de la Partida en Cubicación (Estilo QubiCost) -->
-          <Border Grid.Row="0" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
-                  BorderThickness="0,0,0,1" Padding="12,8">
+          <Border Grid.Row="1" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                  BorderThickness="0,0,0,1" Height="30" Padding="10,0">
             <DockPanel LastChildFill="False">
               <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                <!-- Tag Box Ítem (ej 1.2.-) -->
-                <Border Background="{DynamicResource Brush.BlueFaint}" BorderBrush="{DynamicResource Brush.BlueFocus}"
-                        BorderThickness="1" CornerRadius="4" Padding="8,3" Margin="0,0,8,0">
-                  <TextBlock Text="{Binding SelectedLineItemText}" FontWeight="Bold" FontSize="12"
-                             Foreground="{DynamicResource Brush.Accent}"/>
-                </Border>
-                <!-- Nombre de Partida -->
-                <TextBlock Text="{Binding SelectedLineDescText}" FontWeight="Bold" FontSize="13"
-                           Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" Margin="0,0,12,0"
-                           MaxWidth="320" TextTrimming="CharacterEllipsis"/>
-                <TextBlock Text="(v) Observación" FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <!-- Cuando hay partida seleccionada -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding IsSelectedLinePartida, Converter={StaticResource BoolToVisibility}}">
+                  <!-- Tag Box Ítem (ej 1.2.-) -->
+                  <Border Background="{DynamicResource Brush.Blue}" BorderBrush="{DynamicResource Brush.BlueDark}"
+                          BorderThickness="1" CornerRadius="4" Height="22" Padding="6,1" Margin="0,0,6,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding SelectedLineItemText}" FontWeight="Bold" FontSize="11"
+                               Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                  </Border>
+                  <!-- Nombre de Partida -->
+                  <TextBlock Text="{Binding SelectedLineDescText}" FontWeight="Bold" FontSize="12"
+                             Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" Margin="0,0,8,0"
+                             MaxWidth="360" TextTrimming="CharacterEllipsis"/>
 
-                <!-- UD (Unidad de la partida) -->
-                <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Background="White"
-                        Height="26" Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Unidad de la partida">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="UD: " FontSize="10" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding SelectedLine.Unidad, FallbackValue='gl'}" FontWeight="Bold" FontSize="11"
-                               Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
-                  </StackPanel>
-                </Border>
+                  <!-- UD (Unidad de la partida) -->
+                  <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="4" Background="White"
+                          Height="22" Padding="5,1" Margin="0,0,6,0" VerticalAlignment="Center" ToolTip="Unidad de la partida">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <TextBlock Text="UD: " FontSize="9.5" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding SelectedLine.Unidad}" FontWeight="Bold" FontSize="10.5"
+                                 Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Border>
 
-                <!-- CANT (Badge Verde Idéntico a Cubicación - Editable) -->
-                <Border Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}"
-                        BorderThickness="1" CornerRadius="4" Height="26" Padding="6,1" VerticalAlignment="Center"
-                        ToolTip="Cantidad adicional total para esta partida. Puede editarla aquí o cubicarla en las casillas abajo.">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="CANT: " FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBox x:Name="PartidaCantBox"
-                             Text="{Binding SelectedLine.CantidadAdicionalText, UpdateSourceTrigger=LostFocus}"
-                             FontWeight="Bold" FontSize="12" FontFamily="{StaticResource Font.Mono}"
-                             Foreground="{DynamicResource Brush.Success}" Background="Transparent"
-                             BorderThickness="0" VerticalAlignment="Center" MinWidth="55" TextAlignment="Right"
-                             PreviewKeyDown="OnPartidaCantBoxPreviewKeyDown"
-                             LostFocus="OnPartidaCantBoxLostFocus"/>
-                  </StackPanel>
-                </Border>
+                  <!-- CANT (Badge Verde Idéntico a Cubicación - Editable) -->
+                  <Border Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}"
+                          BorderThickness="1" CornerRadius="4" Height="22" Padding="5,0" VerticalAlignment="Center"
+                          ToolTip="Cantidad adicional total para esta partida. Puede editarla aquí o cubicarla en las casillas abajo.">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <TextBlock Text="CANT TOTAL: " FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                      <TextBox x:Name="PartidaCantBox"
+                               Text="{Binding SelectedLine.CantidadAdicionalText, UpdateSourceTrigger=LostFocus}"
+                               FontWeight="Bold" FontSize="11" FontFamily="{StaticResource Font.Mono}"
+                               Foreground="{DynamicResource Brush.Success}" Background="Transparent"
+                               BorderThickness="0" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                               Padding="2,0" MinWidth="36" TextAlignment="Right"
+                               PreviewKeyDown="OnPartidaCantBoxPreviewKeyDown"
+                               LostFocus="OnPartidaCantBoxLostFocus"/>
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+
+                <!-- Cuando NO hay partida seleccionada (Placeholder limpio) -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding IsSelectedLinePartida, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+                  <TextBlock Text="📋 " FontSize="12" VerticalAlignment="Center"/>
+                  <TextBlock Text="Seleccione una partida para ver su planilla de zonas y cubicación"
+                             FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+                </StackPanel>
               </StackPanel>
 
               <!-- Herramientas del Cubicador -->
               <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
                 <Button Content="+ Agregar Fila" Style="{StaticResource Button.Primary}"
-                        Height="26" Padding="10,0" Margin="0,0,6,0" FontSize="11"
+                        Height="22" Padding="8,0" Margin="0,0,5,0" FontSize="10.5"
+                        IsEnabled="{Binding IsSelectedLinePartida}"
                         Click="OnAddMaterialClick"/>
                 <Button Content="📋 Precargar del Contrato" Style="{StaticResource Button.Secondary}"
-                        Height="26" Padding="10,0" Margin="0,0,6,0" FontSize="11"
+                        Height="22" Padding="8,0" Margin="0,0,5,0" FontSize="10.5"
+                        IsEnabled="{Binding IsSelectedLinePartida}"
                         ToolTip="Copia los materiales originales de esta partida y los escala a la cantidad adicional"
                         Click="OnPrecargarBaseClick"/>
                 <Button Content="🔍 Banco de Precios" Style="{StaticResource Button.Secondary}"
-                        Height="26" Padding="10,0" Margin="0,0,6,0" FontSize="11"
+                        Height="22" Padding="8,0" Margin="0,0,5,0" FontSize="10.5"
+                        IsEnabled="{Binding IsSelectedLinePartida}"
                         ToolTip="Consultar precios en catálogo general"
                         Click="OnBuscarEnBancoClick"/>
                 <!-- Selector de Modo: Casillas / Detalle (Idéntico a Cubicación) -->
-                <Border Background="{DynamicResource Brush.Surface2}" CornerRadius="4" Padding="2" Margin="0,0,6,0">
-                  <StackPanel Orientation="Horizontal">
-                    <Button x:Name="CasillasBtn" Content="Casillas" Height="24" Padding="10,0" FontSize="11" FontWeight="SemiBold"
+                <Border Background="{DynamicResource Brush.Surface2}" CornerRadius="4" Padding="1" Margin="0,0,4,0" Height="22" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="CasillasBtn" Content="Casillas" Height="20" Padding="8,0" FontSize="10" FontWeight="SemiBold"
                             Click="OnCasillasViewClick" ToolTip="Modo Casillas de cubicación (matriz continua de sectores)">
                       <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
@@ -415,7 +602,7 @@
                         </Style>
                       </Button.Style>
                     </Button>
-                    <Button x:Name="DetalleBtn" Content="Detalle" Height="24" Padding="10,0" FontSize="11" FontWeight="SemiBold"
+                    <Button x:Name="DetalleBtn" Content="Detalle" Height="20" Padding="8,0" FontSize="10" FontWeight="SemiBold"
                             Click="OnDetalleViewClick" ToolTip="Modo Detalle de precios unitarios y subtotales">
                       <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
@@ -430,8 +617,20 @@
             </DockPanel>
           </Border>
 
+          <!-- Mensaje cuando la fila seleccionada es un Título -->
+          <Border Grid.Row="2" Background="{DynamicResource Brush.Surface}" Panel.ZIndex="10"
+                  Visibility="{Binding IsSelectedLineTitulo, Converter={StaticResource BoolToVisibility}}"
+                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20">
+              <TextBlock Text="📑 Ítem de Título / Sección" FontSize="14" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+              <TextBlock Text="Este ítem funciona como título o encabezado organizador de la orden de cambio. No requiere cubicación ni materiales."
+                         FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+
           <!-- Planilla Matricial de Zonas estilo Excel (Idéntico a Cubicación) -->
-          <DataGrid Grid.Row="1" x:Name="ActiveMaterialesGrid"
+          <DataGrid Grid.Row="2" x:Name="ActiveMaterialesGrid"
                     ItemsSource="{Binding ActiveMateriales}"
                     AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                     HeadersVisibility="Column" GridLinesVisibility="All"
@@ -440,7 +639,7 @@
                     Background="White"
                     RowBackground="White"
                     AlternatingRowBackground="#F8FAFC"
-                    RowHeight="28" FontSize="11"
+                    RowHeight="28" ColumnHeaderHeight="32" FontSize="11"
                     SelectionMode="Single" SelectionUnit="Cell"
                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
                     ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -448,9 +647,11 @@
                     FrozenColumnCount="5"
                     Style="{StaticResource DataGrid.Workspace.Excel}"
                     infra:DataGridExcelNavigation.Enable="True"
-                    infra:DataGridExcelNavigation.HandlePasteByHost="True"
                     PreparingCellForEdit="OnGridPreparingCellForEdit"
                     CellEditEnding="OnGridCellEditEnding"
+                    PreviewKeyDown="OnActiveMaterialesGridPreviewKeyDown"
+                    PreviewTextInput="OnActiveMaterialesGridPreviewTextInput"
+                    PreviewMouseLeftButtonDown="OnActiveMaterialesGridPreviewMouseLeftButtonDown"
                     BorderThickness="0">
             <DataGrid.Columns>
               <!-- # (Número de Fila) -->
@@ -517,11 +718,12 @@
                   <Style TargetType="TextBlock">
                     <Setter Property="HorizontalAlignment" Value="Center" />
                     <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
 
-              <!-- CANT (Badge Verde Idéntico a la Foto) -->
+              <!-- CANT -->
               <DataGridTemplateColumn Header="CANT" Width="85" MinWidth="75">
                 <DataGridTemplateColumn.CellStyle>
                   <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}" />
@@ -540,8 +742,9 @@
 
               <!-- Columnas de Zonas se inyectan dinámicamente aquí según las configuradas en el proyecto -->
 
-              <!-- P.U. Material ($) - Visible en Modo Detalle -->
-              <DataGridTextColumn x:Name="MatPriceColumn" Header="P. Mat ($)" Binding="{Binding MatClpText, UpdateSourceTrigger=LostFocus}" Width="85" Visibility="Collapsed">
+              <!-- MAT $ (P.U. Material) - Visible en Modo Detalle -->
+              <DataGridTextColumn x:Name="MatPriceColumn" Header="MAT $" Binding="{Binding MatClpText, UpdateSourceTrigger=LostFocus}"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" Width="75" Visibility="Collapsed">
                 <DataGridTextColumn.CellStyle>
                   <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}" />
                 </DataGridTextColumn.CellStyle>
@@ -550,7 +753,7 @@
                     <Setter Property="HorizontalAlignment" Value="Right" />
                     <Setter Property="VerticalAlignment" Value="Center" />
                     <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
-                    <Setter Property="Padding" Value="0,0,4,0" />
+                    <Setter Property="Padding" Value="0,0,5,0" />
                   </Style>
                 </DataGridTextColumn.ElementStyle>
                 <DataGridTextColumn.EditingElementStyle>
@@ -558,12 +761,57 @@
                     <Setter Property="TextAlignment" Value="Right" />
                     <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
                     <Setter Property="VerticalContentAlignment" Value="Center" />
+                    <Setter Property="Padding" Value="2,0" />
                   </Style>
                 </DataGridTextColumn.EditingElementStyle>
               </DataGridTextColumn>
 
-              <!-- Subtotal Fila ($ / UF) - Visible en Modo Detalle -->
-              <DataGridTextColumn x:Name="SubtotalMatColumn" Header="Subtotal" Binding="{Binding SubtotalDisplay}" Width="95" IsReadOnly="True" Visibility="Collapsed">
+              <!-- MO $ (P.U. Mano de Obra) - Visible en Modo Detalle -->
+              <DataGridTextColumn x:Name="LaborPriceColumn" Header="MO $" Binding="{Binding MoClpText, UpdateSourceTrigger=LostFocus}"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Numeric}" Width="75" Visibility="Collapsed">
+                <DataGridTextColumn.CellStyle>
+                  <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}" />
+                </DataGridTextColumn.CellStyle>
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="Padding" Value="0,0,5,0" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+                <DataGridTextColumn.EditingElementStyle>
+                  <Style TargetType="TextBox">
+                    <Setter Property="TextAlignment" Value="Right" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                    <Setter Property="Padding" Value="2,0" />
+                  </Style>
+                </DataGridTextColumn.EditingElementStyle>
+              </DataGridTextColumn>
+
+              <!-- $ UNIT fx (Unitario Total = MAT + MO) - Visible en Modo Detalle -->
+              <DataGridTextColumn x:Name="TotalPriceColumn" Header="$ UNIT fx" Binding="{Binding UnitarioClp, StringFormat=N0}"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="82" IsReadOnly="True" Visibility="Collapsed">
+                <DataGridTextColumn.CellStyle>
+                  <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}" />
+                </DataGridTextColumn.CellStyle>
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                    <Setter Property="Padding" Value="0,0,5,0" />
+                    <Setter Property="ToolTip" Value="$ UNIT = MAT $ + MO $ (calculado)" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </DataGridTextColumn>
+
+              <!-- SUBTOTAL $ fx (CANT * $ UNIT) - Visible en Modo Detalle -->
+              <DataGridTextColumn x:Name="SubtotalMatColumn" Header="SUBTOTAL $ fx" Binding="{Binding SubtotalClp, StringFormat=N0}"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="98" IsReadOnly="True" Visibility="Collapsed">
                 <DataGridTextColumn.CellStyle>
                   <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}" />
                 </DataGridTextColumn.CellStyle>
@@ -573,11 +821,65 @@
                     <Setter Property="VerticalAlignment" Value="Center"/>
                     <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
                     <Setter Property="FontWeight" Value="SemiBold"/>
-                    <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}"/>
                     <Setter Property="Padding" Value="0,0,6,0"/>
+                    <Setter Property="ToolTip" Value="Subtotal CLP = $ UNIT × Cantidad (calculado)" />
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
+
+              <!-- GG+UT fx - Visible en Modo Detalle -->
+              <DataGridTextColumn x:Name="GgUtColumn" Header="GG+UT fx" Binding="{Binding GgUtFactorText, UpdateSourceTrigger=LostFocus}"
+                                  HeaderStyle="{StaticResource DataGridColumnHeader.Formula}" Width="64" Visibility="Collapsed">
+                <DataGridTextColumn.CellStyle>
+                  <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}" />
+                </DataGridTextColumn.CellStyle>
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" />
+                    <Setter Property="Padding" Value="0,0,5,0" />
+                    <Setter Property="ToolTip" Value="Factor de Gastos Generales y Utilidad aplicado" />
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+                <DataGridTextColumn.EditingElementStyle>
+                  <Style TargetType="TextBox">
+                    <Setter Property="TextAlignment" Value="Right" />
+                    <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                    <Setter Property="Padding" Value="2,0" />
+                  </Style>
+                </DataGridTextColumn.EditingElementStyle>
+              </DataGridTextColumn>
+
+              <!-- OBSERVACIONES / Nota interna - Visible en Modo Detalle -->
+              <ctrl:DisplayBindingTextColumn x:Name="ObservacionesColumn" Header="OBSERVACIONES"
+                                            Binding="{Binding NotaInterna, UpdateSourceTrigger=LostFocus}"
+                                            DisplayBinding="{Binding NotaInterna, Converter={StaticResource EmptyToPlaceholder}, ConverterParameter='Nota interna (no sale en la oferta)'}"
+                                            Width="*" MinWidth="160" Visibility="Collapsed">
+                <DataGridTextColumn.CellStyle>
+                  <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+                  </Style>
+                </DataGridTextColumn.CellStyle>
+                <DataGridTextColumn.ElementStyle>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                    <Setter Property="FontStyle" Value="Italic" />
+                    <Setter Property="FontSize" Value="10.5" />
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                    <Setter Property="Margin" Value="6,0" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding NotaInterna, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+                        <Setter Property="FontStyle" Value="Normal" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </DataGridTextColumn.ElementStyle>
+              </ctrl:DisplayBindingTextColumn>
 
               <!-- Quitar Material -->
               <DataGridTemplateColumn Width="34">
@@ -651,24 +953,25 @@
           </Popup>
 
           <!-- Pie del Cubicador: Totales de la Partida Activa -->
-          <Border Grid.Row="2" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
-                  BorderThickness="0,1,0,0" Padding="12,6">
+          <Border Grid.Row="3" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                  BorderThickness="0,1,0,0" Height="25" Padding="10,0">
             <DockPanel LastChildFill="False">
               <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                <TextBlock Text="Medición Total Cubipada de la Partida: " FontSize="11" Foreground="{DynamicResource Brush.Muted}"/>
+                <TextBlock Text="Medición Total Cubicada de la Partida: " FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
                 <Border Background="{DynamicResource Brush.SuccessBg}" BorderBrush="{DynamicResource Brush.SuccessBorder}"
-                        BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="4,0,8,0">
+                        BorderThickness="1" CornerRadius="4" Padding="6,1" Height="19" Margin="4,0,8,0" VerticalAlignment="Center">
                   <TextBlock Text="{Binding SelectedLineCantTotalDisplay}" FontWeight="Bold"
-                             FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Success}"/>
+                             FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{DynamicResource Brush.Success}"
+                             VerticalAlignment="Center"/>
                 </Border>
-                <TextBlock Text="➔ Vinculada directamente a Δ Cantidad de la partida" FontSize="10"
+                <TextBlock Text="➔ Vinculada directamente a Δ Cantidad de la partida" FontSize="9.5"
                            Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
               </StackPanel>
 
               <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-                <TextBlock Text="{Binding SelectedLinePuLabel}" FontSize="11" Foreground="{DynamicResource Brush.Muted}"/>
-                <TextBlock Text="{Binding SelectedLinePuDisplay}" FontWeight="Bold"
-                           FontFamily="{StaticResource Font.Mono}" Margin="0,0,16,0">
+                <TextBlock Text="{Binding SelectedLinePuLabel}" FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding SelectedLinePuDisplay}" FontWeight="Bold" FontSize="11"
+                           FontFamily="{StaticResource Font.Mono}" Margin="0,0,14,0" VerticalAlignment="Center">
                   <TextBlock.Style>
                     <Style TargetType="TextBlock">
                       <Setter Property="Foreground" Value="{DynamicResource Brush.Amber}"/>
@@ -680,21 +983,22 @@
                     </Style>
                   </TextBlock.Style>
                 </TextBlock>
-                <TextBlock Text="Subtotal Venta Partida: " FontSize="11" Foreground="{DynamicResource Brush.Muted}"/>
-                <TextBlock Text="{Binding SelectedLineSubtotalDisplay}" FontWeight="Bold"
-                           FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Success}"/>
+                <TextBlock Text="Subtotal Venta Partida: " FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding SelectedLineSubtotalDisplay}" FontWeight="Bold" FontSize="11"
+                           FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Success}"
+                           VerticalAlignment="Center"/>
               </StackPanel>
             </DockPanel>
           </Border>
         </Grid>
       </Border>
 
-      <!-- ── 4. Botones Footer ── -->
-      <DockPanel Grid.Row="4" Style="{StaticResource Dialog.Footer}" Margin="0,12,0,0">
+      <!-- ── 4. BOTONES FOOTER ── -->
+      <DockPanel Grid.Row="4" Style="{StaticResource Dialog.Footer}" Margin="0,6,0,0">
         <Button DockPanel.Dock="Right" Content="✓ Guardar Adicional" IsDefault="True"
-                Style="{StaticResource Button.Primary}" MinWidth="150" Height="34" Click="OnSave"/>
-        <Button DockPanel.Dock="Right" Content="Cancelar" IsCancel="True"
-                Style="{StaticResource Button.Secondary}" MinWidth="90" Height="34" Margin="0,0,10,0"/>
+                Style="{StaticResource Button.Primary}" MinWidth="160" Height="32" Click="OnSave"/>
+        <Button DockPanel.Dock="Right" Content="Cancelar"
+                Style="{StaticResource Button.Secondary}" MinWidth="90" Height="32" Margin="0,0,10,0" Click="OnCancelClick"/>
       </DockPanel>
     </Grid>
   </Border>

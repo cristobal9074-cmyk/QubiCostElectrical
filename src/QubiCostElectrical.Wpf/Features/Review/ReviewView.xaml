@@ -47,7 +47,17 @@
               <Border Style="{StaticResource Card.StatPill}" Margin="0,0,8,0">
                 <StackPanel>
                   <TextBlock Text="Bloqueantes" Style="{StaticResource Text.Caption}" />
-                  <TextBlock Text="{Binding BlockerCount, StringFormat={}{0:N0} pendientes}" FontWeight="SemiBold" />
+                  <TextBlock Text="{Binding BlockerCount, StringFormat={}{0:N0} pendientes}" FontWeight="SemiBold">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding HasBlockers}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.DangerDark}" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
                 </StackPanel>
               </Border>
               <Border Style="{StaticResource Card.StatPill}" Margin="0,0,8,0">
@@ -65,7 +75,17 @@
               <Border Style="{StaticResource Card.StatPill}">
                 <StackPanel>
                   <TextBlock Text="Estado" Style="{StaticResource Text.Caption}" />
-                  <TextBlock Text="{Binding ExportStateText}" FontWeight="SemiBold" />
+                  <TextBlock Text="{Binding ExportStateText}" FontWeight="SemiBold">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding HasBlockers}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.DangerDark}" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
                 </StackPanel>
               </Border>
             </StackPanel>

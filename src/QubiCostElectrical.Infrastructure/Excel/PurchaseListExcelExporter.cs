@@ -3,6 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using ClosedXML.Excel;
+using QubiCostElectrical;
 
 namespace QubiCostElectrical.Infrastructure;
 
@@ -92,13 +93,16 @@ public sealed class PurchaseListExcelExporter : IPurchaseListExcelExporter
     /// permite; en CLP se usa el valor en pesos y se recurre a la conversión si no viniera informado.
     /// </summary>
     private static decimal PrecioUnitario(CompraMaterialViewModel x, PurchaseListExcelRequest request)
+        => PrecioUnitario(x, request.MuestraUf, request.ValorUfClp);
+
+    private static decimal PrecioUnitario(CompraMaterialViewModel x, bool muestraUf, decimal valorUfClp)
     {
-        if (request.MuestraUf)
+        if (muestraUf)
             return x.MatUfUnitario;
 
         return x.MatClpUnitario > 0m
             ? x.MatClpUnitario
-            : x.MatUfUnitario * ValorUf(request.ValorUfClp);
+            : x.MatUfUnitario * ValorUf(valorUfClp);
     }
 
     private static decimal ValorUf(decimal valorUfClp)
@@ -209,6 +213,129 @@ public sealed class PurchaseListExcelExporter : IPurchaseListExcelExporter
         ws.Column(10).Width = 18;
         ws.Column(11).Width = 24;
         ws.Column(12).Width = 32;
+
+        ClosedXmlExportStyler.FinalizeClosedXmlWorksheet(ws);
+        wb.SaveAs(path);
+    }
+
+    public void ExportPurchaseOrder(string path, PurchaseOrderExcelRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            throw new ArgumentException("Ruta de exportación requerida.", nameof(path));
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        if (File.Exists(path))
+            File.Delete(path);
+
+        using var wb = new XLWorkbook();
+        wb.Style.Font.FontName = "Segoe UI";
+        wb.Style.Font.FontSize = 9;
+
+        var ws = wb.Worksheets.Add("OrdenDeCompra");
+        ClosedXmlExportStyler.PrepareClosedXmlSheet(ws);
+        ClosedXmlExportStyler.AddSheetTitle(ws, "ORDEN DE COMPRA — MATERIALES ELÉCTRICOS", 7);
+
+        string company = string.IsNullOrWhiteSpace(request.CompanyName) ? "Qubi Cost Electrical" : request.CompanyName.Trim();
+        string numeroOc = !string.IsNullOrWhiteSpace(request.NumeroOc) ? request.NumeroOc : $"OC-{AppClock.Now:yyyyMMdd}-{AppClock.Now:HHmm}";
+
+        ws.Cell(2, 1).Value = "N° Orden de Compra:";
+        ws.Cell(2, 2).Value = numeroOc;
+        ws.Cell(2, 4).Value = "Empresa Emisora:";
+        ws.Cell(2, 5).Value = company;
+        ws.Cell(2, 6).Value = "Fecha Emisión:";
+        ws.Cell(2, 7).SetValue(AppClock.Now);
+        ws.Cell(2, 7).Style.NumberFormat.Format = "dd-mm-yyyy";
+        ws.Range(2, 1, 2, 7).Style.Font.Bold = true;
+
+        ws.Cell(3, 1).Value = "Proyecto / Obra:";
+        ws.Cell(3, 2).Value = request.ProjectTitle;
+        ws.Cell(3, 4).Value = "Proveedor / Distribuidor:";
+        ws.Cell(3, 5).Value = string.IsNullOrWhiteSpace(request.Proveedor) ? "Distribuidor Autorizado" : request.Proveedor;
+        ws.Cell(3, 6).Value = "Moneda:";
+        ws.Cell(3, 7).Value = request.MuestraUf ? "UF" : "CLP ($)";
+        ws.Range(3, 1, 3, 7).Style.Font.Bold = true;
+
+        ws.Cell(4, 1).Value = "Lugar de Entrega:";
+        ws.Cell(4, 2).Value = "En Faena / Obra según coordinación con Jefe de Terreno.";
+        ws.Range(4, 2, 4, 7).Merge();
+        ws.Cell(4, 1).Style.Font.Bold = true;
+        ws.Cell(4, 2).Style.Font.Italic = true;
+
+        int headerRow = 6;
+        string etiquetaMoneda = request.MuestraUf ? "UF" : "$";
+        ClosedXmlExportStyler.SetHeaderRow(ws, headerRow, new[]
+        {
+            "ÍTEM", "CÓDIGO", "DESCRIPCIÓN DEL MATERIAL", "UD.",
+            "CANTIDAD A COMPRAR", $"PRECIO UNITARIO NETO ({etiquetaMoneda})", $"TOTAL NETO ({etiquetaMoneda})"
+        });
+
+        int row = headerRow + 1;
+        int itemIndex = 1;
+        foreach (var x in request.Rows)
+        {
+            ws.Cell(row, 1).SetValue(itemIndex++);
+            ws.Cell(row, 2).Value = x.Codigo;
+            ws.Cell(row, 3).Value = x.Descripcion;
+            ws.Cell(row, 4).Value = x.Unidad;
+            ws.Cell(row, 5).SetValue(ClosedXmlExportStyler.ToDouble(x.CantidadCompra));
+            ws.Cell(row, 6).SetValue(ClosedXmlExportStyler.ToDouble(PrecioUnitario(x, request.MuestraUf, request.ValorUfClp)));
+            ws.Cell(row, 7).FormulaA1 = $"E{row}*F{row}";
+            row++;
+        }
+
+        int lastRow = Math.Max(row - 1, headerRow);
+        ClosedXmlExportStyler.StyleClosedXmlTable(ws, headerRow, 1, lastRow, 7, "tbl_orden_compra");
+        ws.Range(headerRow + 1, 1, Math.Max(lastRow, headerRow + 1), 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+        ws.Range(headerRow + 1, 4, Math.Max(lastRow, headerRow + 1), 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+        ws.Range(headerRow + 1, 5, Math.Max(lastRow, headerRow + 1), 5).Style.NumberFormat.Format = "#,##0.00";
+        ws.Range(headerRow + 1, 6, Math.Max(lastRow, headerRow + 1), 7).Style.NumberFormat.Format = request.MuestraUf ? ClosedXmlExportStyler.UfExcelFormat() : "$ #,##0";
+
+        // Totales: Subtotal Neto, IVA 19%, Total Bruto
+        int subtotalRow = lastRow + 2;
+        int ivaRow = subtotalRow + 1;
+        int totalBrutoRow = ivaRow + 1;
+
+        string formatoMoneda = request.MuestraUf ? ClosedXmlExportStyler.UfExcelFormat() : "$ #,##0";
+
+        ws.Cell(subtotalRow, 6).Value = $"SUBTOTAL NETO ({etiquetaMoneda})";
+        ws.Cell(subtotalRow, 6).Style.Font.Bold = true;
+        ws.Cell(subtotalRow, 7).FormulaA1 = lastRow > headerRow ? $"SUM(G{headerRow + 1}:G{lastRow})" : "0";
+        ws.Cell(subtotalRow, 7).Style.NumberFormat.Format = formatoMoneda;
+        ws.Cell(subtotalRow, 7).Style.Font.Bold = true;
+
+        ws.Cell(ivaRow, 6).Value = $"IVA (19%) ({etiquetaMoneda})";
+        ws.Cell(ivaRow, 6).Style.Font.Bold = true;
+        ws.Cell(ivaRow, 7).FormulaA1 = $"G{subtotalRow}*0.19";
+        ws.Cell(ivaRow, 7).Style.NumberFormat.Format = formatoMoneda;
+
+        ws.Cell(totalBrutoRow, 6).Value = $"TOTAL ORDEN DE COMPRA ({etiquetaMoneda})";
+        ws.Cell(totalBrutoRow, 6).Style.Font.Bold = true;
+        ws.Cell(totalBrutoRow, 7).FormulaA1 = $"G{subtotalRow}+G{ivaRow}";
+        ws.Cell(totalBrutoRow, 7).Style.NumberFormat.Format = formatoMoneda;
+        ws.Cell(totalBrutoRow, 7).Style.Font.Bold = true;
+
+        ws.Range(subtotalRow, 6, totalBrutoRow, 7).Style.Fill.BackgroundColor = XLColor.FromColor(Color.FromArgb(229, 241, 255));
+        ws.Range(subtotalRow, 6, totalBrutoRow, 7).Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
+        ws.Range(subtotalRow, 6, totalBrutoRow, 7).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+        // Firmas y aprobaciones
+        int signRow = totalBrutoRow + 3;
+        ws.Cell(signRow, 2).Value = "Solicitado por (Adquisiciones / Estimador)";
+        ws.Cell(signRow, 2).Style.Font.Bold = true;
+        ws.Cell(signRow, 5).Value = "Aprobado por (Jefatura de Obra / Gerencia)";
+        ws.Cell(signRow, 5).Style.Font.Bold = true;
+        ws.Cell(signRow + 2, 2).Value = "Firma: ___________________________";
+        ws.Cell(signRow + 2, 5).Value = "Firma: ___________________________";
+
+        ws.SheetView.FreezeRows(headerRow);
+        ws.Column(1).Width = 8;
+        ws.Column(2).Width = 16;
+        ws.Column(3).Width = 46;
+        ws.Column(4).Width = 8;
+        ws.Column(5).Width = 20;
+        ws.Column(6).Width = 22;
+        ws.Column(7).Width = 22;
 
         ClosedXmlExportStyler.FinalizeClosedXmlWorksheet(ws);
         wb.SaveAs(path);

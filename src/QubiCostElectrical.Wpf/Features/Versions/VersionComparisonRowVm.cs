@@ -76,6 +76,34 @@ public sealed class VersionComparisonRowVm
     public string DeltaCantidadDisplay => DeltaCantidad == 0m ? "—" : (DeltaCantidad > 0m ? $"+{DeltaCantidad:N0} {Unidad}" : $"{DeltaCantidad:N0} {Unidad}");
     public string DeltaCantidadNumDisplay => DeltaCantidad == 0m ? "—" : (DeltaCantidad > 0m ? $"+{DeltaCantidad:N0}" : $"{DeltaCantidad:N0}");
 
+    public string DeltaTotalText => DeltaMontoDisplay;
+    public decimal TotalBaseUf => BaselineUf;
+    public decimal TotalActualUf => CurrentUf;
+
+    public string DiffStatusBadgeText => DiffKind switch
+    {
+        RevisionDiffKind.Adicional => "+ AGREGADA",
+        RevisionDiffKind.Deductivo => "- ELIMINADA",
+        RevisionDiffKind.Modificado => DeltaPuUf != 0m ? "Δ PRECIO" : "Δ CANTIDAD",
+        _ => "SIN CAMBIO"
+    };
+
+    public bool HasDeltaPu => DeltaPuUf != 0m;
+
+    public string DeltaPuDisplay
+    {
+        get
+        {
+            if (DeltaPuUf == 0m) return "";
+            if (currency is not null && !currency.MuestraUf)
+            {
+                var deltaClp = Math.Round(DeltaPuUf * currency.UfRate, 0, MidpointRounding.AwayFromZero);
+                return deltaClp > 0m ? $"+$ {deltaClp:N0}/u" : $"$ {deltaClp:N0}/u";
+            }
+            return DeltaPuUf > 0m ? $"+{DeltaPuUf:N3} UF/u" : $"{DeltaPuUf:N3} UF/u";
+        }
+    }
+
     public bool IsAdicional => DiffKind == RevisionDiffKind.Adicional;
     public bool IsDeductivo => DiffKind == RevisionDiffKind.Deductivo;
     public bool IsModificado => DiffKind == RevisionDiffKind.Modificado;

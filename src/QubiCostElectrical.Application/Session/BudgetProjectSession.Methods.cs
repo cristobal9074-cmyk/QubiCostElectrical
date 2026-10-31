@@ -56,6 +56,7 @@ public sealed partial class BudgetProjectSession
     public List<SolicitudItemRow> Solicitudes => Data.Solicitudes;
     public List<EstadoPagoMesRow> EstadoPagoMeses => Data.EstadoPagoMeses ??= new List<EstadoPagoMesRow>();
     public EstadoPagoConfig EstadoPagoConfig => Data.EstadoPagoConfig ??= EstadoPagoConfig.Default();
+    public TipologiasEdificioData Tipologias => Data.Tipologias ??= TipologiasEdificioData.Default();
     public List<BudgetStatusHistoryRow> BudgetStatusHistory => ProjectInfo.HistorialEstados;
     public List<CubicacionCellCommentRow> CubicacionCellComments => ProjectInfo.CubicacionCellComments;
     public List<TechnicalValidationRuleRow> TechnicalValidationRules => ProjectInfo.TechnicalValidationRules;

@@ -129,6 +129,12 @@ public sealed class CompraMaterialViewModel : INotifyPropertyChanged
             ? Proveedor.Trim()
             : string.IsNullOrWhiteSpace(Categoria) ? "Sin categoría" : Categoria.Trim();
 
+    /// <summary>
+    /// Clave de agrupación por familia / categoría de material.
+    /// </summary>
+    public string GrupoFamilia =>
+        !string.IsNullOrWhiteSpace(Categoria) ? Categoria.Trim() : "Sin familia / categoría";
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

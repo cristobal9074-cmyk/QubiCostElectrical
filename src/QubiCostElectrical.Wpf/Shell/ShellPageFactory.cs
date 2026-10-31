@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using QubiCostElectrical;
@@ -156,7 +156,7 @@ internal static class ShellPageFactory
                 }
             case ShellRoute.EstadosPagos:
                 {
-                    var vm = Vm<EstadosPagoFeature.EstadosPagoViewModel>();
+                    var vm = Vm<EstadosPagoFeature.EstadosPagoViewModel>(appHost.UndoService);
                     return (new EstadosPagoFeature.EstadosPagoView { DataContext = vm }, vm);
                 }
             case ShellRoute.Costo:

@@ -178,4 +178,57 @@ public sealed class MaterialControlViewModelTests
         Assert.Single(visibleSearch);
         Assert.Equal("THHN10", visibleSearch[0].Codigo);
     }
+
+    [Fact]
+    public void MaterialControlView_ConsumoGreaterThanCubicado_TriggersAmberAlert()
+    {
+        var rowModel = new MaterialControlRow(
+            Codigo: "CONDUIT25",
+            Descripcion: "TUBERIA CONDUIT 25MM",
+            Unidad: "M",
+            Categoria: "Canalización",
+            CantidadCubicada: 100m,
+            CantidadSolicitada: 140m, // Consumo > Cubicado
+            CantidadPendiente: 0m,
+            CantidadExceso: 40m,
+            PorcentajeAvance: 140.0,
+            EstadoControl: "⚠️ Sobrepedido (+40)",
+            TieneSobrepedido: true,
+            Solicitudes: Array.Empty<MaterialSolicitudUso>());
+
+        var rowVm = new MaterialControlRowVm(rowModel);
+
+        Assert.True(rowVm.TieneSobreconsumo);
+        Assert.True(rowVm.TieneSobrepedido);
+        Assert.Equal(140.0, rowVm.PorcentajeAvance);
+
+        // Verificación de conversores visuales ámbar
+        var progressConverter = new PercentToProgressBrushConverter();
+        var progressBrush = progressConverter.Convert(140.0, typeof(System.Windows.Media.Brush), null, System.Globalization.CultureInfo.InvariantCulture) as System.Windows.Media.SolidColorBrush;
+        Assert.NotNull(progressBrush);
+        Assert.Equal(0xD9, progressBrush.Color.R);
+        Assert.Equal(0x77, progressBrush.Color.G);
+        Assert.Equal(0x06, progressBrush.Color.B);
+
+        var bgConverter = new StatusToBadgeBgConverter();
+        var bgBrush = bgConverter.Convert(rowVm.EstadoControl, typeof(System.Windows.Media.Brush), null, System.Globalization.CultureInfo.InvariantCulture) as System.Windows.Media.SolidColorBrush;
+        Assert.NotNull(bgBrush);
+        Assert.Equal(0xFE, bgBrush.Color.R);
+        Assert.Equal(0xF3, bgBrush.Color.G);
+        Assert.Equal(0xC7, bgBrush.Color.B);
+
+        var borderConverter = new StatusToBadgeBorderConverter();
+        var borderBrush = borderConverter.Convert(rowVm.EstadoControl, typeof(System.Windows.Media.Brush), null, System.Globalization.CultureInfo.InvariantCulture) as System.Windows.Media.SolidColorBrush;
+        Assert.NotNull(borderBrush);
+        Assert.Equal(0xFC, borderBrush.Color.R);
+        Assert.Equal(0xD3, borderBrush.Color.G);
+        Assert.Equal(0x4D, borderBrush.Color.B);
+
+        var fgConverter = new StatusToBadgeFgConverter();
+        var fgBrush = fgConverter.Convert(rowVm.EstadoControl, typeof(System.Windows.Media.Brush), null, System.Globalization.CultureInfo.InvariantCulture) as System.Windows.Media.SolidColorBrush;
+        Assert.NotNull(fgBrush);
+        Assert.Equal(0x78, fgBrush.Color.R);
+        Assert.Equal(0x35, fgBrush.Color.G);
+        Assert.Equal(0x0F, fgBrush.Color.B);
+    }
 }

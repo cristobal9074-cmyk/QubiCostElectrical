@@ -97,10 +97,30 @@ public sealed class ItemizadoClipboardPasteCoordinator
         if (path == null)
             return;
 
+        string? sheetName = null;
+        try
+        {
+            var sheets = await Task.Run(() => presenter.InspectWorksheets(path));
+            if (sheets.Count > 1)
+            {
+                var chosen = SelectExcelSheetDialog.Prompt(sheets, path);
+                if (chosen == null)
+                {
+                    setStatusMessage("Importación cancelada.");
+                    return;
+                }
+                sheetName = chosen.Name;
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warning("Itemizado", "No se pudo inspeccionar hojas del Excel de forma anticipada", ex);
+        }
+
         setStatusMessage("Leyendo archivo…");
         try
         {
-            var outcome = await importCoordinator.ImportExcelAsync(path);
+            var outcome = await importCoordinator.ImportExcelAsync(path, sheetName);
             if (!string.IsNullOrWhiteSpace(outcome.ErrorMessage))
             {
                 WpfDialogService.Error(outcome.ErrorTitle ?? "Importar tabla", outcome.ErrorMessage);

@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.ChangeOrders;
@@ -751,5 +751,55 @@ public sealed class WpfUndoServiceTests
 
         host.UndoService.Redo(host.Session);
         Assert.Equal("Step1", ReadTag(host.Session));
+    }
+
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // 38. EdiciÃ³n de avance en Estados de Pago se deshace paso a paso
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+    [Fact]
+    public void EstadoPago_SequentialAvanceEdits_UndoStepByStepWithoutZombieRecommit()
+    {
+        var host = SetupHost("ep-undo-test");
+        var cfg = host.Session.EstadoPagoConfig;
+        var row = new EstadoPagoMesRow
+        {
+            Id = EstadoPagoMesRow.BuildId(cfg.Anio, 1),
+            Anio = cfg.Anio,
+            Mes = 1,
+            Estado = EstadoPagoEst.Borrador,
+            Folio = EstadoPagoMesRow.BuildFolio(cfg.Anio, 1)
+        };
+        host.Session.EstadoPagoMeses.Add(row);
+
+        for (int i = 1; i <= 4; i++)
+        {
+            string itemId = "partida-" + i;
+            host.UndoService.PushUndoPoint(host.Session, "Modificar avance " + itemId + " (60.0%)");
+            row.AvancesPorItem[itemId] = 60m;
+        }
+
+        Assert.Equal(4, host.UndoService.UndoCount);
+        Assert.Equal(60m, row.AvancesPorItem["partida-4"]);
+
+        host.UndoService.Undo(host.Session);
+        var r1 = host.Session.EstadoPagoMeses[0];
+        Assert.False(r1.AvancesPorItem.TryGetValue("partida-4", out decimal av4) && av4 > 0m);
+        Assert.Equal(60m, r1.AvancesPorItem["partida-3"]);
+
+        host.UndoService.Undo(host.Session);
+        var r2 = host.Session.EstadoPagoMeses[0];
+        Assert.False(r2.AvancesPorItem.TryGetValue("partida-3", out decimal av3) && av3 > 0m);
+        Assert.Equal(60m, r2.AvancesPorItem["partida-2"]);
+
+        host.UndoService.Undo(host.Session);
+        var r3 = host.Session.EstadoPagoMeses[0];
+        Assert.False(r3.AvancesPorItem.TryGetValue("partida-2", out decimal av2) && av2 > 0m);
+        Assert.Equal(60m, r3.AvancesPorItem["partida-1"]);
+
+        host.UndoService.Undo(host.Session);
+        var r4 = host.Session.EstadoPagoMeses[0];
+        Assert.False(r4.AvancesPorItem.TryGetValue("partida-1", out decimal av1) && av1 > 0m);
+        Assert.False(host.UndoService.CanUndo);
     }
 }

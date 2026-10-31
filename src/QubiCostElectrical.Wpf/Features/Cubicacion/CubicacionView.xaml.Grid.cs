@@ -332,6 +332,20 @@ public partial class CubicacionView : UserControl
             }
 
             Vm.OnRowEdited(row, preEditSnapshot);
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                Vm.TryReevaluatePartidaCantidadFormula();
+                if (_templateCantBox != null && !_templateCantBox.IsKeyboardFocused)
+                {
+                    _templateCantBox.Text = Vm.PartidaCantidadText;
+                    BindingOperations.GetBindingExpression(_templateCantBox, TextBox.TextProperty)?.UpdateTarget();
+                }
+                if (CantHeaderBox != null && !CantHeaderBox.IsKeyboardFocused)
+                {
+                    CantHeaderBox.Text = Vm.PartidaCantidadText;
+                    BindingOperations.GetBindingExpression(CantHeaderBox, TextBox.TextProperty)?.UpdateTarget();
+                }
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
     }
 

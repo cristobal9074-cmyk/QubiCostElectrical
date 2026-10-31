@@ -41,6 +41,8 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         applyProjectPricesCommand = new RelayCommand(ApplyProjectPrices, CanApplyProjectPrices);
         clearFiltersCommand = new RelayCommand(ClearFilters);
         clearSearchCommand = new RelayCommand(() => SearchText = string.Empty, () => HasSearchText);
+        cargarCatalogoChileCommand = new RelayCommand(CargarCatalogoChile, () => CanEdit);
+        purgarCatalogoChileCommand = new RelayCommand(PurgarCatalogoChile, () => CanEdit && entries.Count > 0);
         OpenProjectCommand = shell != null
             ? new RelayCommand(() => _ = shell.OpenProjectAsync())
             : new RelayCommand(() => { }, () => false);
@@ -187,6 +189,8 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     public bool HasProject => projectWorkspace.HasOpenProject;
 
     public ICommand OpenProjectCommand { get; }
+    public ICommand CargarCatalogoChileCommand => cargarCatalogoChileCommand;
+    public ICommand PurgarCatalogoChileCommand => purgarCatalogoChileCommand;
 
     public ICommand RefreshCommand => refreshCommand;
     public ICommand ImportFileCommand => importFileCommand;
@@ -331,13 +335,41 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
     // rechazando TODAS las filas (0 visibles aunque el banco tenga miles de registros). Por eso
     // se guarda la selección antes de reconstruir las listas y se restaura después (o "Todos"/
     // "Todas" si esa opción ya no existe, ej. tras eliminar la única fila de una categoría).
+    private static readonly string[] PriorityCategories = ["Conductores", "Canalizaciones", "Canalizado", "Tableros", "Artefactos"];
+
+    private static void RebuildCategoryOptions(ObservableCollection<string> target, IEnumerable<string> source)
+    {
+        var rawValues = source
+            .Select(x => string.IsNullOrWhiteSpace(x) ? "Sin familia" : x.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var priorityMatches = PriorityCategories
+            .Where(p => rawValues.Any(r => string.Equals(r, p, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        var prioritySet = new HashSet<string>(PriorityCategories, StringComparer.OrdinalIgnoreCase);
+        var remaining = rawValues
+            .Where(r => !prioritySet.Contains(r))
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        target.Clear();
+        target.Add("Todos");
+        foreach (var p in priorityMatches)
+            target.Add(p);
+        foreach (var r in remaining)
+            target.Add(r);
+    }
+
     private void BuildFilterOptions()
     {
         var prevCategory = SelectedCategory;
         var prevProvider = SelectedProvider;
         var prevCurrency = SelectedCurrency;
 
-        RebuildOptions(categoryOptions, entries.Select(x => x.Categoria));
+        RebuildCategoryOptions(categoryOptions, entries.Select(x => x.Categoria));
         RebuildOptions(providerOptions, entries.Select(x => x.Proveedor));
         RebuildOptions(currencyOptions, entries.Select(x => x.MonedaPrecio));
 
@@ -384,9 +416,18 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
 
         // El único filtro (además del buscador) es Familia — Proveedor/Marca ya no se muestran
         // en la grilla y Moneda quedó fija en CLP, así que dejaron de servir como filtro.
-        if (!string.Equals(SelectedCategory, "Todos", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(entry.Categoria ?? "—", SelectedCategory, StringComparison.OrdinalIgnoreCase))
-            return false;
+        if (!string.Equals(SelectedCategory, "Todos", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.Equals(SelectedCategory, "Sin familia", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!string.IsNullOrWhiteSpace(entry.Categoria) && entry.Categoria != "-" && entry.Categoria != "\u2014")
+                    return false;
+            }
+            else if (!string.Equals(entry.Categoria ?? "-", SelectedCategory, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
 
         return true;
     }
@@ -885,5 +926,80 @@ public sealed partial class PriceBankViewModel : SessionAwareViewModelBase, IRef
         var match = entries.FirstOrDefault(x => string.Equals(x.Codigo, code, StringComparison.OrdinalIgnoreCase));
         if (match != null)
             SelectedEntry = match;
+    }
+
+    public void CargarCatalogoChile()
+    {
+        if (!CanEdit)
+            return;
+
+        if (!WpfDialogService.Confirm(
+            "Cargar Catálogo Base Chile 2026",
+            "¿Desea cargar el Catálogo Base Chile 2026 (811 insumos canónicos: cables libres de halógenos, bandejas BPC, canalizaciones EMT, tableros y malla a tierra)?\n\n" +
+            "• Los materiales nuevos se agregarán al catálogo.\n" +
+            "• Si ya tiene materiales propios con el mismo código, se mantendrán sus precios.\n" +
+            "• Podrá identificarlos o eliminarlos en cualquier momento desde el menú Acciones.",
+            isWarning: false))
+        {
+            return;
+        }
+
+        try
+        {
+            var entriesToLoad = PriceBankSeeder.GetEmbeddedEntries();
+            if (entriesToLoad.Count == 0)
+            {
+                string? seedFile = PriceBankSeeder.FindSeedFile(AppContext.BaseDirectory);
+                if (seedFile != null)
+                    entriesToLoad = PriceBankSeeder.ParseFile(seedFile);
+            }
+
+            if (entriesToLoad.Count == 0)
+            {
+                WpfDialogService.Info("Catálogo Base Chile", "No se encontró el catálogo base embebido ni en disco.");
+                return;
+            }
+
+            int count = store.UpsertMany(entriesToLoad);
+            Refresh();
+            AppendImportLog($"Catálogo Base Chile 2026 cargado: {count} insumos");
+            StatusMessage = $"Catálogo Base Chile cargado con {count} insumos.";
+            WpfDialogService.Info("Catálogo cargado", $"Se incorporaron exitosamente {count} materiales del Catálogo Base Chile 2026 al banco.");
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("BancoPrecios", "Error al cargar catálogo base Chile", ex);
+            WpfDialogService.Error("Error al cargar catálogo", ex.Message);
+        }
+    }
+
+    public void PurgarCatalogoChile()
+    {
+        if (!CanEdit)
+            return;
+
+        if (!WpfDialogService.Confirm(
+            "Purgar Catálogo Base Chile",
+            "¿Desea eliminar únicamente los materiales cuyo origen sea 'Catálogo Base Chile 2026' o 'Banco inicial'?\n\n" +
+            "Los materiales ingresados manualmente o importados desde las listas internas de su empresa NO se eliminarán.",
+            isWarning: true))
+        {
+            return;
+        }
+
+        try
+        {
+            int deleted = (store as QubiCostElectrical.Infrastructure.PriceBankStore)?.DeleteByOrigen("Catálogo Base Chile 2026") ?? 0;
+            deleted += (store as QubiCostElectrical.Infrastructure.PriceBankStore)?.DeleteByOrigen("Banco inicial") ?? 0;
+            Refresh();
+            AppendImportLog($"Catálogo Base purgado: {deleted} materiales eliminados");
+            StatusMessage = $"Se eliminaron {deleted} materiales del Catálogo Base Chile.";
+            WpfDialogService.Info("Catálogo purgado", $"Se eliminaron {deleted} materiales del Catálogo Base. Sus listas internas y proyectos se mantienen intactos.");
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("BancoPrecios", "Error al purgar catálogo base Chile", ex);
+            WpfDialogService.Error("Error al purgar catálogo", ex.Message);
+        }
     }
 }

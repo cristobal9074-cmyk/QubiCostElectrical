@@ -28,6 +28,7 @@ public sealed class BudgetVersionData
     public List<StaffingRoleRow> StaffingPlan { get; set; } = new();
     public EppBudgetData Epp { get; set; } = EppBudgetData.Default();
     public ClosingPolicySelection ClosingPolicy { get; set; } = ClosingPolicySelection.Default();
+    public TipologiasEdificioData Tipologias { get; set; } = TipologiasEdificioData.Default();
 
     public static BudgetVersionData FromProjectFileData(ProjectFileData source)
     {
@@ -60,7 +61,8 @@ public sealed class BudgetVersionData
             NegotiatedDiscounts = source.NegotiatedDiscounts,
             StaffingPlan = source.StaffingPlan,
             Epp = source.Epp,
-            ClosingPolicy = source.ClosingPolicy
+            ClosingPolicy = source.ClosingPolicy,
+            Tipologias = source.Tipologias
         };
     }
 }
@@ -144,6 +146,7 @@ public sealed class ProjectFileData
     public List<StaffingRoleRow> StaffingPlan { get; set; } = new();
     public EppBudgetData Epp { get; set; } = EppBudgetData.Default();
     public ClosingPolicySelection ClosingPolicy { get; set; } = ClosingPolicySelection.Default();
+    public TipologiasEdificioData Tipologias { get; set; } = TipologiasEdificioData.Default();
     public List<EstadoPagoMesRow> EstadoPagoMeses { get; set; } = new();
     public EstadoPagoConfig EstadoPagoConfig { get; set; } = EstadoPagoConfig.Default();
     public string ActiveVersionId { get; set; } = "";

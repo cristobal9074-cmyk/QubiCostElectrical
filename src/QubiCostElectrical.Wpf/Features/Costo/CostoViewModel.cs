@@ -82,6 +82,19 @@ public sealed partial class CostoViewModel : SessionAwareViewModelBase, IRefresh
     private string costosPresetHint = "Sin preset guardado en este proyecto";
     private CostoRowVm? ventaCierre;
     private CostoRowVm? ufMetroCierre;
+    private System.Windows.GridLength financialRatioDirectosStar = new(1, System.Windows.GridUnitType.Star);
+    private System.Windows.GridLength financialRatioIndirectosStar = new(1, System.Windows.GridUnitType.Star);
+    private System.Windows.GridLength financialRatioMargenStar = new(1, System.Windows.GridUnitType.Star);
+    private string financialRatioDirectosPct = "—";
+    private string financialRatioIndirectosPct = "—";
+    private string financialRatioMargenPct = "—";
+    private string financialRatioDirectosMonto = "—";
+    private string financialRatioIndirectosMonto = "—";
+    private string financialRatioMargenMonto = "—";
+    private string financialRatioDirectosSub = "";
+    private string financialRatioIndirectosSub = "";
+    private string financialRatioMargenSub = "";
+    private bool hasFinancialRatioData;
     public ClosingPolicySectionVm ClosingPolicySection { get; }
     public CommercialNegotiationVm NegotiationSimulator { get; }
     public CostoViewTabsVm Tabs { get; } = new();   // pestaña activa, KPIs del hero y sub-familias (rediseño 2.0)

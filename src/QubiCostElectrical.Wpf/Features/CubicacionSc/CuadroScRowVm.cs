@@ -63,7 +63,8 @@ public sealed class CuadroScRowVm : ViewModelBase
         }
     }
 
-    public string NombreCompletoTooltip => $"{Nombre} ({CircuitosActivos}/{CircuitosProyectados} circ)";
+    public string NombreCompletoTooltip =>
+        $"{Nombre} · {PotenciaBadgeText} · {CircuitosActivos}/{CircuitosProyectados} circ ({CapacidadPct:N0}%)";
 
     // Edición inline del nombre en el sidebar: doble clic activa el TextBox; al confirmar
     // (Enter/perder foco) o cancelar (Escape) vuelve a false. Ver CubicacionScView.xaml.cs.
@@ -95,12 +96,66 @@ public sealed class CuadroScRowVm : ViewModelBase
             if (row.CircuitosProyectados == value) return;
             row.CircuitosProyectados = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(CapacidadPct));
+            OnPropertyChanged(nameof(CapacidadBarValue));
+            OnPropertyChanged(nameof(CapacidadText));
+            OnPropertyChanged(nameof(CapacidadEstado));
+            OnPropertyChanged(nameof(CapacidadTooltip));
             OnPropertyChanged(nameof(NombreCompletoTooltip));
             onChanged?.Invoke();
         }
     }
 
     public int CircuitosActivos => row.Circuitos.Count(c => c.EsActivo);
+
+    public decimal TotalPotenciaW
+    {
+        get
+        {
+            if (row.Circuitos == null || row.Circuitos.Count == 0) return 0m;
+            return row.Circuitos
+                .Where(c => c.EsActivo || c.EsReservaEquipada)
+                .Sum(CuadroCargasSecEngine.EstimateCircuitPowerW);
+        }
+    }
+
+    public decimal TotalPotenciaKw => Math.Round(TotalPotenciaW / 1000m, 1);
+
+    public decimal TotalPotenciaKva => TotalPotenciaKw > 0m
+        ? Math.Round(TotalPotenciaKw / 0.93m, 1)
+        : 0m;
+
+    public string PotenciaBadgeText => $"{TotalPotenciaKw:N1} kW / {TotalPotenciaKva:N1} kVA";
+
+    public double CapacidadPct
+    {
+        get
+        {
+            if (CircuitosProyectados <= 0) return 0.0;
+            return Math.Round((double)CircuitosActivos / CircuitosProyectados * 100.0, 1);
+        }
+    }
+
+    public double CapacidadBarValue => Math.Clamp(CapacidadPct, 0.0, 100.0);
+
+    public string CapacidadText => $"{CircuitosActivos}/{CircuitosProyectados} circ ({CapacidadPct:N0}%)";
+
+    public string CapacidadEstado => CapacidadPct switch
+    {
+        > 100.0 => "Overload",
+        > 75.0 => "Warning",
+        _ => "Normal"
+    };
+
+    public string CapacidadTooltip =>
+        $"{Nombre}\n" +
+        $"Potencia calculada: {TotalPotenciaKw:N1} kW / {TotalPotenciaKva:N1} kVA\n" +
+        $"Capacidad ocupada: {CircuitosActivos} de {CircuitosProyectados} circuitos ({CapacidadPct:N1}%)\n" +
+        (CapacidadPct > 100.0
+            ? "⚠ Sobrecapacidad: supera el 100% de la capacidad proyectada"
+            : CapacidadPct > 75.0
+                ? "⚠ Alerta SEC: reserva libre inferior al 25% (RIC N°02)"
+                : "✓ Capacidad y reserva conforme normativa SEC");
 
     public string Categoria
     {
@@ -122,6 +177,15 @@ public sealed class CuadroScRowVm : ViewModelBase
     public void NotifyCircuitosActivosChanged()
     {
         OnPropertyChanged(nameof(CircuitosActivos));
+        OnPropertyChanged(nameof(TotalPotenciaW));
+        OnPropertyChanged(nameof(TotalPotenciaKw));
+        OnPropertyChanged(nameof(TotalPotenciaKva));
+        OnPropertyChanged(nameof(PotenciaBadgeText));
+        OnPropertyChanged(nameof(CapacidadPct));
+        OnPropertyChanged(nameof(CapacidadBarValue));
+        OnPropertyChanged(nameof(CapacidadText));
+        OnPropertyChanged(nameof(CapacidadEstado));
+        OnPropertyChanged(nameof(CapacidadTooltip));
         OnPropertyChanged(nameof(NombreCompletoTooltip));
     }
 }

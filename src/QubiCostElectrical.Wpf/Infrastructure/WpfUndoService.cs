@@ -19,6 +19,8 @@ public sealed class WpfUndoService : INotifyPropertyChanged
     public bool CanUndo => _undo.Count > 0;
     public bool CanRedo => _redo.Count > 0;
 
+    public bool IsUndoingOrRedoing { get; private set; }
+
     public string LastUndoDescription => _undo.Count > 0 ? _undo.Peek().Description : "";
     public string LastRedoDescription => _redo.Count > 0 ? _redo.Peek().Description : "";
 
@@ -27,7 +29,11 @@ public sealed class WpfUndoService : INotifyPropertyChanged
     /// Las ediciones no confirmadas (mid-TextBox) no deben llamar este método.
     /// </summary>
     public void PushUndoPoint(BudgetProjectSession session, string description = "Edición")
-        => PushSnapshot(session.CreateSnapshot(), description);
+    {
+        if (IsUndoingOrRedoing)
+            return;
+        PushSnapshot(session.CreateSnapshot(), description);
+    }
 
     /// <summary>
     /// Registra un snapshot pre-capturado (tomado antes de un diálogo modal).
@@ -36,6 +42,9 @@ public sealed class WpfUndoService : INotifyPropertyChanged
     /// </summary>
     public void PushSnapshot(ProjectFileData snapshot, string description = "Edición")
     {
+        if (IsUndoingOrRedoing)
+            return;
+
         if (_savedDepth > _undo.Count)
             _savedDepth = -1;
 
@@ -55,15 +64,23 @@ public sealed class WpfUndoService : INotifyPropertyChanged
         actionDescription = "";
         if (_undo.Count == 0) return false;
 
-        var (previous, desc) = _undo.Pop();
-        actionDescription = desc;
-        _redo.Push((session.CreateSnapshot(), desc));
+        IsUndoingOrRedoing = true;
+        try
+        {
+            var (previous, desc) = _undo.Pop();
+            actionDescription = desc;
+            _redo.Push((session.CreateSnapshot(), desc));
 
-        bool isDirty = _savedDepth < 0 || _undo.Count != _savedDepth;
-        session.ApplySnapshot(previous, markDirty: isDirty);
+            bool isDirty = _savedDepth < 0 || _undo.Count != _savedDepth;
+            session.ApplySnapshot(previous, markDirty: isDirty);
 
-        NotifyCanChanged();
-        return true;
+            NotifyCanChanged();
+            return true;
+        }
+        finally
+        {
+            IsUndoingOrRedoing = false;
+        }
     }
 
     public bool Redo(BudgetProjectSession session) => Redo(session, out _);
@@ -73,15 +90,23 @@ public sealed class WpfUndoService : INotifyPropertyChanged
         actionDescription = "";
         if (_redo.Count == 0) return false;
 
-        var (next, desc) = _redo.Pop();
-        actionDescription = desc;
-        _undo.Push((session.CreateSnapshot(), desc));
+        IsUndoingOrRedoing = true;
+        try
+        {
+            var (next, desc) = _redo.Pop();
+            actionDescription = desc;
+            _undo.Push((session.CreateSnapshot(), desc));
 
-        bool isDirty = _savedDepth < 0 || _undo.Count != _savedDepth;
-        session.ApplySnapshot(next, markDirty: isDirty);
+            bool isDirty = _savedDepth < 0 || _undo.Count != _savedDepth;
+            session.ApplySnapshot(next, markDirty: isDirty);
 
-        NotifyCanChanged();
-        return true;
+            NotifyCanChanged();
+            return true;
+        }
+        finally
+        {
+            IsUndoingOrRedoing = false;
+        }
     }
 
     /// <summary>Registra el estado actual como guardado para gestión de IsDirty.</summary>

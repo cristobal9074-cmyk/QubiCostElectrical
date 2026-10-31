@@ -238,16 +238,16 @@
     <Setter Property="VerticalAlignment" Value="Center" />
     <Style.Triggers>
       <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
-        <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}" />
+        <Setter Property="Background" Value="#DCFCE7" />
+        <Setter Property="BorderBrush" Value="#86EFAC" />
       </DataTrigger>
       <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
-        <Setter Property="Background" Value="{DynamicResource Brush.DangerBg}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.DangerBorder}" />
+        <Setter Property="Background" Value="#FEE2E2" />
+        <Setter Property="BorderBrush" Value="#FCA5A5" />
       </DataTrigger>
       <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
-        <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Amber2}" />
+        <Setter Property="Background" Value="#FEF9C3" />
+        <Setter Property="BorderBrush" Value="#FDE047" />
       </DataTrigger>
     </Style.Triggers>
   </Style>
@@ -398,15 +398,20 @@
   <Style x:Key="Versions.ComparisonRow" TargetType="DataGridRow">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="SnapsToDevicePixels" Value="True" />
+    <Setter Property="BorderThickness" Value="3.5,0,0,0" />
+    <Setter Property="BorderBrush" Value="Transparent" />
     <Style.Triggers>
       <DataTrigger Binding="{Binding DiffKind}" Value="Modificado">
-        <Setter Property="Background" Value="#0EF59E0B" />
+        <Setter Property="Background" Value="#1AF59E0B" />
+        <Setter Property="BorderBrush" Value="#F59E0B" />
       </DataTrigger>
       <DataTrigger Binding="{Binding DiffKind}" Value="Adicional">
-        <Setter Property="Background" Value="#0E10B981" />
+        <Setter Property="Background" Value="#1810B981" />
+        <Setter Property="BorderBrush" Value="#10B981" />
       </DataTrigger>
       <DataTrigger Binding="{Binding DiffKind}" Value="Deductivo">
-        <Setter Property="Background" Value="#0EEF4444" />
+        <Setter Property="Background" Value="#18EF4444" />
+        <Setter Property="BorderBrush" Value="#EF4444" />
       </DataTrigger>
     </Style.Triggers>
   </Style>

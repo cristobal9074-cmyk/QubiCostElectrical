@@ -138,6 +138,8 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
     public RelayCommand EditSelectedCommand { get; }
     public RelayCommand DeleteSelectedCommand { get; }
     public RelayCommand DuplicateSelectedCommand { get; }
+    public RelayCommand AvanzarASolicitadoCommand { get; }
+    public RelayCommand AvanzarAEnAprobacionCommand { get; }
     public RelayCommand EnviarRevisionCommand { get; }
     public RelayCommand AprobarSelectedCommand { get; }
     public RelayCommand RechazarSelectedCommand { get; }
@@ -171,6 +173,8 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         EditSelectedCommand = new RelayCommand(EditSelected, () => CanEdit);
         DeleteSelectedCommand = new RelayCommand(DeleteSelected, () => CanDelete);
         DuplicateSelectedCommand = new RelayCommand(DuplicateSelected, () => CanDuplicate);
+        AvanzarASolicitadoCommand = new RelayCommand(AvanzarASolicitado);
+        AvanzarAEnAprobacionCommand = new RelayCommand(AvanzarAEnAprobacion);
         EnviarRevisionCommand = new RelayCommand(EnviarARevision, () => CanEnviarRevision);
         AprobarSelectedCommand = new RelayCommand(AprobarSelected, () => CanAprobar);
         RechazarSelectedCommand = new RelayCommand(RechazarSelected, () => CanRechazar);
@@ -367,6 +371,22 @@ public sealed partial class ChangeOrdersViewModel : ObservableObject, IDisposabl
         _session.OrdenesCambio.Remove(oc);
         _session.MarkDirty(ProjectDirtyScope.OrdenesCambio);
         Reload();
+    }
+
+    public void AvanzarASolicitado()
+    {
+        var oc = FindRow(Selected?.Id ?? "");
+        if (oc == null) return;
+        _undo.PushUndoPoint(_session, $"Presentar orden {oc.Numero} a Solicitado");
+        Transition(oc, "Solicitado");
+    }
+
+    public void AvanzarAEnAprobacion()
+    {
+        var oc = FindRow(Selected?.Id ?? "");
+        if (oc == null) return;
+        _undo.PushUndoPoint(_session, $"Pasar orden {oc.Numero} a En Aprobación");
+        Transition(oc, "En Aprobación");
     }
 
     public void EnviarARevision()

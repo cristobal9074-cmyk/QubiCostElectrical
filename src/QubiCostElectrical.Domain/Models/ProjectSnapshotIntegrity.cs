@@ -34,6 +34,9 @@ public static class ProjectSnapshotIntegrity
         value.Epp.AccesoriosOpcionales ??= new List<EppSeccionRow>();
         value.EstadoPagoMeses ??= new List<EstadoPagoMesRow>();
         value.EstadoPagoConfig ??= EstadoPagoConfig.Default();
+        value.Tipologias ??= TipologiasEdificioData.Default();
+        value.Tipologias.Tipologias ??= new List<TipologiaDefinicion>();
+        value.Tipologias.Distribucion ??= new List<TipologiaDistribucionPiso>();
         value.ActiveVersionId ??= "";
 
         EnsureProjectInfo(value.Proyecto);

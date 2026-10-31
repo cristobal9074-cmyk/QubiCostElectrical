@@ -322,6 +322,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
             OnPropertyChanged(nameof(KpiPotenciaText));
             OnPropertyChanged(nameof(KpiDesbalanceText));
             OnPropertyChanged(nameof(IsDesbalanceConformeSec));
+        NotifySidebarTotals();
             ((RelayCommand)BalancearFasesCommand).RaiseCanExecuteChanged();
             ((RelayCommand<object>)RemoveCuadroCommand).RaiseCanExecuteChanged();
             ((RelayCommand)AddCircuitoCommand).RaiseCanExecuteChanged();
@@ -549,7 +550,8 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
             UpdateStatusMessage();
             HasPendingChanges = false;
             CaptureBaseline();
-            NotifyKpiProperties();
+            selectedCuadro?.NotifyCircuitosActivosChanged();
+        NotifyKpiProperties();
             OnPropertyChanged(nameof(CuadrosFiltrados));
             OnPropertyChanged(nameof(CuadrosFiltradosCount));
             OnPropertyChanged(nameof(CircuitosFiltrados));
@@ -680,12 +682,14 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
                 RequestClearGridSelection?.Invoke();
                 Circuitos.Clear();
                 SelectedCircuito = null;
-                NotifyKpiProperties();
+                selectedCuadro?.NotifyCircuitosActivosChanged();
+        NotifyKpiProperties();
             }
         }
         else
         {
-            NotifyKpiProperties();
+            selectedCuadro?.NotifyCircuitosActivosChanged();
+        NotifyKpiProperties();
         }
 
         MarkDirty();
@@ -990,6 +994,7 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
 
         HasPendingChanges = true;
         OnPropertyChanged(nameof(HasPendingChanges));
+        selectedCuadro?.NotifyCircuitosActivosChanged();
         NotifyKpiProperties();
         ((RelayCommand)ApplyCommand).RaiseCanExecuteChanged();
 
@@ -1029,87 +1034,13 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
                ?? throw new InvalidOperationException($"No se pudo clonar {typeof(T).Name} para baseline SC.");
     }
 
-    public string KpiCanalizacionText
-    {
-        get
-        {
-            if (showEmptyState) return "0 m";
-            var activeCircs = session.CubicacionSC.SelectMany(cuadro => cuadro.Circuitos).Where(c => c.EsActivo).ToList();
-            decimal total = activeCircs.Sum(c => c.MetrosBandejaEfectivo + c.MetrosTuberiaEfectivo);
-            return $"{total:N1} m";
-        }
-    }
-
-    public int KpiTablerosCount
-    {
-        get
-        {
-            if (showEmptyState) return 0;
-            return session.CubicacionSC.Count;
-        }
-    }
-
-    public int KpiCircuitosCount
-    {
-        get
-        {
-            if (showEmptyState) return 0;
-            return session.CubicacionSC.Sum(t => t.Circuitos.Count(c => c.EsActivo || c.EsReservaEquipada));
-        }
-    }
-
-    public string KpiCajasTerminalesText
-    {
-        get
-        {
-            if (showEmptyState) return "0 un / 0.0 m";
-            var activeCircs = session.CubicacionSC.SelectMany(cuadro => cuadro.Circuitos).Where(c => c.EsActivo).ToList();
-            decimal totalCajas = activeCircs.Sum(c => c.TotalCajasEfectivas);
-            decimal totalTerminales = 0;
-            foreach (var c in activeCircs)
-            {
-                var flex = Config.Flexibles.FirstOrDefault(f => string.Equals(f.Diametro, c.SeccionTuberia, StringComparison.OrdinalIgnoreCase));
-                if (flex != null && c.TotalCajasEfectivas > 0m && flex.MetrosPorCaja > 0m)
-                {
-                    totalTerminales += c.TotalCajasEfectivas * flex.MetrosPorCaja;
-                }
-            }
-            return $"{totalCajas} un / {totalTerminales:N1} m";
-        }
-    }
-
-    public string KpiPotenciaText
-    {
-        get
-        {
-            if (showEmptyState) return "0.0 kW";
-            var activeCircs = session.CubicacionSC.SelectMany(cuadro => cuadro.Circuitos).Where(c => c.EsActivo || c.EsReservaEquipada).ToList();
-            if (activeCircs.Count == 0) return "0.0 kW";
-            decimal totalW = activeCircs.Sum(CuadroCargasSecEngine.EstimateCircuitPowerW);
-            decimal kw = Math.Round(totalW / 1000m, 1);
-            return $"{kw:N1} kW";
-        }
-    }
-
-    public string KpiDesbalanceText
-    {
-        get
-        {
-            if (showEmptyState || selectedCuadro == null) return "0.0% SEC";
-            var summary = CuadroCargasSecEngine.CalculateTableroSummary(selectedCuadro.Source);
-            return $"{summary.PorcentajeDesbalance:N1}% {(summary.ConformeSec ? "✓ SEC" : "⚠ Desbalance")}";
-        }
-    }
-
-    public bool IsDesbalanceConformeSec
-    {
-        get
-        {
-            if (showEmptyState || selectedCuadro == null) return true;
-            var summary = CuadroCargasSecEngine.CalculateTableroSummary(selectedCuadro.Source);
-            return summary.ConformeSec;
-        }
-    }
+    public string KpiCanalizacionText => CubicacionScKpiCoordinator.GetCanalizacionText(showEmptyState, session.CubicacionSC);
+    public int KpiTablerosCount => showEmptyState ? 0 : session.CubicacionSC.Count;
+    public int KpiCircuitosCount => CubicacionScKpiCoordinator.GetCircuitosCount(showEmptyState, session.CubicacionSC);
+    public string KpiCajasTerminalesText => CubicacionScKpiCoordinator.GetCajasTerminalesText(showEmptyState, session.CubicacionSC, Config);
+    public string KpiPotenciaText => CubicacionScKpiCoordinator.GetPotenciaText(showEmptyState, session.CubicacionSC);
+    public string KpiDesbalanceText => CubicacionScKpiCoordinator.GetDesbalanceText(showEmptyState, selectedCuadro?.Source);
+    public bool IsDesbalanceConformeSec => CubicacionScKpiCoordinator.GetIsDesbalanceConformeSec(showEmptyState, selectedCuadro?.Source);
 
     private void NotifyKpiProperties()
     {
@@ -1120,6 +1051,70 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         OnPropertyChanged(nameof(KpiPotenciaText));
         OnPropertyChanged(nameof(KpiDesbalanceText));
         OnPropertyChanged(nameof(IsDesbalanceConformeSec));
+        NotifySidebarTotals();
+    }
+
+    public decimal TotalPerspectivePotenciaKw =>
+        Math.Round(CuadrosFiltrados.Sum(c => c.TotalPotenciaKw), 1);
+
+    public decimal TotalPerspectivePotenciaKva =>
+        Math.Round(CuadrosFiltrados.Sum(c => c.TotalPotenciaKva), 1);
+
+    public string TotalPerspectivePotenciaBadgeText =>
+        $"{TotalPerspectivePotenciaKw:N1} kW / {TotalPerspectivePotenciaKva:N1} kVA";
+
+    public int TotalPerspectiveCircuitosActivos =>
+        CuadrosFiltrados.Sum(c => c.CircuitosActivos);
+
+    public int TotalPerspectiveCircuitosProyectados =>
+        CuadrosFiltrados.Sum(c => c.CircuitosProyectados);
+
+    public double TotalPerspectiveCapacidadPct
+    {
+        get
+        {
+            var proj = TotalPerspectiveCircuitosProyectados;
+            return proj > 0
+                ? Math.Round((double)TotalPerspectiveCircuitosActivos / proj * 100.0, 1)
+                : 0.0;
+        }
+    }
+
+    public double TotalPerspectiveCapacidadBarValue =>
+        Math.Clamp(TotalPerspectiveCapacidadPct, 0.0, 100.0);
+
+    public string TotalPerspectiveCapacidadText =>
+        $"{TotalPerspectiveCircuitosActivos}/{TotalPerspectiveCircuitosProyectados} circ";
+
+    public string TotalPerspectiveCapacidadEstado => TotalPerspectiveCapacidadPct switch
+    {
+        > 100.0 => "Overload",
+        > 75.0 => "Warning",
+        _ => "Normal"
+    };
+
+    public string TotalPerspectiveCapacidadTooltip =>
+        $"Vista {(IsPerspectiveDeptos ? "Departamentos" : "Tableros SC")}\n" +
+        $"Potencia calculada total: {TotalPerspectivePotenciaKw:N1} kW / {TotalPerspectivePotenciaKva:N1} kVA\n" +
+        $"Capacidad global: {TotalPerspectiveCircuitosActivos} de {TotalPerspectiveCircuitosProyectados} circuitos ({TotalPerspectiveCapacidadPct:N1}% ocupado)\n" +
+        (TotalPerspectiveCapacidadPct > 100.0
+            ? "⚠ Sobrecapacidad en el total de la vista"
+            : TotalPerspectiveCapacidadPct > 75.0
+                ? "⚠ Alerta SEC: reserva libre global inferior al 25% (RIC N°02)"
+                : "✓ Capacidad y reserva global conforme SEC");
+
+    public void NotifySidebarTotals()
+    {
+        OnPropertyChanged(nameof(TotalPerspectivePotenciaKw));
+        OnPropertyChanged(nameof(TotalPerspectivePotenciaKva));
+        OnPropertyChanged(nameof(TotalPerspectivePotenciaBadgeText));
+        OnPropertyChanged(nameof(TotalPerspectiveCircuitosActivos));
+        OnPropertyChanged(nameof(TotalPerspectiveCircuitosProyectados));
+        OnPropertyChanged(nameof(TotalPerspectiveCapacidadPct));
+        OnPropertyChanged(nameof(TotalPerspectiveCapacidadBarValue));
+        OnPropertyChanged(nameof(TotalPerspectiveCapacidadText));
+        OnPropertyChanged(nameof(TotalPerspectiveCapacidadEstado));
+        OnPropertyChanged(nameof(TotalPerspectiveCapacidadTooltip));
     }
 
     private void BalancearFases()
@@ -1129,10 +1124,11 @@ public sealed partial class CubicacionScViewModel : SessionAwareViewModelBase, I
         undo.PushUndoPoint(session, "Auto-balancear fases SEC");
         CuadroCargasSecEngine.AutoBalancearFases(selectedCuadro.Source);
         LoadCircuitos();
+        selectedCuadro?.NotifyCircuitosActivosChanged();
         NotifyKpiProperties();
         MarkDirty();
 
-        var summary = CuadroCargasSecEngine.CalculateTableroSummary(selectedCuadro.Source);
+        var summary = CuadroCargasSecEngine.CalculateTableroSummary(selectedCuadro!.Source);
         string status = summary.ConformeSec
             ? $"Fases auto-balanceadas: Desbalance {summary.PorcentajeDesbalance:N1}% (Conforme SEC RIC N°02 ≤ 10%)."
             : $"Fases auto-balanceadas: Desbalance {summary.PorcentajeDesbalance:N1}%.";

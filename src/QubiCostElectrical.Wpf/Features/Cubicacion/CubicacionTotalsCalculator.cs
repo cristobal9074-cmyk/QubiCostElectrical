@@ -59,6 +59,7 @@ internal sealed class CubicacionTotalsCalculator : IDisposable
 
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
+                parent.TryReevaluatePartidaCantidadFormula();
                 parent.ApplyTotals(totals);
                 parent.NotifyCubicacionSummaryChangedInternal();
             });

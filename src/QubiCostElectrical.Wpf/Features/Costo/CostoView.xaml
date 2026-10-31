@@ -162,8 +162,9 @@
                           </Style>
                         </Border.Style>
                         <Grid>
-                          <Border Height="3" VerticalAlignment="Bottom" HorizontalAlignment="Left" CornerRadius="2"
-                                  Background="{DynamicResource Brush.Blue2}" Opacity="0.45" IsHitTestVisible="False">
+                          <!-- Componente de ratio apilado / proporción con contraste WCAG AAA -->
+                          <Border Height="4" VerticalAlignment="Bottom" HorizontalAlignment="Left" CornerRadius="2"
+                                  Background="{DynamicResource Brush.Finance.Direct}" IsHitTestVisible="False">
                             <Border.Width>
                               <MultiBinding Converter="{StaticResource ShareWidth}">
                                 <Binding Path="Share" />
@@ -731,10 +732,12 @@
                         <TextBlock Grid.Column="1" Text="{Binding ShareLabel}" FontFamily="{StaticResource Font.Mono}"
                                    FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Ink3}" />
                       </Grid>
+                      <!-- Componente de ratio apilado con contraste WCAG AAA -->
                       <Grid Grid.Row="1" Margin="0,3,0,0">
-                        <Border Height="6" CornerRadius="3" Background="{DynamicResource Brush.TrackSoft}" HorizontalAlignment="Stretch" />
-                        <Border Height="6" CornerRadius="3" Background="{DynamicResource Brush.Blue2}"
-                                HorizontalAlignment="Left" Opacity="0.85">
+                        <Border Height="8" CornerRadius="4" Background="{DynamicResource Brush.Finance.Track}"
+                                BorderBrush="{DynamicResource Brush.Finance.TrackBorder}" BorderThickness="1" HorizontalAlignment="Stretch" />
+                        <Border Height="6" CornerRadius="3" Background="{DynamicResource Brush.Finance.Direct}"
+                                HorizontalAlignment="Left" Margin="1,0,0,0">
                           <Border.Width>
                             <MultiBinding Converter="{StaticResource ShareWidth}">
                               <Binding Path="Share" />

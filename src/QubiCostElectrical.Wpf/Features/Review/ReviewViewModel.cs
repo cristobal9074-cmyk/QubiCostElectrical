@@ -140,6 +140,7 @@ public sealed partial class ReviewViewModel : SessionAwareViewModelBase, IRefres
     private readonly RelayCommand nextWarRoomIssueCommand;
     private readonly RelayCommand previousWarRoomIssueCommand;
     private readonly RelayCommand markResolvedLocalCommand;
+    private readonly RelayCommand<string> toggleSeverityFilterCommand;
     private readonly HashSet<string> locallyResolvedIds = new(StringComparer.OrdinalIgnoreCase);
 
     private string searchText = "";

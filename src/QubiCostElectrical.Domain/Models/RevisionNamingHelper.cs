@@ -40,7 +40,7 @@ public static class RevisionNamingHelper
 
         string nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
 
-        // 1. Patrón PEL039A2026 (código proyecto chileno: letras + num + letra_rev + año)
+        // 1. Patrón código de proyecto estándar (ej. PRJ001A2026: letras + num + letra_rev + año)
         var pelMatch = PelYearRegex.Match(nameWithoutExt);
         if (pelMatch.Success)
         {

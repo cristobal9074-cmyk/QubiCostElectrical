@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -522,6 +522,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         });
     }
 
+    [RelayCommand(CanExecute = nameof(CanUndo))]
     public void Undo()
     {
         if (undo.Undo(session, out var desc))
@@ -532,6 +533,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         }
     }
 
+    [RelayCommand(CanExecute = nameof(CanRedo))]
     public void Redo()
     {
         if (undo.Redo(session, out var desc))
@@ -548,6 +550,8 @@ public sealed partial class ShellViewModel : ViewModelBase, IShellNavigationHost
         OnPropertyChanged(nameof(CanRedo));
         OnPropertyChanged(nameof(UndoToolTip));
         OnPropertyChanged(nameof(RedoToolTip));
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
         System.Windows.Input.CommandManager.InvalidateRequerySuggested();
     }
 

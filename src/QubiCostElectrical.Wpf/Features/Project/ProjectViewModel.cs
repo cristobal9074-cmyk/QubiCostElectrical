@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Windows.Input;
 using Microsoft.Win32;
 using QubiCostElectrical;
+using QubiCostElectrical.Wpf.Controls;
 using QubiCostElectrical.Wpf.Features.Dashboard;
 using QubiCostElectrical.Wpf.Infrastructure;
 using QubiCostElectrical.Wpf.Navigation;

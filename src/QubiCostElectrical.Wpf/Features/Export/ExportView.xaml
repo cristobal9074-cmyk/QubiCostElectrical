@@ -17,7 +17,8 @@
     <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveOfferSettingsCommand}" />
   </UserControl.InputBindings>
 
-  <Grid Background="{DynamicResource Brush.Canvas}"
+  <Grid Margin="20,14,20,14"
+        Background="{DynamicResource Brush.Canvas}"
         HorizontalAlignment="Stretch">
     <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
                             IconData="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8"
@@ -37,7 +38,6 @@
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
       <Grid.ColumnDefinitions>
@@ -45,47 +45,103 @@
         <ColumnDefinition Width="720" MinWidth="600" />
       </Grid.ColumnDefinitions>
 
-      <!-- ══ Cabecera de página ═══════════════════════════════════ -->
-      <Grid Grid.Row="0" Margin="0,0,0,8">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
+      <!-- ══ 1. CABECERA EJECUTIVA UNIFICADA ($20B+ GLOBAL STANDARD) ══════ -->
+      <Border Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,10"
+              Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+              BorderThickness="1" CornerRadius="10" Padding="16,11">
+        <DockPanel LastChildFill="True">
+          <!-- Métricas y Acciones a la derecha -->
+          <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+            <!-- Cockpit Total Oferta -->
+            <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}"
+                    BorderThickness="1.5" CornerRadius="8" Padding="12,5" Margin="0,0,12,0" VerticalAlignment="Center"
+                    ToolTip="{Binding TotalOfertaSecondaryTooltip}">
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="TOTAL OFERTA (NETO)" FontSize="9" FontWeight="Bold"
+                           Foreground="{DynamicResource Brush.Blue}" HorizontalAlignment="Right"/>
+                <TextBlock Text="{Binding TotalOfertaDisplay}" FontFamily="{StaticResource Font.Mono}"
+                           FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"
+                           HorizontalAlignment="Right"/>
+              </StackPanel>
+            </Border>
 
-        <StackPanel>
-          <TextBlock Text="Oferta y exportación" FontSize="19" FontWeight="Bold"
-                     Foreground="{DynamicResource Brush.Ink}" LineHeight="22" />
-
-          <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-            <TextBlock Text="{Binding ProjectTitle}" FontSize="12" Foreground="{DynamicResource Brush.Muted}" />
-            <TextBlock Text="  ·  " FontSize="12" Foreground="{DynamicResource Brush.Muted}" />
-            <TextBlock Text="{Binding ClientName}" FontSize="12" Foreground="{DynamicResource Brush.Muted}" />
-            <TextBlock Text="  ·  " FontSize="12" Foreground="{DynamicResource Brush.Muted}" />
-            <TextBlock Text="{Binding TotalOfertaDisplay}" FontSize="12" FontFamily="{StaticResource Font.Mono}"
-                       Foreground="{DynamicResource Brush.Muted}" ToolTip="{Binding TotalOfertaSecondaryTooltip}" />
+            <!-- Acciones -->
+            <Button Style="{StaticResource Button.Secondary}" Command="{Binding RefreshCommand}" Margin="0,0,8,0" Height="32" Padding="12,0"
+                    ToolTip="Actualizar oferta y vista previa (F5)">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Path Data="{StaticResource Geo.Refresh}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Ink}" Margin="0,0,6,0" />
+                <TextBlock Text="Actualizar (F5)" FontWeight="SemiBold" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Style="{StaticResource Button.Secondary}" Command="{Binding GoToFinalReviewCommand}" Height="32" Padding="12,0"
+                    ToolTip="Ir al módulo de Revisión y Control de Calidad">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="Ir a Revisión" FontWeight="SemiBold" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
           </StackPanel>
-        </StackPanel>
 
-        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-          <Button Style="{StaticResource Button.Ghost}" Command="{Binding RefreshCommand}" Margin="0,0,10,0"
-                  ToolTip="Actualizar oferta y vista previa (F5)">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,7,0" VerticalAlignment="Center" />
-              <TextBlock Text="Actualizar (F5)" VerticalAlignment="Center" />
+          <!-- Título, Categoría y Metadatos del Proyecto a la izquierda -->
+          <StackPanel VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+              <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}"
+                      BorderThickness="1" CornerRadius="10" Padding="8,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                <TextBlock Text="CIERRE COMERCIAL &amp; OFERTA" FontSize="9.5" FontWeight="Bold"
+                           Foreground="{DynamicResource Brush.Blue}"/>
+              </Border>
+              <TextBlock Text="Oferta y Exportación Oficial" FontSize="18" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
             </StackPanel>
-          </Button>
-          <Button Style="{StaticResource Button.Ghost}" Command="{Binding GoToFinalReviewCommand}"
-                  ToolTip="Ir al módulo de Revisión y Control de Calidad">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,7,0" VerticalAlignment="Center" />
-              <TextBlock Text="Ir a Revisión" VerticalAlignment="Center" />
-            </StackPanel>
-          </Button>
-        </StackPanel>
-      </Grid>
 
-      <!-- ══ Banner de bloqueantes ═══════════════════════════════════════ -->
-      <Border Grid.Row="1" Margin="0,0,0,8" Padding="12,6"
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,0">
+              <!-- Proyecto -->
+              <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1" CornerRadius="6" Padding="7,2" Margin="0,0,6,0" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <Path Data="{StaticResource Geo.FolderOpen}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Ink3}" Margin="0,0,5,0" />
+                  <TextBlock Text="{Binding ProjectTitle}" FontSize="11" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center"/>
+                </StackPanel>
+              </Border>
+              <!-- Cliente -->
+              <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1" CornerRadius="6" Padding="7,2" Margin="0,0,6,0" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <Path Data="{StaticResource Geo.Building}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Ink3}" Margin="0,0,5,0" />
+                  <TextBlock Text="{Binding ClientName}" FontSize="11" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center"/>
+                </StackPanel>
+              </Border>
+              <!-- Versión -->
+              <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1" CornerRadius="6" Padding="7,2" Margin="0,0,6,0" VerticalAlignment="Center"
+                      Visibility="{Binding VersionText, Converter={StaticResource StringNotEmptyToVisibility}}">
+                <TextBlock Text="{Binding VersionText}" FontSize="11" FontWeight="Bold"
+                           Foreground="{DynamicResource Brush.Ink2}" VerticalAlignment="Center"/>
+              </Border>
+              <!-- Precios Congelados -->
+              <Border Background="{DynamicResource Brush.AmberSoft}" BorderBrush="{DynamicResource Brush.AmberBorder}"
+                      BorderThickness="1" CornerRadius="6" Padding="7,2" Margin="0,0,6,0" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <Path Data="{StaticResource Geo.Lock}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Amber}" Margin="0,0,5,0" />
+                  <TextBlock Text="{Binding FreezeBannerTitle}" FontSize="11" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Brush.Amber}" VerticalAlignment="Center"/>
+                </StackPanel>
+              </Border>
+              <!-- Estado Exportación -->
+              <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}"
+                      BorderThickness="1" CornerRadius="6" Padding="7,2" VerticalAlignment="Center">
+                <TextBlock Text="{Binding ExportReadinessText, StringFormat={}Calidad: {0}}" FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"/>
+              </Border>
+            </StackPanel>
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
+      <!-- ══ 2. BANNER DE BLOQUEANTES (SI APLICA) ═════════════════════════ -->
+      <Border Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,0,10" Padding="14,8"
               Background="{DynamicResource Brush.RedSoft}" BorderBrush="{DynamicResource Brush.DangerBorder}"
               BorderThickness="1" CornerRadius="10"
               Visibility="{Binding HasBlockers, Converter={StaticResource BoolToVisibility}}">
@@ -95,32 +151,37 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
           </Grid.ColumnDefinitions>
-          <Border Width="22" Height="22" CornerRadius="7" Background="{DynamicResource Brush.White}"
-                  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0">
-            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+          <Border Width="26" Height="26" CornerRadius="8" Background="{DynamicResource Brush.White}"
+                  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,12,0">
+            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                        Foreground="{DynamicResource Brush.Danger}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
           </Border>
           <StackPanel Grid.Column="1" VerticalAlignment="Center">
-            <TextBlock Text="Hay bloqueantes que impiden exportar" FontSize="12" FontWeight="Bold"
+            <TextBlock Text="Hay bloqueantes que impiden exportar la oferta" FontSize="12.5" FontWeight="Bold"
                        Foreground="{DynamicResource Brush.DangerDark}" />
-            <TextBlock Text="{Binding Blockers, StringFormat={}{0} problema(s) pendiente(s) en Revisión final.}"
-                       FontSize="11" Foreground="{DynamicResource Brush.Danger}" Margin="0,1,0,0" />
+            <TextBlock Text="{Binding Blockers, StringFormat={}{0} problema(s) pendiente(s) de resolución en Revisión Final y Control de Calidad.}"
+                       FontSize="11.5" Foreground="{DynamicResource Brush.Danger}" Margin="0,1,0,0" />
           </StackPanel>
-          <Button Grid.Column="2" Style="{StaticResource Button.Primary}" Content="Ir a Revisión"
-                  Command="{Binding GoToFinalReviewCommand}" Padding="9,4" FontSize="11"
+          <Button Grid.Column="2" Style="{StaticResource Button.Primary}" Content="Ir a Revisión →"
+                  Command="{Binding GoToFinalReviewCommand}" Padding="14,6" FontSize="11.5"
                   VerticalAlignment="Center" />
         </Grid>
       </Border>
 
-      <!-- ══ Stepper compacto ═══════════════════════════════════ -->
-      <local:ExportStepperControl Grid.Row="2" Margin="0,0,0,8" />
+      <!-- ══ 3. ÁREA DE TRABAJO PRINCIPAL (SPLIT WIZARD + PREVIEW) ═══════ -->
+      <!-- Columna izquierda: Stepper + Contenido de Paso -->
+      <Grid Grid.Row="2" Grid.Column="0">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-      <!-- ══ Contenido principal: columna izquierda ═══════════════ -->
-      <Grid Grid.Row="3">
+        <!-- Stepper compacto -->
+        <local:ExportStepperControl Grid.Row="0" Margin="0,0,0,10" />
 
-        <!-- ══ Columna izquierda ═════════════════════════════════ -->
-        <Border Grid.Column="0" Style="{StaticResource Card.Surface}" Padding="0">
+        <!-- Tarjeta de Contenido del Paso -->
+        <Border Grid.Row="1" Style="{StaticResource Card.Surface}" Padding="0">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
@@ -129,7 +190,7 @@
             </Grid.RowDefinitions>
 
             <!-- Encabezado por paso -->
-            <Grid Grid.Row="0" Margin="10,7,10,6" Visibility="{Binding IsConfigureStep, Converter={StaticResource BoolToVisibility}}">
+            <Grid Grid.Row="0" Margin="14,10,14,8" Visibility="{Binding IsConfigureStep, Converter={StaticResource BoolToVisibility}}">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -143,7 +204,7 @@
                       Command="{Binding SaveOfferSettingsCommand}" Padding="10,6" FontSize="12" />
             </Grid>
 
-            <Grid Grid.Row="0" Margin="10,7,10,6" Visibility="{Binding IsPreviewStep, Converter={StaticResource BoolToVisibility}}">
+            <Grid Grid.Row="0" Margin="14,10,14,8" Visibility="{Binding IsPreviewStep, Converter={StaticResource BoolToVisibility}}">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -158,7 +219,7 @@
               </Border>
             </Grid>
 
-            <Grid Grid.Row="0" Margin="10,7,10,6" Visibility="{Binding IsExportStep, Converter={StaticResource BoolToVisibility}}">
+            <Grid Grid.Row="0" Margin="14,10,14,8" Visibility="{Binding IsExportStep, Converter={StaticResource BoolToVisibility}}">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -181,7 +242,7 @@
 
             <!-- Cuerpo scrolleable -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-              <StackPanel Margin="10,0,10,2">
+              <StackPanel Margin="14,0,14,4">
                 <!-- ═══════════ PASO 1 · CONFIGURAR ═══════════ -->
                 <local:ExportConfigureStepControl Visibility="{Binding IsConfigureStep, Converter={StaticResource BoolToVisibility}}" />
 
@@ -196,7 +257,7 @@
             <!-- Pie por paso -->
             <Border Grid.Row="2" Background="{DynamicResource Brush.Surface2}"
                     BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0"
-                    CornerRadius="0,0,14,14" Padding="12,7">
+                    CornerRadius="0,0,10,10" Padding="14,8">
               <Grid>
                 <Grid.RowDefinitions>
                   <RowDefinition Height="Auto" />
@@ -215,7 +276,7 @@
                             Command="{Binding SaveOfferSettingsCommand}" Padding="10,6" FontSize="12" Margin="0,0,9,0"
                             ToolTip="Guardar configuración de oferta en el archivo del proyecto (Ctrl+S)" />
                     <Button Style="{StaticResource Button.Primary}" Content="Continuar a vista previa →"
-                            Command="{Binding GoToPreviewStepCommand}" Padding="12,6" FontSize="12"
+                            Command="{Binding GoToPreviewStepCommand}" Padding="14,6" FontSize="12"
                             ToolTip="Continuar al Paso 2: Vista previa (Ctrl+2)" />
                   </StackPanel>
                 </Grid>
@@ -235,7 +296,7 @@
                             Command="{Binding GoToConfigureStepCommand}" Padding="10,6" FontSize="12" Margin="0,0,9,0"
                             ToolTip="Volver al Paso 1: Configurar (Ctrl+1)" />
                     <Button Style="{StaticResource Button.Primary}" Content="Continuar a exportar →"
-                            Command="{Binding GoToExportStepCommand}" Padding="12,6" FontSize="12"
+                            Command="{Binding GoToExportStepCommand}" Padding="14,6" FontSize="12"
                             ToolTip="Continuar al Paso 3: Exportar paquete (Ctrl+3)" />
                   </StackPanel>
                 </Grid>
@@ -286,11 +347,10 @@
             </Border>
           </Grid>
         </Border>
-
       </Grid>
 
-      <!-- Rail derecho: vista previa a altura completa -->
-      <Border Grid.RowSpan="4" Grid.Column="1" Style="{StaticResource Card.Section}" Padding="0" Margin="14,0,0,0">
+      <!-- Columna derecha: Rail de previsualización en vivo a altura completa -->
+      <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource Card.Section}" Padding="0" Margin="12,0,0,0">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -298,7 +358,7 @@
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
 
-          <Grid Grid.Row="0" Margin="10,7,10,6">
+          <Grid Grid.Row="0" Margin="14,10,14,8">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="Auto" />

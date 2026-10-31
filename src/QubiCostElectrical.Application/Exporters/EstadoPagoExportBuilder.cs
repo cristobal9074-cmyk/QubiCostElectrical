@@ -33,7 +33,8 @@ public static class EstadoPagoExportBuilder
         meses ??= Array.Empty<EstadoPagoMesRow>();
 
         var todas = secciones.SelectMany(s => s.Partidas).ToList();
-        var acumAntes = EstadoPagoCalculator.BuildAcumulado(meses, config.Anio, row.Mes - 1);
+        var (prevAnio, prevMes) = EstadoPagoCalculator.PreviousMonth(row.Anio, row.Mes);
+        var acumAntes = EstadoPagoCalculator.BuildAcumulado(meses, prevAnio, prevMes, config.Anio);
         var detalle = EstadoPagoCalculator.CalcularMes(todas, acumAntes, row.AvancesPorItem, config);
 
         var mes = new EstadoPagoExportMes(
@@ -76,7 +77,8 @@ public static class EstadoPagoExportBuilder
                 if (!porId.TryGetValue(p.Id, out var f))
                     continue;
                 exportFilas.Add(new EstadoPagoExportFila(
-                    f.Item, f.Descripcion, f.Monto, f.AvanceAnterior, f.AvanceMes, f.MontoMes, f.AcumPct));
+                    f.Item, f.Descripcion, f.Monto, f.AvanceAnterior, f.AvanceMes, f.MontoMes, f.AcumPct,
+                    f.Unidad, f.Cantidad, f.PrecioUnitario, f.CantidadMes, f.CantidadAcum, f.SaldoCantidad, f.SaldoMonto));
             }
 
             if (exportFilas.Count > 0)
@@ -91,30 +93,38 @@ public static class EstadoPagoExportBuilder
         IEnumerable<EstadoPagoMesRow> meses,
         List<EstadoPagoPartidaInput> partidas)
     {
-        var porMes = meses
-            .Where(r => r is not null && r.Anio == config.Anio && r.Mes >= 1 && r.Mes <= 12)
-            .GroupBy(r => r.Mes)
+        var porPeriodo = (meses ?? Enumerable.Empty<EstadoPagoMesRow>())
+            .Where(r => r is not null)
+            .GroupBy(r => (r.Anio, r.Mes))
             .ToDictionary(g => g.Key, g => g.Last());
 
-        var lista = new List<EstadoPagoExportCronogramaMes>(12);
-        for (int m = 1; m <= 12; m++)
+        int cant = Math.Max(1, config.CantMeses);
+        var lista = new List<EstadoPagoExportCronogramaMes>(cant);
+        for (int i = 0; i < cant; i++)
         {
-            if (!porMes.TryGetValue(m, out var row))
+            var (anio, m) = EstadoPagoCalculator.GetMonthForPeriod(config, i);
+            string nombreMes = config.CantMeses > 12 || config.MesInicio > 1
+                ? $"{EstadoPagoExportText.MesNombre(m)} {anio}"
+                : EstadoPagoExportText.MesNombre(m);
+
+            if (!porPeriodo.TryGetValue((anio, m), out var row))
             {
                 lista.Add(new EstadoPagoExportCronogramaMes(
-                    m, EstadoPagoExportText.MesNombre(m), "", "", EstadoPagoExportText.EstadoLabel(null), null));
+                    m, nombreMes, "", "", EstadoPagoExportText.EstadoLabel(null), null, anio));
                 continue;
             }
 
-            var acumAntes = EstadoPagoCalculator.BuildAcumulado(meses, config.Anio, row.Mes - 1);
+            var (prevAnio, prevMes) = EstadoPagoCalculator.PreviousMonth(row.Anio, row.Mes);
+            var acumAntes = EstadoPagoCalculator.BuildAcumulado(meses ?? Enumerable.Empty<EstadoPagoMesRow>(), prevAnio, prevMes, config.Anio);
             var detalle = EstadoPagoCalculator.CalcularMes(partidas, acumAntes, row.AvancesPorItem, config);
             lista.Add(new EstadoPagoExportCronogramaMes(
                 m,
-                EstadoPagoExportText.MesNombre(m),
+                nombreMes,
                 row.Folio,
                 row.Estado,
                 EstadoPagoExportText.EstadoLabel(row.Estado),
-                detalle.Totales.Total));
+                detalle.Totales.Total,
+                row.Anio));
         }
 
         return lista;

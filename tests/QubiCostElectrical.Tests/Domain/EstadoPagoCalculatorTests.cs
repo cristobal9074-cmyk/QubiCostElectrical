@@ -206,4 +206,73 @@ public class EstadoPagoCalculatorTests
         Assert.Equal(0m, copia["b"]);   // negativo se recorta a 0
         Assert.Equal(30m, copia["c"]);  // sin acumulado previo: libre hasta 100
     }
+
+    [Fact]
+    public void CalcularMes_AvanceFisicoYCantidades_CalculaCorrectamente()
+    {
+        var partidas = new List<EstadoPagoPartidaInput>
+        {
+            new("P01", "1.1", "Tablero TDF", 1000m, Unidad: "UN", Cantidad: 10m, PrecioUnitario: 100m)
+        };
+        var acumAntes = new Dictionary<string, decimal> { ["P01"] = 30m };
+        var avancesMes = new Dictionary<string, decimal> { ["P01"] = 25m };
+
+        var detalle = EstadoPagoCalculator.CalcularMes(partidas, acumAntes, avancesMes, Cfg());
+        var fila = detalle.Filas[0];
+
+        Assert.Equal("UN", fila.Unidad);
+        Assert.Equal(10m, fila.Cantidad);
+        Assert.Equal(100m, fila.PrecioUnitario);
+        Assert.Equal(250m, fila.MontoMes);
+        Assert.Equal(2.5m, fila.CantidadMes);
+        Assert.Equal(5.5m, fila.CantidadAcum);
+        Assert.Equal(55m, fila.AcumPct);
+        Assert.Equal(4.5m, fila.SaldoCantidad);
+        Assert.Equal(450m, fila.SaldoMonto);
+    }
+
+    [Fact]
+    public void GetMonthForPeriod_MesInicioOctubre_AvanzaAlSiguienteAnio()
+    {
+        var cfg = new EstadoPagoConfig
+        {
+            Anio = 2026,
+            MesInicio = 10,
+            CantMeses = 6
+        };
+
+        var p0 = EstadoPagoCalculator.GetMonthForPeriod(cfg, 0);
+        Assert.Equal(2026, p0.Anio);
+        Assert.Equal(10, p0.Mes);
+
+        var p2 = EstadoPagoCalculator.GetMonthForPeriod(cfg, 2);
+        Assert.Equal(2026, p2.Anio);
+        Assert.Equal(12, p2.Mes);
+
+        var p3 = EstadoPagoCalculator.GetMonthForPeriod(cfg, 3);
+        Assert.Equal(2027, p3.Anio);
+        Assert.Equal(1, p3.Mes);
+
+        var p5 = EstadoPagoCalculator.GetMonthForPeriod(cfg, 5);
+        Assert.Equal(2027, p5.Anio);
+        Assert.Equal(3, p5.Mes);
+    }
+
+    [Fact]
+    public void BuildAcumulado_MultiAnio_SumaCronologicamente()
+    {
+        var meses = new List<EstadoPagoMesRow>
+        {
+            new() { Id = "2026-11", Anio = 2026, Mes = 11, AvancesPorItem = new() { ["item1"] = 10m } },
+            new() { Id = "2026-12", Anio = 2026, Mes = 12, AvancesPorItem = new() { ["item1"] = 20m } },
+            new() { Id = "2027-01", Anio = 2027, Mes = 1, AvancesPorItem = new() { ["item1"] = 15m } },
+            new() { Id = "2027-02", Anio = 2027, Mes = 2, AvancesPorItem = new() { ["item1"] = 25m } },
+        };
+
+        var acumEnero = EstadoPagoCalculator.BuildAcumulado(meses, 2027, 1, anioInicio: 2026);
+        Assert.Equal(45m, acumEnero["item1"]);
+
+        var acumAntesEnero = EstadoPagoCalculator.BuildAcumulado(meses, 2026, 12, anioInicio: 2026);
+        Assert.Equal(30m, acumAntesEnero["item1"]);
+    }
 }

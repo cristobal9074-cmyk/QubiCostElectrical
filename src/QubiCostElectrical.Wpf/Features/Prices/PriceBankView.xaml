@@ -10,17 +10,77 @@
     <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewEntryCommand}" />
   </UserControl.InputBindings>
   <UserControl.Resources>
+    <!-- Estilo de barra de chips horizontales de filtro por familias -->
+    <Style x:Key="PriceBank.CategoryChipBar" TargetType="ListBox">
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+      <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+      <Setter Property="ScrollViewer.CanContentScroll" Value="False" />
+      <Setter Property="ItemsPanel">
+        <Setter.Value>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" />
+          </ItemsPanelTemplate>
+        </Setter.Value>
+      </Setter>
+      <Setter Property="ItemContainerStyle">
+        <Setter.Value>
+          <Style TargetType="ListBoxItem">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Ink3}" />
+            <Setter Property="Template">
+              <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                  <Border x:Name="ChipBorder"
+                          Background="{DynamicResource Brush.Surface}"
+                          BorderBrush="{DynamicResource Brush.Line}"
+                          BorderThickness="1"
+                          CornerRadius="13"
+                          Padding="{TemplateBinding Padding}"
+                          SnapsToDevicePixels="True">
+                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                      <Setter TargetName="ChipBorder" Property="Background" Value="{DynamicResource Brush.BlueHover}" />
+                      <Setter TargetName="ChipBorder" Property="BorderBrush" Value="{DynamicResource Brush.BlueFocus}" />
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.BlueDark}" />
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                      <Setter TargetName="ChipBorder" Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
+                      <Setter TargetName="ChipBorder" Property="BorderBrush" Value="{DynamicResource Brush.Blue}" />
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                      <Setter Property="FontWeight" Value="Bold" />
+                    </Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate>
+              </Setter.Value>
+            </Setter>
+          </Style>
+        </Setter.Value>
+      </Setter>
+    </Style>
     <!-- Chip "Vigente": verde si el precio tiene menos de 6 meses; ámbar "REVISAR" si no
          (ver MaterialRow.RequiereRevisionPrecio / PriceBankEntryVm.VigenciaKind). -->
     <Style x:Key="VigenciaChipBorder" TargetType="Border">
       <Setter Property="CornerRadius" Value="{StaticResource Radius.Chip}" />
-      <Setter Property="Padding" Value="10,4" />
+      <Setter Property="Padding" Value="8,2.5" />
       <Setter Property="HorizontalAlignment" Value="Center" />
       <Setter Property="VerticalAlignment" Value="Center" />
       <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.SuccessBorder}" />
+      <Setter Property="BorderThickness" Value="1" />
       <Style.Triggers>
         <DataTrigger Binding="{Binding VigenciaKind}" Value="Revisar">
           <Setter Property="Background" Value="{DynamicResource Brush.AmberSoft}" />
+          <Setter Property="BorderBrush" Value="{DynamicResource Brush.AmberBorder}" />
         </DataTrigger>
       </Style.Triggers>
     </Style>
@@ -46,7 +106,8 @@
                             Description="Importe una lista con columnas Código · Descripción · UN · Precio CLP · Familia · MO. Descargue la plantilla si su archivo tiene otro formato.">
       <ctrl:EmptyStateControl.Actions>
         <WrapPanel HorizontalAlignment="Center">
-          <Button Style="{StaticResource Button.Primary}" Content="Importar lista" Command="{Binding ImportFileCommand}" Margin="4" MinWidth="140" />
+          <Button Style="{StaticResource Button.Primary}" Content="📂 Importar lista propia" Command="{Binding ImportFileCommand}" Margin="4" MinWidth="160" ToolTip="Importar archivo Excel o CSV con los precios propios de su empresa" />
+          <Button Style="{StaticResource Button.Secondary}" Content="🇨🇱 Cargar Catálogo Base Chile 2026" Command="{Binding CargarCatalogoChileCommand}" Margin="4" MinWidth="200" ToolTip="Cargar opcionalmente 800+ insumos canónicos chilenos (Conductores, Bandejas, Tableros, etc.)" />
           <Button Style="{StaticResource Button.Secondary}" Content="Descargar plantilla" Command="{Binding DownloadTemplateCommand}" Margin="4" MinWidth="140" />
           <Button Style="{StaticResource Button.Secondary}" Content="Importar proyecto" Command="{Binding ImportProjectCommand}" Margin="4" MinWidth="140" />
           <Button Style="{StaticResource Button.Secondary}" Content="Nuevo precio" Command="{Binding NewEntryCommand}" Margin="4" MinWidth="140" />
@@ -77,7 +138,8 @@
 
         <DockPanel Grid.Row="0" LastChildFill="True" Margin="0,0,0,10">
           <StackPanel DockPanel.Dock="Left">
-            <TextBlock Text="Banco de precios" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+            <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,8,4" HorizontalAlignment="Left"><TextBlock Text="📦 CATÁLOGO DE INSUMOS" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" /></Border>
+            <TextBlock Text="Banco de Precios" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
             <TextBlock Text="Catálogo central editable con búsqueda, filtros, importación y aplicación controlada."
                        Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Muted}"
                        TextWrapping="Wrap" Margin="0,4,0,0" />
@@ -99,35 +161,28 @@
               <Button.ContextMenu>
                 <ContextMenu>
                   <MenuItem Header="Importar lista de precios (Excel/CSV)…" Command="{Binding ImportFileCommand}">
-                    <MenuItem.Icon>
-                      <TextBlock Text="📥" FontSize="12" VerticalAlignment="Center" />
-                    </MenuItem.Icon>
+                    
                   </MenuItem>
                   <MenuItem Header="Importar desde otro proyecto (.qce)…" Command="{Binding ImportProjectCommand}">
-                    <MenuItem.Icon>
-                      <TextBlock Text="📂" FontSize="12" VerticalAlignment="Center" />
-                    </MenuItem.Icon>
+                    
                   </MenuItem>
                   <MenuItem Header="Descargar plantilla de importación" Command="{Binding DownloadTemplateCommand}"
                             ToolTip="Plantilla .xlsx/.csv con columnas normalizadas">
-                    <MenuItem.Icon>
-                      <TextBlock Text="📋" FontSize="12" VerticalAlignment="Center" />
-                    </MenuItem.Icon>
+                    
                   </MenuItem>
+                  <Separator />
+                  <MenuItem Header="🇨🇱 Cargar Catálogo Base Chile 2026 (Opcional)…" Command="{Binding CargarCatalogoChileCommand}" ToolTip="Incorpora los 800 insumos canónicos chilenos con precios de referencia CLP" />
+                  <MenuItem Header="🧹 Purgar solo materiales del Catálogo Base Chile…" Command="{Binding PurgarCatalogoChileCommand}" ToolTip="Elimina solo los materiales del catálogo base sin tocar las listas internas de su empresa" />
                   <Separator />
                   <MenuItem Header="Eliminar material seleccionado" Command="{Binding DeleteSelectedCommand}"
                             ToolTip="Elimina el material seleccionado del catálogo central">
-                    <MenuItem.Icon>
-                      <TextBlock Text="🗑️" FontSize="12" VerticalAlignment="Center" />
-                    </MenuItem.Icon>
+                    
                   </MenuItem>
                   <Separator />
                   <MenuItem Header="Vaciar banco de precios…" Command="{Binding DeleteAllCommand}"
                             Foreground="{DynamicResource Brush.Danger}"
                             ToolTip="Vacía por completo todos los materiales y familias del banco de precios para cargar una nueva lista de precios (irreversible)">
-                    <MenuItem.Icon>
-                      <TextBlock Text="⚠️" FontSize="12" VerticalAlignment="Center" />
-                    </MenuItem.Icon>
+                    
                   </MenuItem>
                 </ContextMenu>
               </Button.ContextMenu>
@@ -137,48 +192,101 @@
 
         <!-- Único filtro además del buscador: Familia (Proveedor/Marca ya no se muestran en la
              grilla y Moneda quedó fija en CLP, así que se sacaron de acá). -->
+        <!-- Filtros del catalogo: Buscador + Barra horizontal de chips de familia + Selector desplegable -->
         <Border Grid.Row="1" Style="{StaticResource Card.Section}" Padding="10" Margin="0,0,0,10">
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="2*" />
-              <ColumnDefinition Width="200" />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0" Margin="0,0,8,0">
-              <TextBox x:Name="SearchBox"
-                       Style="{StaticResource Form.SearchBox}"
-                       Tag="Buscar por código, descripción o familia… (Ctrl+F)"
-                       Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                       Padding="28,4,26,4" />
-              <TextBlock Text="🔍"
-                         FontSize="11"
-                         Foreground="{DynamicResource Brush.Muted}"
-                         VerticalAlignment="Center"
-                         HorizontalAlignment="Left"
-                         Margin="9,0,0,0"
-                         IsHitTestVisible="False" />
-              <Button Style="{StaticResource Button.Ghost}"
-                      Content="✕"
-                      Padding="0"
-                      Width="18" Height="18"
-                      FontSize="10"
-                      FontWeight="Bold"
-                      Foreground="{DynamicResource Brush.Muted}"
-                      HorizontalAlignment="Right"
-                      VerticalAlignment="Center"
-                      Margin="0,0,6,0"
-                      Command="{Binding ClearSearchCommand}"
-                      Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVisibility}}"
-                      ToolTip="Limpiar búsqueda (Esc)" />
+          <StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <Grid Grid.Column="0" Margin="0,0,8,0">
+                <TextBox x:Name="SearchBox"
+                         Style="{StaticResource Form.SearchBox}"
+                         Tag="Buscar por c&#243;digo, descripci&#243;n o familia&#8230; (Ctrl+F)"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         Padding="28,4,26,4" />
+                <TextBlock Text="&#128269;"
+                           FontSize="11"
+                           Foreground="{DynamicResource Brush.Muted}"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Left"
+                           Margin="9,0,0,0"
+                           IsHitTestVisible="False" />
+                <Button Style="{StaticResource Button.Ghost}"
+                        Content="&#10005;"
+                        Padding="0"
+                        Width="18" Height="18"
+                        FontSize="10"
+                        FontWeight="Bold"
+                        Foreground="{DynamicResource Brush.Muted}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Margin="0,0,6,0"
+                        Command="{Binding ClearSearchCommand}"
+                        Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVisibility}}"
+                        ToolTip="Limpiar b&#250;squeda (Esc)" />
+              </Grid>
+              <ComboBox Grid.Column="1" Style="{StaticResource Form.ComboBox}" ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory}" Margin="0,0,8,0"
+                        ToolTip="Filtrar por familia" />
+              <Button Grid.Column="2" Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}"
+                      ToolTip="Restablecer b&#250;squeda y filtro de familia (Esc)" />
             </Grid>
-            <ComboBox Grid.Column="1" Style="{StaticResource Form.ComboBox}" ItemsSource="{Binding CategoryOptions}" SelectedItem="{Binding SelectedCategory}" Margin="0,0,8,0"
-                      ToolTip="Filtrar por familia" />
-            <Button Grid.Column="2" Style="{StaticResource Button.Ghost}" Content="Limpiar filtros" Command="{Binding ClearFiltersCommand}"
-                    ToolTip="Restablecer búsqueda y filtro de familia (Esc)" />
-          </Grid>
+
+            <!-- Barra de chips horizontales de filtro rapido por familias -->
+            <DockPanel Margin="0,8,0,0" LastChildFill="True">
+              <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                <TextBlock Text="FAMILIAS:" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" Margin="0,0,4,0" />
+              </StackPanel>
+              <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" HorizontalAlignment="Left" CanContentScroll="False">
+                <ListBox ItemsSource="{Binding CategoryOptions}"
+                         SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                         Style="{StaticResource PriceBank.CategoryChipBar}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate>
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Path x:Name="ChipIcon" Style="{StaticResource Icon.Vector.Sm}" Margin="0,0,5,0" VerticalAlignment="Center" Visibility="Collapsed" />
+                        <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                      </StackPanel>
+                      <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding}" Value="Conductores">
+                          <Setter TargetName="ChipIcon" Property="Data" Value="{StaticResource Geo.Bolt}" />
+                          <Setter TargetName="ChipIcon" Property="Stroke" Value="{DynamicResource Brush.Blue}" />
+                          <Setter TargetName="ChipIcon" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding}" Value="Canalizaciones">
+                          <Setter TargetName="ChipIcon" Property="Data" Value="{StaticResource Geo.Grid}" />
+                          <Setter TargetName="ChipIcon" Property="Stroke" Value="{DynamicResource Brush.Cyan}" />
+                          <Setter TargetName="ChipIcon" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding}" Value="Canalizado">
+                          <Setter TargetName="ChipIcon" Property="Data" Value="{StaticResource Geo.Grid}" />
+                          <Setter TargetName="ChipIcon" Property="Stroke" Value="{DynamicResource Brush.Cyan}" />
+                          <Setter TargetName="ChipIcon" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding}" Value="Tableros">
+                          <Setter TargetName="ChipIcon" Property="Data" Value="{StaticResource Geo.Cube}" />
+                          <Setter TargetName="ChipIcon" Property="Stroke" Value="{DynamicResource Brush.Warning}" />
+                          <Setter TargetName="ChipIcon" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding}" Value="Artefactos">
+                          <Setter TargetName="ChipIcon" Property="Data" Value="{StaticResource Geo.Building}" />
+                          <Setter TargetName="ChipIcon" Property="Stroke" Value="{DynamicResource Brush.Purple}" />
+                          <Setter TargetName="ChipIcon" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                      </DataTemplate.Triggers>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </ScrollViewer>
+            </DockPanel>
+          </StackPanel>
         </Border>
 
-        <Border Grid.Row="2" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}" Padding="10" Margin="0,0,0,10">
+        <Border Grid.Row="2" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,10">
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
@@ -262,7 +370,7 @@
                   </Style>
                 </DataGridTextColumn.ElementStyle>
               </DataGridTextColumn>
-              <DataGridTextColumn Header="UN" Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="52">
+              <DataGridTextColumn Header="UN" Binding="{Binding Unidad, UpdateSourceTrigger=PropertyChanged}" Width="52" HeaderStyle="{StaticResource DataGridColumnHeader.Center}">
                 <DataGridTextColumn.ElementStyle>
                   <Style TargetType="TextBlock">
                     <Setter Property="TextAlignment" Value="Center" />
@@ -370,7 +478,7 @@
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="0,8,0,0">
               <TextBlock Text="Precio seleccionado" Style="{StaticResource Text.SectionLabel}" />
-              <Border Margin="0,10,0,12" Padding="12" Background="{DynamicResource Brush.BlueSoft}" CornerRadius="{StaticResource Radius.Sm}">
+              <Border Margin="0,10,0,12" Padding="12" Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}">
                 <StackPanel>
                   <TextBlock Text="{Binding SelectedEntry.Codigo, TargetNullValue='Sin selección'}" FontWeight="Bold" FontSize="15" />
                   <TextBlock Text="{Binding SelectedEntry.Descripcion}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />

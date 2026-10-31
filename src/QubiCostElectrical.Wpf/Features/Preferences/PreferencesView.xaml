@@ -228,66 +228,161 @@
         </StackPanel>
       </Border>
 
-      <!-- ─── Vista previa del membrete ──────────────────────────────────────── -->
+      <!-- ─── Vista previa del membrete oficial (Miniatura en tiempo real) ── -->
       <Border Style="{StaticResource Card.FormSection}"
               Visibility="{Binding IsIdentitySection, Converter={StaticResource BoolToVisibility}}">
         <StackPanel>
-          <TextBlock Text="VISTA PREVIA DEL MEMBRETE" Style="{StaticResource Text.SectionLabel}" Margin="0,0,0,2"/>
-          <TextBlock Text="Composición representativa. No replica el diseño PDF exacto." Style="{StaticResource Text.Caption}" Margin="0,0,0,14"/>
+          <DockPanel Margin="0,0,0,2">
+            <Border DockPanel.Dock="Right" Background="#0F172A" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+              <TextBlock Text="MINIATURA PDF OFICIAL" FontSize="9" FontWeight="Bold" Foreground="#38BDF8" />
+            </Border>
+            <TextBlock Text="PREVISUALIZACIÓN DEL MEMBRETE OFICIAL" Style="{StaticResource Text.SectionLabel}" VerticalAlignment="Center" />
+          </DockPanel>
+          <TextBlock Text="Miniatura en tiempo real del encabezado oficial según se emite en presupuestos y documentos PDF."
+                     Style="{StaticResource Text.Caption}" Margin="0,0,0,12"/>
 
-          <Border Background="{DynamicResource Brush.BlueFaint}" BorderBrush="{DynamicResource Brush.Slate3}" BorderThickness="1" CornerRadius="6" Padding="16,12">
+          <!-- Hoja miniatura estilo carta PDF con sombra y diseño oficial -->
+          <Border Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Padding="16,14" Margin="0,0,0,6">
+            <Border.Effect>
+              <DropShadowEffect BlurRadius="14" Color="#000000" Opacity="0.10" ShadowDepth="3" Direction="270" />
+            </Border.Effect>
             <StackPanel>
-              <!-- Logo + empresa -->
+              <!-- Fila superior: Logo y datos de empresa a la izquierda, bloque oficial cliente/oferta a la derecha -->
               <Grid>
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto"/>
-                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="16" />
+                  <ColumnDefinition Width="220" />
                 </Grid.ColumnDefinitions>
-                <!-- Logo real cuando existe imagen válida -->
-                <Border Grid.Column="0" Width="80" Height="40" Margin="0,0,12,0"
-                        Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Slate3}" BorderThickness="1" CornerRadius="3"
-                        Visibility="{Binding LogoImageSource, Converter={StaticResource NullToVisibility}, ConverterParameter=Inverse}">
-                  <Image Source="{Binding LogoImageSource}" Stretch="Uniform"
-                         AutomationProperties.Name="Logo de la empresa" Margin="4"/>
+
+                <!-- Columna Izquierda: Logo + Empresa + Contacto -->
+                <Grid Grid.Column="0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+
+                  <!-- Logo con contenedor idéntico a PDF -->
+                  <Border Grid.Column="0" Width="110" Height="52" Margin="0,0,12,0"
+                          Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3"
+                          VerticalAlignment="Top"
+                          Visibility="{Binding LogoImageSource, Converter={StaticResource NullToVisibility}, ConverterParameter=Inverse}">
+                    <Image Source="{Binding LogoImageSource}" Stretch="Uniform" Margin="4" />
+                  </Border>
+                  <!-- Placeholder cuando no hay logo -->
+                  <Border Grid.Column="0" Width="110" Height="52" Margin="0,0,12,0"
+                          Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3"
+                          VerticalAlignment="Top"
+                          Visibility="{Binding LogoImageSource, Converter={StaticResource NullToVisibility}}">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                      <TextBlock Text="SIN LOGO" FontSize="9" FontWeight="Bold" Foreground="#94A3B8" HorizontalAlignment="Center" />
+                      <TextBlock Text="Horizontal recom." FontSize="7.5" Foreground="#CBD5E1" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                    </StackPanel>
+                  </Border>
+
+                  <!-- Textos de empresa -->
+                  <StackPanel Grid.Column="1" VerticalAlignment="Top">
+                    <TextBlock Text="{Binding CompanyName}" FontSize="12" FontWeight="Bold" Foreground="#0B2442"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock FontSize="8" Foreground="#475569" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
+                               Visibility="{Binding Rut, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}">
+                      <Run Text="RUT: " FontWeight="SemiBold" Foreground="#0B2442" /><Run Text="{Binding Rut}" />
+                    </TextBlock>
+                    <TextBlock FontSize="8" Foreground="#64748B" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"
+                               Visibility="{Binding Address, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}"
+                               Text="{Binding Address}" />
+                    <TextBlock FontSize="8" Foreground="#64748B" Margin="0,1,0,0" TextTrimming="CharacterEllipsis">
+                      <Run Text="FONO: " FontWeight="SemiBold" /><Run Text="{Binding Phone}" /><Run Text="  |  " /><Run Text="{Binding Email}" />
+                    </TextBlock>
+                    <TextBlock FontSize="7.5" Foreground="#0284C7" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"
+                               Visibility="{Binding Website, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}"
+                               Text="{Binding Website}" />
+                  </StackPanel>
+                </Grid>
+
+                <!-- Columna Derecha: Tarjeta de datos oficiales PDF -->
+                <Border Grid.Column="2" BorderBrush="#CBD5E1" BorderThickness="0.8" CornerRadius="2" Background="#FAFAFA" VerticalAlignment="Top">
+                  <StackPanel>
+                    <Border Background="#0B2442" Padding="6,3">
+                      <TextBlock Text="DATOS OFERTA / DOCUMENTO" FontSize="8" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" />
+                    </Border>
+                    <StackPanel Margin="8,5">
+                      <TextBlock FontSize="7.5" Foreground="#334155" Margin="0,1">
+                        <Run Text="Folio / Carta: " FontWeight="Bold" Foreground="#0B2442" /><Run Text="OFT-001-2026" FontWeight="SemiBold" />
+                      </TextBlock>
+                      <TextBlock FontSize="7.5" Foreground="#334155" Margin="0,1">
+                        <Run Text="Mandante: " FontWeight="Bold" /><Run Text="Constructora del Sur SpA" />
+                      </TextBlock>
+                      <TextBlock FontSize="7.5" Foreground="#334155" Margin="0,1">
+                        <Run Text="Proyecto: " FontWeight="Bold" /><Run Text="Instalación Eléctrica General" />
+                      </TextBlock>
+                      <TextBlock FontSize="7.5" Foreground="#64748B" Margin="0,1">
+                        <Run Text="Fecha emisión: " FontWeight="Bold" /><Run Text="30/10/2026" />
+                      </TextBlock>
+                    </StackPanel>
+                  </StackPanel>
                 </Border>
-                <Border Grid.Column="0" Width="80" Height="40" Margin="0,0,12,0"
-                        Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Slate3}" BorderThickness="1" CornerRadius="3"
-                        Visibility="{Binding LogoImageSource, Converter={StaticResource NullToVisibility}}">
-                  <TextBlock Text="SIN LOGO" FontSize="10" Foreground="{DynamicResource Brush.Slate2}"
-                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                  <TextBlock Text="{Binding CompanyName}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
-                             TextTrimming="CharacterEllipsis"/>
-                  <TextBlock FontSize="9" Foreground="{DynamicResource Brush.Ink6}" TextTrimming="CharacterEllipsis">
-                    <TextBlock.Text>
-                      <MultiBinding StringFormat="{}{0} · {1} · {2}">
-                        <Binding Path="Phone"/>
-                        <Binding Path="Email"/>
-                        <Binding Path="Website"/>
-                      </MultiBinding>
-                    </TextBlock.Text>
-                  </TextBlock>
-                </StackPanel>
               </Grid>
-              <!-- Separador -->
-              <Rectangle Height="1" Fill="{DynamicResource Brush.Slate3}" Margin="0,10,0,10"/>
-              <!-- Profesional -->
-              <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Firmante: " FontSize="9" Foreground="{DynamicResource Brush.Ink4}"/>
-                <TextBlock Text="{Binding ProfessionalName}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"/>
-                <TextBlock Text=" · " FontSize="9" Foreground="{DynamicResource Brush.Ink4}"/>
-                <TextBlock Text="{Binding ProfessionalRole}" FontSize="9" Foreground="{DynamicResource Brush.Ink6}"/>
-                <TextBlock Text=" · SEC: " FontSize="9" Foreground="{DynamicResource Brush.Ink4}"
-                           Visibility="{Binding ProfessionalRegistroSec, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}"/>
-                <TextBlock Text="{Binding ProfessionalRegistroSec}" FontSize="9" Foreground="{DynamicResource Brush.Ink6}"
-                           Visibility="{Binding ProfessionalRegistroSec, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}"/>
-              </StackPanel>
+
+              <!-- Línea divisoria elegante corporativa -->
+              <Grid Margin="0,12,0,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="140" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Height="2" Background="#0B2442" />
+                <Border Grid.Column="1" Height="1" Background="#E2E8F0" VerticalAlignment="Center" />
+              </Grid>
+
+              <!-- Fila inferior: Profesional responsable y vista previa de firma escaneada -->
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Datos del profesional -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal">
+                    <Border Background="#EBF2FB" CornerRadius="2" Padding="4,1" Margin="0,0,6,0">
+                      <TextBlock Text="RESPONSABLE TÉCNICO" FontSize="7.5" FontWeight="Bold" Foreground="#0B2442" />
+                    </Border>
+                    <TextBlock Text="{Binding ProfessionalName}" FontSize="9" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center" />
+                    <TextBlock Text="  ·  " FontSize="9" Foreground="#94A3B8" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding ProfessionalRole}" FontSize="8.5" Foreground="#475569" VerticalAlignment="Center" />
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                    <TextBlock FontSize="8" Foreground="#64748B"
+                               Visibility="{Binding ProfessionalRut, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}">
+                      <Run Text="RUT: " FontWeight="SemiBold" /><Run Text="{Binding ProfessionalRut}" />
+                    </TextBlock>
+                    <TextBlock FontSize="8" Foreground="#64748B" Margin="8,0,0,0"
+                               Visibility="{Binding ProfessionalRegistroSec, Converter={StaticResource NullToVisibility}, ConverterParameter=NonEmpty}">
+                      <Run Text="Clase / Reg. SEC: " FontWeight="SemiBold" Foreground="#0B2442" /><Run Text="{Binding ProfessionalRegistroSec}" />
+                    </TextBlock>
+                  </StackPanel>
+                </StackPanel>
+
+                <!-- Firma escaneada en miniatura -->
+                <Border Grid.Column="1" MinWidth="90" Height="38" Padding="4,2"
+                        Background="#FAFAFA" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="3"
+                        VerticalAlignment="Center">
+                  <Grid>
+                    <Image Source="{Binding SignatureImageSource}" Stretch="Uniform"
+                           Visibility="{Binding SignatureImageSource, Converter={StaticResource NullToVisibility}, ConverterParameter=Inverse}" />
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                Visibility="{Binding SignatureImageSource, Converter={StaticResource NullToVisibility}}">
+                      <TextBlock Text="[ FIRMA OFICIAL ]" FontSize="7.5" FontWeight="SemiBold" Foreground="#94A3B8" HorizontalAlignment="Center" />
+                      <TextBlock Text="{Binding ProfessionalName}" FontSize="7" Foreground="#CBD5E1" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="100" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </Grid>
             </StackPanel>
           </Border>
 
-          <TextBlock Text="Aplica a: PDF (portada, encabezado, firma) · DOCX (carta de presentación) · XLSX (hoja de empresa)"
-                     Style="{StaticResource Text.Caption}" Margin="0,8,0,0"/>
+          <TextBlock Text="Aplica automáticamente a: Portadas PDF, Carta de Oferta, Resumen Ejecutivo, Estado de Pago, Cuadros de Cargas y Planillas Excel oficiales."
+                     Style="{StaticResource Text.Caption}" Margin="0,4,0,0"/>
         </StackPanel>
       </Border>
 

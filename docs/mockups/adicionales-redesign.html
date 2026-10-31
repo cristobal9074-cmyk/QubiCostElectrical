@@ -1,0 +1,2805 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qubi Cost Electrical — Control Ejecutivo de Adicionales & Órdenes de Cambio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy-950: #070D18;
+    --navy-900: #0B1324;
+    --navy-850: #0F1A30;
+    --navy-800: #14223F;
+    --navy-700: #1C2E54;
+    --navy-600: #294273;
+    
+    --slate-50: #F8FAFC;
+    --slate-100: #F1F5F9;
+    --slate-200: #E2E8F0;
+    --slate-300: #CBD5E1;
+    --slate-400: #94A3B8;
+    --slate-500: #64748B;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1E293B;
+    --slate-900: #0F172A;
+
+    --blue-500: #2563EB;
+    --blue-600: #1D4ED8;
+    --blue-400: #60A5FA;
+    --blue-soft: #EFF6FF;
+    --blue-border: #BFDBFE;
+
+    --emerald-500: #10B981;
+    --emerald-600: #059669;
+    --emerald-400: #34D399;
+    --emerald-soft: #ECFDF5;
+    --emerald-border: #A7F3D0;
+
+    --amber-500: #F59E0B;
+    --amber-600: #D97706;
+    --amber-soft: #FFFBEB;
+    --amber-border: #FDE68A;
+
+    --rose-500: #F43F5E;
+    --rose-600: #E11D48;
+    --rose-soft: #FFF1F2;
+    --rose-border: #FECDD3;
+
+    --purple-500: #8B5CF6;
+    --purple-soft: #F5F3FF;
+    --purple-border: #DDD6FE;
+
+    --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+    
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-modal: 0 25px 50px -12px rgba(15, 23, 42, 0.4), 0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; width: 100%; font-family: var(--font); color: var(--slate-800); background: #F8FAFC; overflow: hidden; }
+
+  /* App Shell Container */
+  .app-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #F1F5F9;
+  }
+
+  /* Global Executive Navigation Bar */
+  .top-navbar {
+    height: 52px;
+    background: linear-gradient(90deg, #091120 0%, #0F1C36 50%, #16284D 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    color: #fff;
+    flex-shrink: 0;
+    z-index: 30;
+  }
+
+  .brand-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-logo-badge {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #1D4ED8, #3B82F6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .brand-logo-badge svg {
+    width: 18px;
+    height: 18px;
+    fill: #fff;
+  }
+
+  .brand-text h1 {
+    font-size: 13.5px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: #FFFFFF;
+    line-height: 1.1;
+  }
+
+  .brand-text span {
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: #93C5FD;
+    text-transform: uppercase;
+  }
+
+  .project-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    margin-left: 18px;
+  }
+
+  .project-pill .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--emerald-400);
+    box-shadow: 0 0 6px var(--emerald-400);
+  }
+
+  .project-pill .proj-name {
+    font-weight: 600;
+    color: #F8FAFC;
+  }
+
+  .project-pill .proj-code {
+    font-family: var(--mono);
+    color: #94A3B8;
+    font-size: 11px;
+  }
+
+  /* Nav Modules Ribbon */
+  .modules-ribbon {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+  }
+
+  .nav-tab {
+    padding: 0 13px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #94A3B8;
+    text-decoration: none;
+    border-bottom: 2.5px solid transparent;
+    transition: all 0.15s ease;
+    cursor: pointer;
+  }
+
+  .nav-tab:hover {
+    color: #F8FAFC;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .nav-tab.active {
+    color: #FFFFFF;
+    font-weight: 700;
+    border-bottom-color: #38BDF8;
+    background: rgba(56, 189, 248, 0.08);
+  }
+
+  .nav-tab .badge-count {
+    background: #2563EB;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+
+  .top-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .currency-toggle {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 2px;
+  }
+
+  .currency-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #94A3B8;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .currency-btn.active {
+    background: #2563EB;
+    color: #FFFFFF;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .uf-rate-badge {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: #CBD5E1;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Main Workspace */
+  .workspace {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 22px 20px 22px;
+    min-height: 0;
+    gap: 14px;
+    overflow-y: auto;
+  }
+
+  /* Header Section: Title, Contract Freeze Shield, and Action Buttons */
+  .module-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .title-area {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .title-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1E293B, #0F172A);
+    border: 1px solid #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  }
+
+  .title-icon-box svg {
+    width: 22px;
+    height: 22px;
+    color: #38BDF8;
+  }
+
+  .title-area h2 {
+    font-size: 21px;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .title-area p {
+    font-size: 12.5px;
+    color: #64748B;
+    margin-top: 2px;
+  }
+
+  .contract-shield-pill {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+    border: 1px solid #FCD34D;
+    padding: 7px 14px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(245, 158, 11, 0.08);
+  }
+
+  .shield-icon {
+    width: 20px;
+    height: 20px;
+    color: #D97706;
+  }
+
+  .shield-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .shield-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #92400E;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .shield-desc {
+    font-size: 11.5px;
+    color: #78350F;
+    font-weight: 500;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    border-color: #1D4ED8;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: #FFFFFF;
+    color: #334155;
+    border-color: #CBD5E1;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-secondary:hover {
+    background: #F8FAFC;
+    color: #0F172A;
+    border-color: #94A3B8;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+     EXECUTIVE FINANCIAL DASHBOARD STRIP
+  ───────────────────────────────────────────────────────────────────────────── */
+  .finance-cockpit {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1.3fr 1.1fr 1.2fr 1.1fr;
+    gap: 16px;
+  }
+
+  .kpi-card {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-1px);
+    border-color: #CBD5E1;
+  }
+
+  .kpi-card.approved {
+    background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+    border-color: #86EFAC;
+  }
+
+  .kpi-card.pending {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+    border-color: #FDE68A;
+  }
+
+  .kpi-card.projected {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    border-color: #334155;
+    color: #FFFFFF;
+  }
+
+  .kpi-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748B;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .kpi-card.projected .kpi-label { color: #94A3B8; }
+
+  .kpi-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 12px;
+  }
+
+  .badge-emerald { background: #10B981; color: #FFFFFF; }
+  .badge-amber { background: #F59E0B; color: #FFFFFF; }
+  .badge-cyan { background: #0284C7; color: #FFFFFF; }
+
+  .kpi-value {
+    font-family: var(--mono);
+    font-size: 19px;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+
+  .kpi-card.approved .kpi-value { color: #047857; }
+  .kpi-card.pending .kpi-value { color: #B45309; }
+  .kpi-card.projected .kpi-value { color: #38BDF8; }
+
+  .kpi-sub {
+    font-size: 11px;
+    color: #64748B;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .kpi-card.projected .kpi-sub { color: #94A3B8; }
+
+  /* Waterfall Progress Bar Visualizer */
+  .waterfall-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #EDF2F7;
+  }
+
+  .waterfall-labels {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+  }
+
+  .waterfall-track {
+    height: 10px;
+    background: #E2E8F0;
+    border-radius: 6px;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .wf-segment {
+    height: 100%;
+    transition: width 0.4s ease;
+    position: relative;
+  }
+
+  .wf-segment.base { background: #3B82F6; }
+  .wf-segment.approved { background: #10B981; }
+  .wf-segment.pending {
+    background: #F59E0B;
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(255,255,255,0.3) 6px, rgba(255,255,255,0.3) 12px);
+  }
+
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-size: 11px;
+    color: #64748B;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 3px;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+     WORKSPACE LAYOUT (SPLIT 55% MASTER LIST / 45% DRILLDOWN INSPECTOR)
+  ───────────────────────────────────────────────────────────────────────────── */
+  .main-split {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 55% 45%;
+    gap: 14px;
+    min-height: 520px;
+    height: 100%;
+  }
+
+  .master-panel {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+
+  .panel-top-controls {
+    padding: 12px 16px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E2E8F0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .search-and-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .search-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 11px;
+    width: 15px;
+    height: 15px;
+    color: #94A3B8;
+  }
+
+  .search-input {
+    width: 100%;
+    height: 34px;
+    padding: 0 12px 0 34px;
+    background: #F8FAFC;
+    border: 1px solid #CBD5E1;
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 12px;
+    color: #0F172A;
+    transition: all 0.15s;
+  }
+
+  .search-input:focus {
+    outline: none;
+    background: #FFFFFF;
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  .filter-segmented {
+    display: flex;
+    align-items: center;
+    background: #F1F5F9;
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+    gap: 2px;
+    width: fit-content;
+  }
+
+  .seg-pill {
+    padding: 4px 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748B;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.12s;
+  }
+
+  .seg-pill:hover { color: #0F172A; }
+
+  .seg-pill.active {
+    background: #FFFFFF;
+    color: #0F172A;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .seg-pill.active.approved { color: #047857; }
+  .seg-pill.active.pending { color: #B45309; }
+
+  .seg-pill .count {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 10px;
+    background: #E2E8F0;
+    color: #475569;
+  }
+
+  .seg-pill.active .count { background: #0F172A; color: #FFFFFF; }
+  .seg-pill.active.approved .count { background: #10B981; color: #FFFFFF; }
+  .seg-pill.active.pending .count { background: #F59E0B; color: #FFFFFF; }
+
+  .table-container {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+  }
+
+  .orders-table th {
+    position: sticky;
+    top: 0;
+    background: #F8FAFC;
+    color: #64748B;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 10px 14px;
+    border-bottom: 1px solid #E2E8F0;
+    z-index: 10;
+  }
+
+  .orders-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #F1F5F9;
+    color: #1E293B;
+    vertical-align: middle;
+  }
+
+  .order-row { cursor: pointer; transition: background 0.12s; }
+  .order-row:hover { background: #F8FAFC; }
+  .order-row.selected {
+    background: #EFF6FF !important;
+    position: relative;
+  }
+  .order-row.selected td:first-child { border-left: 3.5px solid #2563EB; }
+
+  .code-cell {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 12px;
+    color: #1E40AF;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .order-title-box { display: flex; flex-direction: column; gap: 3px; }
+  .order-title-text { font-weight: 700; color: #0F172A; font-size: 12.5px; }
+
+  .order-tags { display: flex; align-items: center; gap: 5px; }
+
+  .badge-tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid #E2E8F0;
+  }
+
+  .badge-tag.frozen { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
+  .badge-tag.extra { background: #FAF5FF; color: #6B21A8; border-color: #E9D5FF; }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .status-pill.approved { background: var(--emerald-soft); color: var(--emerald-600); border: 1px solid var(--emerald-border); }
+  .status-pill.pending { background: var(--amber-soft); color: var(--amber-600); border: 1px solid var(--amber-border); }
+  .status-pill.draft { background: var(--slate-100); color: var(--slate-600); border: 1px solid var(--slate-300); }
+  .status-pill.rejected { background: var(--rose-soft); color: var(--rose-600); border: 1px solid var(--rose-border); }
+
+  .status-dot-pulse { width: 6px; height: 6px; border-radius: 50%; }
+  .status-pill.approved .status-dot-pulse { background: #10B981; }
+  .status-pill.pending .status-dot-pulse { background: #F59E0B; animation: pulse 1.8s infinite; }
+  .status-pill.draft .status-dot-pulse { background: #94A3B8; }
+  .status-pill.rejected .status-dot-pulse { background: #F43F5E; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .money-cell {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 12.5px;
+    text-align: right;
+  }
+
+  .money-positive { color: #047857; }
+  .money-negative { color: #B91C1C; }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+     RIGHT PANEL: THE EXECUTIVE DRILLDOWN INSPECTOR
+  ───────────────────────────────────────────────────────────────────────────── */
+  .inspector-panel {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+  }
+
+  .inspector-header {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    padding: 16px 20px;
+    color: #FFFFFF;
+    position: relative;
+  }
+
+  .inspector-top-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .inspector-code {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 800;
+    color: #38BDF8;
+    background: rgba(56, 189, 248, 0.12);
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+  }
+
+  .inspector-title { font-size: 15px; font-weight: 800; color: #F8FAFC; line-height: 1.3; }
+  .inspector-meta { display: flex; align-items: center; gap: 14px; font-size: 11.5px; color: #94A3B8; margin-top: 6px; }
+
+  .workflow-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
+  }
+
+  .step-node { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; color: #94A3B8; }
+  .step-node.completed { color: #047857; }
+  .step-node.current { color: #1D4ED8; font-weight: 700; }
+
+  .step-circle {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    background: #E2E8F0;
+    color: #64748B;
+  }
+
+  .step-node.completed .step-circle { background: #10B981; color: #FFFFFF; }
+  .step-node.current .step-circle {
+    background: #2563EB;
+    color: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  }
+
+  .step-connector { flex: 1; height: 2px; background: #E2E8F0; margin: 0 8px; }
+  .step-connector.completed { background: #10B981; }
+
+  .workflow-actions-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E2E8F0;
+    gap: 8px;
+  }
+
+  .wf-btn {
+    flex: 1;
+    height: 32px;
+    font-size: 11.5px;
+    font-weight: 700;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+
+  .wf-btn.approve { background: #10B981; color: #FFFFFF; }
+  .wf-btn.approve:hover { background: #059669; }
+
+  .wf-btn.review { background: #F59E0B; color: #FFFFFF; }
+  .wf-btn.review:hover { background: #D97706; }
+
+  .wf-btn.reject { background: #FFFFFF; color: #E11D48; border-color: #FECDD3; }
+  .wf-btn.reject:hover { background: #FFF1F2; }
+
+  .wf-btn.delete-order { background: #FFF1F2; color: #E11D48; border-color: #FECDD3; }
+  .wf-btn.delete-order:hover { background: #FEE2E2; }
+
+  .inspector-financial-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 12px 18px;
+    background: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
+  }
+
+  .fin-box {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    padding: 7px 9px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .fin-lbl { font-size: 9.5px; font-weight: 700; color: #64748B; text-transform: uppercase; }
+  .fin-val { font-family: var(--mono); font-size: 12px; font-weight: 700; color: #0F172A; margin-top: 2px; }
+
+  .fin-box.highlight { background: #EFF6FF; border-color: #93C5FD; }
+  .fin-box.highlight .fin-val { color: #1D4ED8; font-size: 13px; }
+
+  .inspector-tabs {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #E2E8F0;
+    padding: 0 16px;
+    background: #FFFFFF;
+  }
+
+  .insp-tab {
+    padding: 9px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748B;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .insp-tab:hover { color: #0F172A; }
+  .insp-tab.active {
+    color: #2563EB;
+    border-bottom-color: #2563EB;
+    font-weight: 700;
+  }
+
+  .inspector-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tab-pane { display: none; height: 100%; }
+  .tab-pane.active { display: flex; flex-direction: column; }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+     PARTIDAS TOOLBAR & ACTION HEADER
+  ───────────────────────────────────────────────────────────────────────────── */
+  .partidas-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px dashed #CBD5E1;
+    gap: 10px;
+  }
+
+  .btn-contract-add {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    color: #FFFFFF;
+    border: 1px solid #334155;
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 11.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .btn-contract-add:hover {
+    background: #1E293B;
+    border-color: #475569;
+    color: #38BDF8;
+    transform: translateY(-1px);
+  }
+
+  .btn-extra-add {
+    background: #FAF5FF;
+    color: #7E22CE;
+    border: 1px solid #E9D5FF;
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 11.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-extra-add:hover {
+    background: #F3E8FF;
+    border-color: #D8B4FE;
+  }
+
+  .lineas-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+
+  .lineas-table th {
+    background: #F1F5F9;
+    color: #475569;
+    font-weight: 700;
+    padding: 8px 10px;
+    border-bottom: 1px solid #E2E8F0;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .lineas-table td {
+    padding: 9px 10px;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+  }
+
+  .lineas-table tr:hover { background: #F8FAFC; }
+
+  .qty-delta-box {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+  }
+
+  .qty-base { color: #94A3B8; font-size: 10.5px; }
+  .qty-arrow { color: #64748B; font-size: 8.5px; }
+  
+  .qty-input-mini {
+    width: 60px;
+    height: 24px;
+    padding: 0 4px;
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 11px;
+    text-align: right;
+    color: #0F172A;
+    background: #FFFFFF;
+  }
+
+  .qty-input-mini:focus {
+    outline: none;
+    border-color: #2563EB;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  }
+
+  .pu-freeze-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+    font-weight: 700;
+    color: #1E293B;
+    background: #FFFBEB;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #FDE68A;
+  }
+
+  .pu-freeze-badge.extra {
+    background: #FAF5FF;
+    color: #6B21A8;
+    border-color: #E9D5FF;
+  }
+
+  .freeze-icon { color: #D97706; font-size: 11px; }
+
+  .btn-remove-line {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #94A3B8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .btn-remove-line:hover {
+    background: #FFF1F2;
+    border-color: #FECDD3;
+    color: #E11D48;
+    transform: scale(1.08);
+  }
+
+  .empty-partidas-box {
+    padding: 30px 20px;
+    text-align: center;
+    background: #F8FAFC;
+    border: 2px dashed #CBD5E1;
+    border-radius: 10px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .empty-partidas-box p {
+    font-size: 12px;
+    color: #64748B;
+    max-width: 320px;
+  }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: #E2E8F0;
+  }
+
+  .timeline-event {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .timeline-dot {
+    position: absolute;
+    left: -20px;
+    top: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 3px solid #2563EB;
+  }
+
+  .timeline-dot.success { border-color: #10B981; }
+  .timeline-dot.warning { border-color: #F59E0B; }
+  .timeline-dot.danger { border-color: #EF4444; }
+
+  .event-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #0F172A;
+  }
+
+  .event-date {
+    font-size: 10.5px;
+    font-family: var(--mono);
+    color: #94A3B8;
+  }
+
+  .event-body {
+    font-size: 11px;
+    color: #475569;
+    background: #F8FAFC;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #E2E8F0;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+     MODAL PICKER: PARTIDAS CERRADAS EN EL CONTRATO
+  ───────────────────────────────────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.15s ease-out;
+  }
+
+  .modal-window {
+    width: 860px;
+    max-width: 95vw;
+    background: #FFFFFF;
+    border-radius: 16px;
+    box-shadow: var(--shadow-modal);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: scaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes scaleUp { from { transform: scale(0.96) translateY(10px); } to { transform: scale(1) translateY(0); } }
+
+  .modal-head {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    padding: 16px 22px;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-head h3 {
+    font-size: 15px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .modal-close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #94A3B8;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.12s;
+  }
+
+  .modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+  }
+
+  .modal-body {
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: 72vh;
+    overflow-y: auto;
+  }
+
+  .contract-picker-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+  }
+
+  .contract-picker-table th {
+    background: #F8FAFC;
+    color: #475569;
+    font-weight: 700;
+    padding: 8px 10px;
+    border-bottom: 2px solid #E2E8F0;
+    text-transform: uppercase;
+    font-size: 10px;
+  }
+
+  .contract-picker-table td {
+    padding: 9px 10px;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+  }
+
+  .contract-picker-table tr:hover { background: #F1F5F9; }
+
+  .modal-footer {
+    padding: 14px 22px;
+    background: #F8FAFC;
+    border-top: 1px solid #E2E8F0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 14px;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .text-input {
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 7px;
+    border: 1px solid #CBD5E1;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: #0F172A;
+    background: #FFFFFF;
+    transition: all 0.15s;
+  }
+
+  .text-input:focus {
+    outline: none;
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 200;
+  }
+
+  .toast {
+    background: #0F172A;
+    color: #FFFFFF;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    animation: slideInRight 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ─── TOP SHELL NAV ──────────────────────────────────────────────────────── -->
+  <header class="top-navbar">
+    <div class="brand-group">
+      <div class="brand-logo-badge">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h8l-2 8 11-12h-8l1-8z"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>QUBI COST®</h1>
+        <span>ELECTRICAL SUITE</span>
+      </div>
+      <div class="project-pill">
+        <span class="dot"></span>
+        <span class="proj-name">Edificio Mirador Las Condes — Etapa 2</span>
+        <span class="proj-code">PEL-039A2026</span>
+      </div>
+    </div>
+
+    <nav class="modules-ribbon">
+      <a class="nav-tab">Proyecto</a>
+      <a class="nav-tab">Itemizado</a>
+      <a class="nav-tab">Cubicación</a>
+      <a class="nav-tab">Cubicación SC</a>
+      <a class="nav-tab">APU Base</a>
+      <a class="nav-tab active">
+        Adicionales (OC)
+        <span class="badge-count" id="totalOrdersPill">5</span>
+      </a>
+      <a class="nav-tab">Oferta y Cierre</a>
+    </nav>
+
+    <div class="top-actions">
+      <div class="currency-toggle">
+        <button class="currency-btn active" id="btnClp" onclick="setCurrency('CLP')">CLP ($)</button>
+        <button class="currency-btn" id="btnUf" onclick="setCurrency('UF')">UF</button>
+      </div>
+      <span class="uf-rate-badge">UF: $38.450</span>
+    </div>
+  </header>
+
+  <!-- ─── MAIN CONTENT WORKSPACE ─────────────────────────────────────────────── -->
+  <main class="workspace">
+
+    <!-- Module Header with Contract Freeze Shield -->
+    <section class="module-header">
+      <div class="title-area">
+        <div class="title-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h2>Control de Adicionales & Órdenes de Cambio (OC)</h2>
+          <p>Gestión ejecutiva de modificaciones contractuales, aumentos de faena y partidas extraordinarias.</p>
+        </div>
+      </div>
+
+      <!-- Contract Shield Pill -->
+      <div class="contract-shield-pill">
+        <svg class="shield-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v2h-2V7zm0 4h2v6h-2v-6z"/>
+        </svg>
+        <div class="shield-content">
+          <span class="shield-title">Respeto de Precios Unitarios</span>
+          <span class="shield-desc">Precios unitarios de contrato congelados 🔒 — Extraordinarios con APU validado</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="exportActaMandante()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar Acta ITO (PDF)
+        </button>
+        <button class="btn btn-primary" onclick="openNewOrderModal()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          + Nueva Orden de Cambio (Ctrl+N)
+        </button>
+      </div>
+    </section>
+
+    <!-- ─── EXECUTIVE FINANCIAL WATERFALL STRIP ────────────────────────── -->
+    <section class="finance-cockpit">
+      <div class="kpi-row">
+        <!-- 1. Contrato Base -->
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Contrato Original Base</span>
+            <span class="kpi-badge" style="background:#E2E8F0; color:#334155;">Vigente</span>
+          </div>
+          <div class="kpi-value" id="kpiContratoOriginal">$ 184.500.000</div>
+          <div class="kpi-sub">
+            <span>4.798,43 UF</span>
+            <span style="font-weight:600; color:#475569;">100% Base</span>
+          </div>
+        </div>
+
+        <!-- 2. Aprobado Mandante -->
+        <div class="kpi-card approved">
+          <div class="kpi-card-header">
+            <span class="kpi-label" style="color:#065F46;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+              Aprobado Mandante
+            </span>
+            <span class="kpi-badge badge-emerald" id="kpiPctAumento">+7,74% Aumento</span>
+          </div>
+          <div class="kpi-value" id="kpiMontoAprobado">+$ 14.280.000</div>
+          <div class="kpi-sub" style="color:#047857;">
+            <span>+371,39 UF</span>
+            <span style="font-weight:700;" id="kpiAprobadoCount">2 órdenes en firme</span>
+          </div>
+        </div>
+
+        <!-- 3. En Trámite / ITO -->
+        <div class="kpi-card pending">
+          <div class="kpi-card-header">
+            <span class="kpi-label" style="color:#92400E;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              En Revisión ITO
+            </span>
+            <span class="kpi-badge badge-amber" id="kpiPendingCount">2 en trámite</span>
+          </div>
+          <div class="kpi-value" id="kpiMontoPendiente">+$ 6.850.000</div>
+          <div class="kpi-sub" style="color:#B45309;">
+            <span>+178,15 UF</span>
+            <span>+3,71% potencial</span>
+          </div>
+        </div>
+
+        <!-- 4. Total Proyectado Obra -->
+        <div class="kpi-card projected">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Proyección Actual Obra</span>
+            <span class="kpi-badge badge-cyan">Contrato + Aprobados</span>
+          </div>
+          <div class="kpi-value" id="kpiTotalProyectado">$ 198.780.000</div>
+          <div class="kpi-sub">
+            <span>5.169,82 UF</span>
+            <span style="font-weight:700; color:#38BDF8;">107,74% del original</span>
+          </div>
+        </div>
+
+        <!-- 5. Margen & Desglose Financiero -->
+        <div class="kpi-card" style="background:#FAF5FF; border-color:#E9D5FF;">
+          <div class="kpi-card-header">
+            <span class="kpi-label" style="color:#6B21A8;">Margen en Adicionales</span>
+            <span class="kpi-badge" style="background:#9333EA; color:#fff;">15% Utilidad</span>
+          </div>
+          <div class="kpi-value" style="color:#7E22CE;" id="kpiUtilidad">$ 1.862.600</div>
+          <div class="kpi-sub" style="color:#6B21A8;">
+            <span id="kpiGGTxt">GG: 12% ($1.490.000)</span>
+            <span style="font-weight:600;" id="kpiCostoTxt">Costo: $10.927.400</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Waterfall Progress Tracker -->
+      <div class="waterfall-container">
+        <div class="waterfall-labels">
+          <div class="legend-row">
+            <div class="legend-item">
+              <span class="legend-dot" style="background:#3B82F6;"></span>
+              <span>Contrato Base Firmado: <b id="wfBaseTxt">$ 184.50M (89,7%)</b></span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background:#10B981;"></span>
+              <span>Aprobado Mandante: <b id="wfAppTxt">+$ 14.28M (6,9%)</b></span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background:#F59E0B;"></span>
+              <span>En Trámite ITO: <b id="wfPenTxt">+$ 6.85M (3,4%)</b></span>
+            </div>
+          </div>
+          <div style="font-family:var(--mono); font-size:11.5px; color:#1E293B;">
+            Total Obra con Aprobados: <strong id="wfTotalTxt">$ 198.780.000</strong>
+          </div>
+        </div>
+        <div class="waterfall-track">
+          <div class="wf-segment base" style="width: 89.7%;"></div>
+          <div class="wf-segment approved" style="width: 6.9%;"></div>
+          <div class="wf-segment pending" style="width: 3.4%;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── MASTER-DETAIL WORKSPACE (SPLIT 55% / 45%) ────────────────────────── -->
+    <div class="main-split">
+
+      <!-- LEFT: MASTER ORDERS TABLE -->
+      <section class="master-panel">
+        
+        <!-- Controls: Search & Segmented Filter Tabs -->
+        <div class="panel-top-controls">
+          <div class="search-and-actions">
+            <div class="search-wrapper">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" class="search-input" id="searchBox" placeholder="Buscar por número, título, ITO, nota técnica... (Ctrl+F)" oninput="filterOrders()">
+            </div>
+            <button class="btn btn-secondary" style="height:34px; padding:0 12px; font-size:11.5px;" onclick="refreshData()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Refrescar
+            </button>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div class="filter-segmented">
+              <button class="seg-pill active" id="filterAll" onclick="setFilter('all')">
+                Todas <span class="count" id="countAll">5</span>
+              </button>
+              <button class="seg-pill approved" id="filterApproved" onclick="setFilter('Aprobado')">
+                ✓ Aprobadas <span class="count" id="countApproved">2</span>
+              </button>
+              <button class="seg-pill pending" id="filterPending" onclick="setFilter('En revisión')">
+                ⏳ En Revisión ITO <span class="count" id="countPending">2</span>
+              </button>
+              <button class="seg-pill" id="filterDraft" onclick="setFilter('Borrador')">
+                ○ Borrador <span class="count" id="countDraft">1</span>
+              </button>
+            </div>
+
+            <span style="font-size:11px; color:#64748B;">
+              Mostrando <strong id="visibleCount">5</strong> de 5 adicionales
+            </span>
+          </div>
+        </div>
+
+        <!-- Table List -->
+        <div class="table-container">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th style="width: 85px;">Código</th>
+                <th>Descripción & Partidas</th>
+                <th style="width: 135px;">Estado</th>
+                <th style="width: 90px;">Fecha</th>
+                <th style="width: 120px; text-align: right;">Impacto Venta</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <!-- Dynamically populated by renderOrdersTable() -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- RIGHT: LIVE EXECUTIVE DRILLDOWN INSPECTOR -->
+      <section class="inspector-panel" id="inspectorPanel">
+        
+        <!-- Inspector Dark Navy Executive Header -->
+        <div class="inspector-header">
+          <div class="inspector-top-line">
+            <span class="inspector-code" id="inspCode">OC-004</span>
+            <div id="inspStatusBadge">
+              <!-- Status pill injected here -->
+            </div>
+          </div>
+          <div class="inspector-title" id="inspTitle">Alimentador Principal Tablero Fuerza Climatización TF-CLIM</div>
+          <div class="inspector-meta">
+            <span id="inspAuthor">Solicitante: <b>Ing. Carlos Mendoza (ITO)</b></span>
+            <span>•</span>
+            <span id="inspDate">Fecha: <b>24/10/2026</b></span>
+          </div>
+        </div>
+
+        <!-- Approval Workflow Stepper -->
+        <div class="workflow-stepper" id="workflowStepper">
+          <div class="step-node completed" id="step1">
+            <div class="step-circle">✓</div>
+            <span>1. Elaboración</span>
+          </div>
+          <div class="step-connector completed" id="stepConn1"></div>
+          <div class="step-node current" id="step2">
+            <div class="step-circle">2</div>
+            <span>2. Revisión ITO</span>
+          </div>
+          <div class="step-connector" id="stepConn2"></div>
+          <div class="step-node" id="step3">
+            <div class="step-circle">3</div>
+            <span>3. Mandante</span>
+          </div>
+        </div>
+
+        <!-- Workflow Contextual Actions -->
+        <div class="workflow-actions-bar" id="workflowActions">
+          <button class="wf-btn approve" onclick="transitionSelected('Aprobado')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+            Aprobar Mandante
+          </button>
+          <button class="wf-btn review" onclick="transitionSelected('En revisión')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Pasar a ITO
+          </button>
+          <button class="wf-btn reject" onclick="transitionSelected('Rechazado')">
+            ✕ Rechazar
+          </button>
+          <button class="wf-btn delete-order" onclick="deleteCurrentOrder()" title="Eliminar orden completa">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Eliminar OC
+          </button>
+        </div>
+
+        <!-- Financial Breakdown Mini-Strip -->
+        <div class="inspector-financial-strip">
+          <div class="fin-box">
+            <span class="fin-lbl">Costo Directo</span>
+            <span class="fin-val" id="inspCosto">$ 6.120.000</span>
+          </div>
+          <div class="fin-box">
+            <span class="fin-lbl">GG (12%)</span>
+            <span class="fin-val" id="inspGG">$ 734.400</span>
+          </div>
+          <div class="fin-box">
+            <span class="fin-lbl">Utilidad (15%)</span>
+            <span class="fin-val" id="inspUtilidad">$ 918.000</span>
+          </div>
+          <div class="fin-box highlight">
+            <span class="fin-lbl" style="color:#1D4ED8;">Venta Neta OC</span>
+            <span class="fin-val" id="inspVenta">$ 7.772.400</span>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs inside Inspector -->
+        <div class="inspector-tabs">
+          <div class="insp-tab active" onclick="switchInspectorTab('tabPartidas')">Partidas del Adicional (<span id="inspPartidasCount">3</span>)</div>
+          <div class="insp-tab" onclick="switchInspectorTab('tabMateriales')">Materiales Críticos</div>
+          <div class="insp-tab" onclick="switchInspectorTab('tabAuditoria')">Bitácora & Trazabilidad</div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="inspector-content">
+          
+          <!-- ─── TAB 1: PARTIDAS DEL ADICIONAL (CON SELECTOR DE CONTRATO Y BORRADO) ─── -->
+          <div class="tab-pane active" id="tabPartidas">
+            
+            <!-- TOOLBAR: SELECCIONAR DE CONTRATO O EXTRAORDINARIA -->
+            <div class="partidas-action-bar">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <button class="btn-contract-add" onclick="openContractPickerModal()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  🔒 + Partida de Contrato (P.U. Cerrado)
+                </button>
+                <button class="btn-extra-add" onclick="openExtraPartidaModal()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  ★ + Partida Extraordinaria
+                </button>
+              </div>
+
+              <span style="font-size:10.5px; color:#64748B;">
+                🔒 P.U. congelados por regla contractual
+              </span>
+            </div>
+
+            <!-- TABLE OF PARTIDAS IN THIS ORDER -->
+            <div id="partidasTableWrapper" style="overflow-y:auto; flex:1;">
+              <table class="lineas-table">
+                <thead>
+                  <tr>
+                    <th style="width: 48px;">Ítem</th>
+                    <th>Descripción Partida</th>
+                    <th style="width: 105px;">Cantidades</th>
+                    <th style="width: 110px;">P.U. Contrato</th>
+                    <th style="width: 95px; text-align: right;">Subtotal</th>
+                    <th style="width: 38px; text-align: center;">Quitar</th>
+                  </tr>
+                </thead>
+                <tbody id="inspPartidasBody">
+                  <!-- Injected via javascript -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- EMPTY STATE IF ALL LINES REMOVED -->
+            <div id="partidasEmptyState" class="empty-partidas-box" style="display:none;">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+              <div style="font-weight:700; color:#334155; font-size:13px;">No hay partidas registradas en este adicional</div>
+              <p>Puedes incorporar partidas del contrato original (con precio unitario congelado) o agregar partidas extraordinarias nuevas.</p>
+              <button class="btn btn-primary" style="height:32px; font-size:11.5px;" onclick="openContractPickerModal()">
+                🔒 Seleccionar Partidas del Contrato
+              </button>
+            </div>
+
+          </div>
+
+          <!-- ─── TAB 2: MATERIALES CRÍTICOS ─── -->
+          <div class="tab-pane" id="tabMateriales">
+            <table class="lineas-table">
+              <thead>
+                <tr>
+                  <th>Insumo / Conductor / Canalización</th>
+                  <th style="width: 55px;">Unidad</th>
+                  <th style="width: 65px; text-align: right;">Cantidad</th>
+                  <th style="width: 90px; text-align: right;">P.U. Compra</th>
+                  <th style="width: 95px; text-align: right;">Total Mat.</th>
+                </tr>
+              </thead>
+              <tbody id="inspMaterialesBody">
+                <!-- Injected via javascript -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ─── TAB 3: BITÁCORA & TRAZABILIDAD ─── -->
+          <div class="tab-pane" id="tabAuditoria">
+            <div class="timeline" id="inspTimeline">
+              <!-- Timeline events injected here -->
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+</div>
+
+<!-- ─── MODAL 1: SELECTOR DE PARTIDAS CERRADAS EN EL CONTRATO (P.U. BLINDADO) ─ -->
+<div class="modal-overlay" id="contractPickerModal">
+  <div class="modal-window">
+    <div class="modal-head">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Partidas Cerradas en el Contrato Original (P.U. Inalterable 🔒)
+      </h3>
+      <button class="modal-close-btn" onclick="closeContractPickerModal()">✕</button>
+    </div>
+    
+    <div class="modal-body">
+      <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:10px 14px; display:flex; align-items:center; gap:10px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#D97706"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v2h-2V7zm0 4h2v6h-2v-6z"/></svg>
+        <div style="font-size:11.5px; color:#78350F;">
+          <strong>Blindaje Contractual:</strong> Los precios unitarios de esta lista corresponden a las bases adjudicadas del contrato. Al incorporarlas a la orden de cambio, el P.U. permanecerá estricta e inviolablemente congelado.
+        </div>
+      </div>
+
+      <!-- Buscador interno de partidas del contrato -->
+      <div class="search-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" class="search-input" id="contractSearchBox" placeholder="Filtrar por ítem (ej. 1.2), cable, alimentador, luminaria..." oninput="filterContractPartidas()">
+      </div>
+
+      <!-- Tabla de partidas disponibles en el contrato -->
+      <div style="max-height:360px; overflow-y:auto; border:1px solid #E2E8F0; border-radius:8px;">
+        <table class="contract-picker-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">Ítem</th>
+              <th>Descripción en Presupuesto Contratado</th>
+              <th style="width: 50px; text-align: center;">Unid</th>
+              <th style="width: 80px; text-align: right;">Cant. Base</th>
+              <th style="width: 110px; text-align: right;">P.U. Contrato 🔒</th>
+              <th style="width: 90px; text-align: center;">Δ Cantidad</th>
+              <th style="width: 95px; text-align: center;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="contractPartidasTableBody">
+            <!-- Dynamically populated from contractCatalog -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeContractPickerModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL 2: NUEVA PARTIDA EXTRAORDINARIA (APU NUEVO) ──────────────────── -->
+<div class="modal-overlay" id="extraPartidaModal">
+  <div class="modal-window" style="width:620px;">
+    <div class="modal-head">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D8B4FE" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Crear Partida Extraordinaria (Nuevo APU)
+      </h3>
+      <button class="modal-close-btn" onclick="closeExtraPartidaModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div style="background:#FAF5FF; border:1px solid #E9D5FF; border-radius:8px; padding:10px 14px; font-size:11.5px; color:#6B21A8;">
+        <strong>Partida Fuera de Contrato:</strong> Al no existir en las bases originales, esta partida permite definir un nuevo Precio Unitario validado con análisis de precios unitarios (APU).
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="field-label">Código Ítem</label>
+          <input type="text" class="text-input" id="extraItemCode" value="EX-003" style="font-family:var(--mono); font-weight:700;">
+        </div>
+        <div class="form-field">
+          <label class="field-label">Descripción Técnica</label>
+          <input type="text" class="text-input" id="extraItemDesc" placeholder="Ej: Canalización subterránea Bapres para grupo electrógeno">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 100px 140px 1fr; gap:12px;">
+        <div class="form-field">
+          <label class="field-label">Unidad</label>
+          <input type="text" class="text-input" id="extraItemUnit" value="M" style="font-family:var(--mono); text-align:center;">
+        </div>
+        <div class="form-field">
+          <label class="field-label">Cantidad Adicional</label>
+          <input type="number" class="text-input" id="extraItemQty" value="15" style="font-family:var(--mono); font-weight:700; text-align:right;">
+        </div>
+        <div class="form-field">
+          <label class="field-label" id="extraItemPuLabel">P.U. Venta (CLP)</label>
+          <input type="number" class="text-input" id="extraItemPu" value="48500" style="font-family:var(--mono); font-weight:700; text-align:right; color:#7E22CE;">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeExtraPartidaModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitExtraPartida()">Incorporar Partida Extraordinaria</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL 3: NUEVA ORDEN DE CAMBIO (SIMULATION) ────────────────────────── -->
+<div class="modal-overlay" id="newOrderModal">
+  <div class="modal-window">
+    <div class="modal-head">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        Crear Nueva Orden de Cambio (Adicional)
+      </h3>
+      <button class="modal-close-btn" onclick="closeNewOrderModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="field-label">Código OC</label>
+          <input type="text" class="text-input" id="newOrderCode" value="OC-006" readonly style="font-family:var(--mono); font-weight:700; background:#F1F5F9;">
+        </div>
+        <div class="form-field">
+          <label class="field-label">Título del Adicional</label>
+          <input type="text" class="text-input" id="newOrderTitle" placeholder="Ej: Nueva acometida eléctrica para grupo electrógeno de respaldo">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+        <div class="form-field">
+          <label class="field-label">Solicitado por (ITO / Mandante)</label>
+          <input type="text" class="text-input" id="newOrderAuthor" value="Ing. Cristobal Silva (Jefe de Obra)">
+        </div>
+        <div class="form-field">
+          <label class="field-label">Referencia / RFI Relacionado</label>
+          <input type="text" class="text-input" id="newOrderRef" placeholder="Ej: RFI-ELEC-058 / Carta Mandante Nº 14">
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label class="field-label">Justificación Técnica del Adicional</label>
+        <textarea class="text-input" id="newOrderNote" style="height:60px; padding:8px 12px; resize:none;" placeholder="Detalle el motivo técnico de la modificación o partida extraordinaria..."></textarea>
+      </div>
+
+      <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:10px 14px; display:flex; align-items:center; gap:10px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#D97706"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v2h-2V7zm0 4h2v6h-2v-6z"/></svg>
+        <div style="font-size:11.5px; color:#78350F;">
+          <strong>Regla de Blindaje Contractual:</strong> Las partidas seleccionadas del presupuesto base mantendrán estrictamente el precio unitario pactado.
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeNewOrderModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitNewOrder()">Crear Borrador y Seleccionar Partidas →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TOAST NOTIFICATION CONTAINER ───────────────────────────────────────── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ─── JAVASCRIPT STATE ENGINE & INTERACTION ──────────────────────────────── -->
+<script>
+  // Project State & Data
+  let currency = 'CLP'; // 'CLP' or 'UF'
+  const UF_RATE = 38450;
+  const CONTRATO_ORIGINAL_UF = 4798.4395;
+
+  let currentFilter = 'all';
+  let selectedOrderId = 'OC-004';
+
+  // Catálogo oficial de partidas del contrato base (con P.U. congelados por adjudicación)
+  const contractCatalog = [
+    { item: '1.1.1', desc: 'Instalación de Faenas y Empalme Provisorio T-PROV', unit: 'GL', baseQty: 1, puUf: 48.114, puClp: 1850000 },
+    { item: '1.2.1', desc: 'Canalización embutida en muro y losa Tubería PVC 20mm', unit: 'M', baseQty: 950, puUf: 0.145, puClp: 5575 },
+    { item: '1.2.4', desc: 'Canalización Tubería PVC Conduit 25mm subterránea', unit: 'M', baseQty: 120, puUf: 0.165, puClp: 6344 },
+    { item: '1.4.1', desc: 'Cable Superflex 3x2.5mm² libre de halógenos RZ1-K', unit: 'M', baseQty: 360, puUf: 0.082, puClp: 3153 },
+    { item: '1.6.8', desc: 'Luminaria Proyector LED 50W IP66 sobreposte', unit: 'UN', baseQty: 12, puUf: 8.510, puClp: 327209 },
+    { item: '2.1.2', desc: 'Tubería Acero Galvanizado EMT 25mm a la vista', unit: 'M', baseQty: 240, puUf: 0.250, puClp: 9613 },
+    { item: '2.1.4', desc: 'Canalización Tubería EPC 50mm heavy duty', unit: 'M', baseQty: 120, puUf: 0.377, puClp: 14500 },
+    { item: '2.2.1', desc: 'Cable de Fuerza Multipolar 4x6mm² XLPE', unit: 'M', baseQty: 80, puUf: 0.277, puClp: 10650 },
+    { item: '2.3.1', desc: 'Cable Superflex Cu 3x50mm² + T RZ1-K 0.6/1kV', unit: 'M', baseQty: 360, puUf: 0.993, puClp: 38181 },
+    { item: '2.4.1', desc: 'Tablero General de Alumbrado TGA en gabinete metálico IP55', unit: 'UN', baseQty: 1, puUf: 219.766, puClp: 8450000 },
+    { item: '2.5.3', desc: 'Arrancador Suave 15kW en gabinete hermético', unit: 'UN', baseQty: 2, puUf: 28.500, puClp: 1095825 },
+    { item: '3.1.2', desc: 'Tubería Acero Galvanizado EMT 20mm', unit: 'M', baseQty: 450, puUf: 0.220, puClp: 8459 },
+    { item: '3.1.5', desc: 'Enchufe Doble Embutido 10/16A Bticino Matix', unit: 'UN', baseQty: 85, puUf: 0.385, puClp: 14800 }
+  ];
+
+  const ordersData = [
+    {
+      id: 'OC-001',
+      code: 'OC-001',
+      title: 'Aumento de Circuitos de Iluminación Exterior Terraza y Jardines',
+      status: 'Aprobado',
+      date: '10/10/2026',
+      author: 'Ing. Carlos Mendoza (ITO)',
+      ref: 'RFI-ELEC-012',
+      tags: ['🔒 P.U. Congelado', '⚡ Iluminación'],
+      ggPct: 12,
+      utilidadPct: 15,
+      note: 'Aprobado según Acta ITO Nº 04. Se adicionan 18 luminarias LED estancas y 95m de canalización subterránea.',
+      partidas: [
+        { item: '1.2.4', desc: 'Canalización Tubería PVC Conduit 25mm subterránea', baseQty: 120, addQty: 95, puUf: 0.165, frozen: true },
+        { item: '1.4.1', desc: 'Cable Superflex 3x2.5mm² libre de halógenos', baseQty: 360, addQty: 285, puUf: 0.082, frozen: true },
+        { item: '1.6.8', desc: 'Luminaria Proyector LED 50W IP66 sobreposte', baseQty: 12, addQty: 18, puUf: 8.510, frozen: true }
+      ],
+      materiales: [
+        { name: 'Luminaria LED Exterior 50W IP66 Philips', unit: 'UN', qty: 18, puClp: 265000, totalClp: 4770000 },
+        { name: 'Tubería Conduit PVC 25mm x 3m', unit: 'TIR', qty: 32, puClp: 8900, totalClp: 284800 },
+        { name: 'Conductor Cu RZ1-K 3x2.5mm²', unit: 'M', qty: 285, puClp: 2150, totalClp: 612750 }
+      ],
+      history: [
+        { date: '10/10/2026 09:30', user: 'Estimador Obra', text: 'Orden creada como borrador técnico con 3 partidas de contrato.' },
+        { date: '11/10/2026 14:15', user: 'Ing. Carlos Mendoza (ITO)', text: 'Validación técnica conforme en terreno. Elevada a Mandante.' },
+        { date: '14/10/2026 18:00', user: 'Mandante Inmobiliaria', text: 'Aprobación definitiva según Acta Nº 04. Incorporada a presupuesto proyectado.' }
+      ]
+    },
+    {
+      id: 'OC-002',
+      code: 'OC-002',
+      title: 'Canalización y Cableado de Red de Sensores de Monóxido de Carbono (CO)',
+      status: 'Aprobado',
+      date: '15/10/2026',
+      author: 'Ing. Carlos Mendoza (ITO)',
+      ref: 'RFI-SEC-028',
+      tags: ['★ Extraordinaria', '🔒 P.U. Congelado'],
+      ggPct: 12,
+      utilidadPct: 15,
+      note: 'Requerimiento de la Dirección de Obras para ventilación mecánica de subterráneos.',
+      partidas: [
+        { item: '3.1.2', desc: 'Tubería Acero Galvanizado EMT 20mm', baseQty: 450, addQty: 180, puUf: 0.220, frozen: true },
+        { item: 'EX-001', desc: 'Detector y Sensor Electroquímico de CO 24V (Extraordinaria)', baseQty: 0, addQty: 14, puUf: 9.968, frozen: false }
+      ],
+      materiales: [
+        { name: 'Sensor Central CO 24V Honeywell', unit: 'UN', qty: 14, puClp: 310000, totalClp: 4340000 },
+        { name: 'Tubería EMT 20mm x 3m con unión', unit: 'TIR', qty: 60, puClp: 14500, totalClp: 870000 }
+      ],
+      history: [
+        { date: '15/10/2026 11:00', user: 'Estimador Obra', text: 'Creación de orden con APU extraordinario de sensor de CO.' },
+        { date: '16/10/2026 16:45', user: 'Ing. Carlos Mendoza (ITO)', text: 'Revisión de rendimientos y cotización de sensor aprobada.' },
+        { date: '18/10/2026 12:30', user: 'Mandante Inmobiliaria', text: 'Aprobado para cumplimiento de recepción municipal SEC.' }
+      ]
+    },
+    {
+      id: 'OC-003',
+      code: 'OC-003',
+      title: 'Modificación de Tablero de Bombeo de Aguas Servidas por aumento de potencia',
+      status: 'En revisión',
+      date: '20/10/2026',
+      author: 'Jefe de Proyectos Hidráulicos',
+      ref: 'RFI-ELEC-037',
+      tags: ['⚡ Fuerza', '🔒 P.U. Congelado'],
+      ggPct: 12,
+      utilidadPct: 15,
+      note: 'Cálculo de bombas modificado de 5.5 HP a 10 HP por nueva cota de impulsión.',
+      partidas: [
+        { item: '2.5.3', desc: 'Arrancador Suave 15kW en gabinete hermético', baseQty: 2, addQty: 2, puUf: 28.500, frozen: true },
+        { item: '2.2.1', desc: 'Cable de Fuerza Multipolar 4x6mm²', baseQty: 80, addQty: 60, puUf: 0.277, frozen: true }
+      ],
+      materiales: [
+        { name: 'Arrancador Suave Schneider ATS22 15kW', unit: 'UN', qty: 2, puClp: 950000, totalClp: 1900000 },
+        { name: 'Cable Cu XLPE 4x6mm²', unit: 'M', qty: 60, puClp: 4800, totalClp: 288000 }
+      ],
+      history: [
+        { date: '20/10/2026 10:20', user: 'Estimador Obra', text: 'Borrador ingresado a solicitud de especialidad sanitaria.' },
+        { date: '21/10/2026 09:00', user: 'Jefe de Faena', text: 'Enviado a revisión de ITO con memoria de cálculo adjunta.' }
+      ]
+    },
+    {
+      id: 'OC-004',
+      code: 'OC-004',
+      title: 'Alimentador Principal Tablero Fuerza Climatización TF-CLIM Piso 3',
+      status: 'En revisión',
+      date: '24/10/2026',
+      author: 'Ing. Carlos Mendoza (ITO)',
+      ref: 'RFI-CLIM-042',
+      tags: ['⚡ Climatización', '🔒 P.U. Congelado', '★ Extraordinaria'],
+      ggPct: 12,
+      utilidadPct: 15,
+      note: 'Reubicación de condensadoras chillers en azotea exige extensión de alimentador principal desde Sala Eléctrica.',
+      partidas: [
+        { item: '2.1.4', desc: 'Canalización Tubería EPC 50mm heavy duty', baseQty: 120, addQty: 45, puUf: 0.377, frozen: true },
+        { item: '2.3.1', desc: 'Cable Superflex Cu 3x50mm² + T RZ1-K', baseQty: 360, addQty: 135, puUf: 0.993, frozen: true },
+        { item: 'EX-002', desc: 'Interruptor Caja Moldeada 3x250A regulable con bobina', baseQty: 0, addQty: 1, puUf: 51.123, frozen: false }
+      ],
+      materiales: [
+        { name: 'Conductor Cu RZ1-K 3x50mm² + T (por metro)', unit: 'M', qty: 135, puClp: 31200, totalClp: 4212000 },
+        { name: 'Tubería EPC 50mm c/accesorios', unit: 'M', qty: 45, puClp: 12400, totalClp: 558000 },
+        { name: 'Interruptor Caja Moldeada Schneider NSX250F 3P', unit: 'UN', qty: 1, puClp: 1350000, totalClp: 1350000 }
+      ],
+      history: [
+        { date: '24/10/2026 14:00', user: 'Estimador Eléctrico', text: 'Borrador cargado con cubicación de azotea.' },
+        { date: '25/10/2026 11:30', user: 'Ing. Carlos Mendoza (ITO)', text: 'Inspección de trazado realizada. Pendiente Visto Bueno del Administrador del Contrato.' }
+      ]
+    },
+    {
+      id: 'OC-005',
+      code: 'OC-005',
+      title: 'Sistema de Canalización Bajo Piso para Puestos de Trabajo Cowork',
+      status: 'Borrador',
+      date: '26/10/2026',
+      author: 'Jefe de Obra',
+      ref: 'RFI-ARQ-019',
+      tags: ['○ En Edición', '🔒 P.U. Congelado'],
+      ggPct: 12,
+      utilidadPct: 15,
+      note: 'Propuesta arquitectónica de habilitación de sala lounge.',
+      partidas: [
+        { item: '1.2.1', desc: 'Canalización embutida en muro y losa Tubería PVC 20mm', baseQty: 950, addQty: 40, puUf: 0.145, frozen: true }
+      ],
+      materiales: [
+        { name: 'Tubería Conduit PVC 20mm x 3m', unit: 'TIR', qty: 14, puClp: 7200, totalClp: 100800 }
+      ],
+      history: [
+        { date: '26/10/2026 17:00', user: 'Jefe de Obra', text: 'Ingreso inicial de cantidades para evaluación económica.' }
+      ]
+    }
+  ];
+
+  // Dynamic calculations of order totals based on active partidas
+  function computeOrderTotals(o) {
+    let subtotalVentaUf = 0;
+    o.partidas.forEach(p => {
+      subtotalVentaUf += p.addQty * p.puUf;
+    });
+
+    const factorVenta = 1 + (o.ggPct / 100) + (o.utilidadPct / 100);
+    const costoDirectoUf = subtotalVentaUf / factorVenta;
+
+    o.costoUf = costoDirectoUf;
+    o.deltaVentaUf = subtotalVentaUf;
+    o.linesCount = o.partidas.length;
+    return subtotalVentaUf;
+  }
+
+  // Recalculate all orders
+  ordersData.forEach(computeOrderTotals);
+
+  // Formatting helpers
+  function formatMoney(amountUf) {
+    if (currency === 'CLP') {
+      const clp = Math.round(amountUf * UF_RATE);
+      return (clp >= 0 ? '' : '- ') + '$ ' + Math.abs(clp).toLocaleString('es-CL');
+    } else {
+      return (amountUf >= 0 ? '' : '- ') + Math.abs(amountUf).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' UF';
+    }
+  }
+
+  function formatDelta(amountUf) {
+    if (currency === 'CLP') {
+      const clp = Math.round(amountUf * UF_RATE);
+      return (clp > 0 ? '+$ ' : clp < 0 ? '-$ ' : '$ ') + Math.abs(clp).toLocaleString('es-CL');
+    } else {
+      return (amountUf > 0 ? '+ ' : amountUf < 0 ? '- ' : '') + Math.abs(amountUf).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' UF';
+    }
+  }
+
+  // Currency Switch
+  function setCurrency(newCur) {
+    currency = newCur;
+    document.getElementById('btnClp').classList.toggle('active', newCur === 'CLP');
+    document.getElementById('btnUf').classList.toggle('active', newCur === 'UF');
+    document.getElementById('extraItemPuLabel').textContent = newCur === 'CLP' ? 'P.U. Venta (CLP)' : 'P.U. Venta (UF)';
+    
+    updateDashboardKpis();
+    renderOrdersTable();
+    renderInspector();
+    showToast(`Moneda cambiada a ${newCur === 'CLP' ? 'Pesos Chilenos (CLP)' : 'Unidades de Fomento (UF)'}`);
+  }
+
+  // Recalculate and update Executive Cockpit KPIs
+  function updateDashboardKpis() {
+    let montoAprobadoUf = 0;
+    let montoPendienteUf = 0;
+    let countApproved = 0;
+    let countPending = 0;
+    let countDraft = 0;
+
+    ordersData.forEach(o => {
+      computeOrderTotals(o);
+      if (o.status === 'Aprobado') {
+        montoAprobadoUf += o.deltaVentaUf;
+        countApproved++;
+      } else if (o.status === 'En revisión') {
+        montoPendienteUf += o.deltaVentaUf;
+        countPending++;
+      } else if (o.status === 'Borrador') {
+        countDraft++;
+      }
+    });
+
+    const totalProyectadoUf = CONTRATO_ORIGINAL_UF + montoAprobadoUf;
+    const pctAumento = (montoAprobadoUf / CONTRATO_ORIGINAL_UF) * 100;
+
+    document.getElementById('kpiContratoOriginal').textContent = formatMoney(CONTRATO_ORIGINAL_UF);
+    document.getElementById('kpiMontoAprobado').textContent = '+' + formatMoney(montoAprobadoUf);
+    document.getElementById('kpiPctAumento').textContent = '+' + pctAumento.toFixed(2) + '% Aumento';
+    document.getElementById('kpiAprobadoCount').textContent = `${countApproved} ${countApproved === 1 ? 'orden en firme' : 'órdenes en firme'}`;
+    
+    document.getElementById('kpiMontoPendiente').textContent = '+' + formatMoney(montoPendienteUf);
+    document.getElementById('kpiPendingCount').textContent = `${countPending} en trámite`;
+    
+    document.getElementById('kpiTotalProyectado').textContent = formatMoney(totalProyectadoUf);
+
+    // Margen
+    const utilidadUf = montoAprobadoUf * 0.1304;
+    const ggUf = montoAprobadoUf * 0.1043;
+    const costoUf = montoAprobadoUf - utilidadUf - ggUf;
+
+    document.getElementById('kpiUtilidad').textContent = formatMoney(utilidadUf);
+    document.getElementById('kpiGGTxt').textContent = `GG: 12% (${formatMoney(ggUf)})`;
+    document.getElementById('kpiCostoTxt').textContent = `Costo: ${formatMoney(costoUf)}`;
+
+    // Waterfall bar widths
+    const totalMax = Math.max(CONTRATO_ORIGINAL_UF + 1, totalProyectadoUf + montoPendienteUf);
+    const basePct = (CONTRATO_ORIGINAL_UF / totalMax) * 100;
+    const appPct = (montoAprobadoUf / totalMax) * 100;
+    const penPct = (montoPendienteUf / totalMax) * 100;
+
+    document.querySelector('.wf-segment.base').style.width = basePct.toFixed(1) + '%';
+    document.querySelector('.wf-segment.approved').style.width = appPct.toFixed(1) + '%';
+    document.querySelector('.wf-segment.pending').style.width = penPct.toFixed(1) + '%';
+
+    document.getElementById('wfBaseTxt').textContent = `${formatMoney(CONTRATO_ORIGINAL_UF)} (${basePct.toFixed(1)}%)`;
+    document.getElementById('wfAppTxt').textContent = `+${formatMoney(montoAprobadoUf)} (${appPct.toFixed(1)}%)`;
+    document.getElementById('wfPenTxt').textContent = `+${formatMoney(montoPendienteUf)} (${penPct.toFixed(1)}%)`;
+    document.getElementById('wfTotalTxt').textContent = formatMoney(totalProyectadoUf);
+
+    // Counters
+    document.getElementById('totalOrdersPill').textContent = ordersData.length;
+    document.getElementById('countAll').textContent = ordersData.length;
+    document.getElementById('countApproved').textContent = countApproved;
+    document.getElementById('countPending').textContent = countPending;
+    document.getElementById('countDraft').textContent = countDraft;
+  }
+
+  // Filter Orders
+  function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.seg-pill').forEach(btn => btn.classList.remove('active'));
+    if (filter === 'all') document.getElementById('filterAll').classList.add('active');
+    if (filter === 'Aprobado') document.getElementById('filterApproved').classList.add('active');
+    if (filter === 'En revisión') document.getElementById('filterPending').classList.add('active');
+    if (filter === 'Borrador') document.getElementById('filterDraft').classList.add('active');
+    renderOrdersTable();
+  }
+
+  function filterOrders() {
+    renderOrdersTable();
+  }
+
+  // Render Master Orders Table
+  function renderOrdersTable() {
+    const tbody = document.getElementById('ordersTableBody');
+    tbody.innerHTML = '';
+
+    const query = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+
+    const filtered = ordersData.filter(o => {
+      const matchFilter = (currentFilter === 'all') || (o.status === currentFilter);
+      const matchQuery = !query ||
+        o.code.toLowerCase().includes(query) ||
+        o.title.toLowerCase().includes(query) ||
+        o.author.toLowerCase().includes(query) ||
+        o.note.toLowerCase().includes(query);
+      return matchFilter && matchQuery;
+    });
+
+    document.getElementById('visibleCount').textContent = filtered.length;
+
+    filtered.forEach(o => {
+      const tr = document.createElement('tr');
+      tr.className = 'order-row' + (o.id === selectedOrderId ? ' selected' : '');
+      tr.onclick = () => selectOrder(o.id);
+
+      let statusClass = 'draft';
+      let statusText = '○ Borrador';
+      if (o.status === 'Aprobado') { statusClass = 'approved'; statusText = '✓ Aprobado'; }
+      if (o.status === 'En revisión') { statusClass = 'pending'; statusText = '⏳ En revisión ITO'; }
+      if (o.status === 'Rechazado') { statusClass = 'rejected'; statusText = '✗ Rechazado'; }
+
+      tr.innerHTML = `
+        <td class="code-cell">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6"/></svg>
+          ${o.code}
+        </td>
+        <td>
+          <div class="order-title-box">
+            <span class="order-title-text">${o.title}</span>
+            <div class="order-tags">
+              <span class="badge-tag">${o.partidas.length} ${o.partidas.length === 1 ? 'partida' : 'partidas'}</span>
+              ${o.tags.map(t => `<span class="badge-tag ${t.includes('Congelado') ? 'frozen' : t.includes('Extra') ? 'extra' : ''}">${t}</span>`).join('')}
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="status-pill ${statusClass}">
+            <span class="status-dot-pulse"></span>
+            ${statusText}
+          </span>
+        </td>
+        <td style="font-family:var(--mono); font-size:11.5px; color:#64748B;">
+          ${o.date}
+        </td>
+        <td class="money-cell ${o.deltaVentaUf >= 0 ? 'money-positive' : 'money-negative'}">
+          ${formatDelta(o.deltaVentaUf)}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Select Order & Render Inspector
+  function selectOrder(id) {
+    selectedOrderId = id;
+    renderOrdersTable();
+    renderInspector();
+  }
+
+  function renderInspector() {
+    const o = ordersData.find(x => x.id === selectedOrderId);
+    if (!o) return;
+
+    computeOrderTotals(o);
+
+    document.getElementById('inspCode').textContent = o.code;
+    document.getElementById('inspTitle').textContent = o.title;
+    document.getElementById('inspAuthor').innerHTML = `Solicitante: <b>${o.author}</b>`;
+    document.getElementById('inspDate').innerHTML = `Fecha: <b>${o.date}</b> • Ref: <b>${o.ref}</b>`;
+
+    let statusClass = 'draft';
+    let statusText = '○ Borrador';
+    if (o.status === 'Aprobado') { statusClass = 'approved'; statusText = '✓ Aprobado Mandante'; }
+    if (o.status === 'En revisión') { statusClass = 'pending'; statusText = '⏳ En Revisión ITO'; }
+    if (o.status === 'Rechazado') { statusClass = 'rejected'; statusText = '✗ Rechazado'; }
+    document.getElementById('inspStatusBadge').innerHTML = `
+      <span class="status-pill ${statusClass}">
+        <span class="status-dot-pulse"></span>
+        ${statusText}
+      </span>
+    `;
+
+    // Financial breakdown
+    document.getElementById('inspCosto').textContent = formatMoney(o.costoUf);
+    const ggUf = o.costoUf * (o.ggPct / 100);
+    const utilUf = (o.costoUf + ggUf) * (o.utilidadPct / 100);
+    document.getElementById('inspGG').textContent = formatMoney(ggUf);
+    document.getElementById('inspUtilidad').textContent = formatMoney(utilUf);
+    document.getElementById('inspVenta').textContent = formatDelta(o.deltaVentaUf);
+
+    // Stepper
+    const s1 = document.getElementById('step1');
+    const s2 = document.getElementById('step2');
+    const s3 = document.getElementById('step3');
+    const c1 = document.getElementById('stepConn1');
+    const c2 = document.getElementById('stepConn2');
+
+    s1.className = 'step-node completed';
+    s2.className = 'step-node';
+    s3.className = 'step-node';
+    c1.className = 'step-connector';
+    c2.className = 'step-connector';
+
+    if (o.status === 'Borrador') {
+      s1.className = 'step-node current';
+    } else if (o.status === 'En revisión') {
+      s1.className = 'step-node completed';
+      c1.className = 'step-connector completed';
+      s2.className = 'step-node current';
+    } else if (o.status === 'Aprobado') {
+      s1.className = 'step-node completed';
+      c1.className = 'step-connector completed';
+      s2.className = 'step-node completed';
+      c2.className = 'step-connector completed';
+      s3.className = 'step-node completed';
+    }
+
+    // Partidas tab count
+    document.getElementById('inspPartidasCount').textContent = o.partidas.length;
+
+    // Toggle Empty state vs table
+    const tableWrap = document.getElementById('partidasTableWrapper');
+    const emptyBox = document.getElementById('partidasEmptyState');
+    if (o.partidas.length === 0) {
+      tableWrap.style.display = 'none';
+      emptyBox.style.display = 'flex';
+    } else {
+      tableWrap.style.display = 'block';
+      emptyBox.style.display = 'none';
+    }
+
+    // Partidas Body with DELETE BUTTON and EDITABLE QUANTITY
+    const pBody = document.getElementById('inspPartidasBody');
+    pBody.innerHTML = '';
+    o.partidas.forEach((p, idx) => {
+      const tr = document.createElement('tr');
+      const subtotalLine = p.addQty * p.puUf;
+
+      tr.innerHTML = `
+        <td style="font-family:var(--mono); font-weight:700; color:#1D4ED8;">${p.item}</td>
+        <td>
+          <div style="font-weight:600; color:#0F172A;">${p.desc}</div>
+          <div style="font-size:10px; color:${p.frozen ? '#B45309' : '#7E22CE'};">
+            ${p.frozen ? '🔒 Precio Unitario congelado del contrato base' : '★ Partida Extraordinaria (Nuevo APU)'}
+          </div>
+        </td>
+        <td>
+          <div class="qty-delta-box">
+            <span class="qty-base" title="Cantidad en contrato base">${p.baseQty}</span>
+            <span class="qty-arrow">➔</span>
+            <input type="number" class="qty-input-mini" value="${p.addQty}" step="1"
+                   onchange="updateLineQty(${idx}, this.value)" title="Modificar cantidad adicional">
+          </div>
+        </td>
+        <td>
+          <span class="pu-freeze-badge ${p.frozen ? '' : 'extra'}" title="${p.frozen ? 'Valor cerrado en contrato original' : 'APU fuera de contrato'}">
+            ${p.frozen ? '<span class="freeze-icon">🔒</span>' : '★'}
+            ${formatMoney(p.puUf)}
+          </span>
+        </td>
+        <td style="font-family:var(--mono); font-weight:700; text-align:right; color:#047857;">
+          ${formatMoney(subtotalLine)}
+        </td>
+        <td style="text-align:center;">
+          <button class="btn-remove-line" onclick="removePartidaFromOrder(${idx})" title="Eliminar partida de este adicional">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </td>
+      `;
+      pBody.appendChild(tr);
+    });
+
+    // Materiales Body
+    const mBody = document.getElementById('inspMaterialesBody');
+    mBody.innerHTML = '';
+    o.materiales.forEach(m => {
+      const tr = document.createElement('tr');
+      const totalUf = m.totalClp / UF_RATE;
+      const puUf = m.puClp / UF_RATE;
+      tr.innerHTML = `
+        <td style="font-weight:600; color:#1E293B;">${m.name}</td>
+        <td style="font-family:var(--mono); color:#64748B;">${m.unit}</td>
+        <td style="font-family:var(--mono); font-weight:700; text-align:right;">${m.qty}</td>
+        <td style="font-family:var(--mono); text-align:right;">${currency === 'CLP' ? '$ ' + m.puClp.toLocaleString('es-CL') : puUf.toFixed(2) + ' UF'}</td>
+        <td style="font-family:var(--mono); font-weight:700; text-align:right; color:#1E40AF;">
+          ${currency === 'CLP' ? '$ ' + m.totalClp.toLocaleString('es-CL') : totalUf.toFixed(2) + ' UF'}
+        </td>
+      `;
+      mBody.appendChild(tr);
+    });
+
+    // Timeline Body
+    const tBody = document.getElementById('inspTimeline');
+    tBody.innerHTML = '';
+    o.history.forEach((h, idx) => {
+      const ev = document.createElement('div');
+      ev.className = 'timeline-event';
+      const isLast = idx === o.history.length - 1;
+      ev.innerHTML = `
+        <div class="timeline-dot ${isLast && o.status === 'Aprobado' ? 'success' : isLast && o.status === 'En revisión' ? 'warning' : ''}"></div>
+        <div class="event-header">
+          <span>${h.user}</span>
+          <span class="event-date">${h.date}</span>
+        </div>
+        <div class="event-body">${h.text}</div>
+      `;
+      tBody.appendChild(ev);
+    });
+  }
+
+  // ─── ACTIONS ON PARTIDAS: REMOVE AND UPDATE QUANTITY ───────────────────────
+  function removePartidaFromOrder(index) {
+    const o = ordersData.find(x => x.id === selectedOrderId);
+    if (!o) return;
+
+    const removedItem = o.partidas[index];
+    o.partidas.splice(index, 1);
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('es-CL') + ' ' + now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    o.history.push({
+      date: dateStr,
+      user: 'Estimador / Usuario',
+      text: `Partida ${removedItem.item} «${removedItem.desc}» eliminada del adicional. Totales recalculados.`
+    });
+
+    computeOrderTotals(o);
+    updateDashboardKpis();
+    renderOrdersTable();
+    renderInspector();
+    showToast(`Partida ${removedItem.item} eliminada del adicional. Totales actualizados.`);
+  }
+
+  function updateLineQty(index, newQtyStr) {
+    const o = ordersData.find(x => x.id === selectedOrderId);
+    if (!o) return;
+
+    const newQty = parseFloat(newQtyStr);
+    if (isNaN(newQty)) return;
+
+    o.partidas[index].addQty = newQty;
+    computeOrderTotals(o);
+    updateDashboardKpis();
+    renderOrdersTable();
+    renderInspector();
+    showToast(`Cantidad actualizada para partida ${o.partidas[index].item} (+${newQty}).`);
+  }
+
+  // ─── MODAL 1: CONTRACT PICKER FUNCTIONS ──────────────────────────────────
+  function openContractPickerModal() {
+    renderContractPickerTable();
+    document.getElementById('contractPickerModal').style.display = 'flex';
+  }
+
+  function closeContractPickerModal() {
+    document.getElementById('contractPickerModal').style.display = 'none';
+  }
+
+  function filterContractPartidas() {
+    renderContractPickerTable();
+  }
+
+  function renderContractPickerTable() {
+    const tbody = document.getElementById('contractPartidasTableBody');
+    tbody.innerHTML = '';
+
+    const query = (document.getElementById('contractSearchBox').value || '').toLowerCase().trim();
+    const o = ordersData.find(x => x.id === selectedOrderId);
+
+    const filtered = contractCatalog.filter(c => {
+      return !query || c.item.toLowerCase().includes(query) || c.desc.toLowerCase().includes(query);
+    });
+
+    filtered.forEach(c => {
+      const tr = document.createElement('tr');
+      const alreadyInOrder = o && o.partidas.some(p => p.item === c.item);
+
+      tr.innerHTML = `
+        <td style="font-family:var(--mono); font-weight:700; color:#1D4ED8;">${c.item}</td>
+        <td>
+          <div style="font-weight:600; color:#0F172A;">${c.desc}</div>
+          <div style="font-size:10px; color:#92400E;">🔒 Precio unitario congelado por contrato original</div>
+        </td>
+        <td style="font-family:var(--mono); text-align:center; color:#64748B;">${c.unit}</td>
+        <td style="font-family:var(--mono); text-align:right; color:#64748B;">${c.baseQty}</td>
+        <td style="font-family:var(--mono); font-weight:700; text-align:right;">
+          <span class="pu-freeze-badge">
+            <span class="freeze-icon">🔒</span>
+            ${formatMoney(c.puUf)}
+          </span>
+        </td>
+        <td style="text-align:center;">
+          <input type="number" id="qty_${c.item.replace(/\./g, '_')}" value="20" min="1" step="1"
+                 style="width:55px; height:26px; border:1px solid #CBD5E1; border-radius:4px; font-family:var(--mono); font-weight:700; text-align:right; padding:0 4px;">
+        </td>
+        <td style="text-align:center;">
+          <button class="btn btn-primary" style="height:26px; padding:0 8px; font-size:11px;"
+                  onclick="addContractPartidaToOrder('${c.item}')">
+            ${alreadyInOrder ? '+ Sumar' : '+ Agregar'}
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function addContractPartidaToOrder(itemCode) {
+    const o = ordersData.find(x => x.id === selectedOrderId);
+    if (!o) return;
+
+    const catItem = contractCatalog.find(c => c.item === itemCode);
+    if (!catItem) return;
+
+    const inputId = 'qty_' + itemCode.replace(/\./g, '_');
+    const inputEl = document.getElementById(inputId);
+    const addQty = parseFloat(inputEl ? inputEl.value : '10') || 10;
+
+    // Check if already in order
+    const existing = o.partidas.find(p => p.item === itemCode);
+    if (existing) {
+      existing.addQty += addQty;
+      showToast(`Se sumaron +${addQty} a la partida existente ${itemCode}.`);
+    } else {
+      o.partidas.push({
+        item: catItem.item,
+        desc: catItem.desc,
+        baseQty: catItem.baseQty,
+        addQty: addQty,
+        puUf: catItem.puUf,
+        frozen: true
+      });
+      showToast(`Partida ${itemCode} incorporada al adicional con P.U. congelado 🔒.`);
+    }
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('es-CL') + ' ' + now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    o.history.push({
+      date: dateStr,
+      user: 'Estimador / Usuario',
+      text: `Partida contractual ${itemCode} «${catItem.desc}» agregada con P.U. congelado ${formatMoney(catItem.puUf)}.`
+    });
+
+    closeContractPickerModal();
+    computeOrderTotals(o);
+    updateDashboardKpis();
+    renderOrdersTable();
+    renderInspector();
+  }
+
+  // ─── MODAL 2: EXTRAORDINARY PARTIDA FUNCTIONS ─────────────────────────────
+  function openExtraPartidaModal() {
+    document.getElementById('extraPartidaModal').style.display = 'flex';
+    document.getElementById('extraItemDesc').focus();
+  }
+
+  function closeExtraPartidaModal() {
+    document.getElementById('extraPartidaModal').style.display = 'none';
+  }
+
+  function submitExtraPartida() {
+    const o = ordersData.find(x => x.id === selectedOrderId);
+    if (!o) return;
+
+    const code = document.getElementById('extraItemCode').value.trim() || 'EX-001';
+    const desc = document.getElementById('extraItemDesc').value.trim();
+    const unit = document.getElementById('extraItemUnit').value.trim() || 'UN';
+    const qty = parseFloat(document.getElementById('extraItemQty').value) || 1;
+    const puVal = parseFloat(document.getElementById('extraItemPu').value) || 0;
+
+    if (!desc) {
+      alert('Por favor ingrese la descripción técnica de la partida extraordinaria.');
+      return;
+    }
+
+    const puUf = currency === 'CLP' ? (puVal / UF_RATE) : puVal;
+
+    o.partidas.push({
+      item: code,
+      desc: desc,
+      baseQty: 0,
+      addQty: qty,
+      puUf: puUf,
+      frozen: false
+    });
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('es-CL') + ' ' + now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    o.history.push({
+      date: dateStr,
+      user: 'Estimador Obra',
+      text: `Partida extraordinaria ${code} «${desc}» agregada con nuevo APU ${formatMoney(puUf)}.`
+    });
+
+    closeExtraPartidaModal();
+    computeOrderTotals(o);
+    updateDashboardKpis();
+    renderOrdersTable();
+    renderInspector();
+    showToast(`Partida extraordinaria ${code} incorporada exitosamente.`);
+  }
+
+  // ─── DELETE ORDER FUNCTION ─────────────────────────────────────────────────
+  function deleteCurrentOrder() {
+    const o = ordersData.find(x => x.id === selectedOrderId);
+    if (!o) return;
+
+    if (!confirm(`¿Está seguro de eliminar completamente la orden de cambio «${o.code} — ${o.title}»?`)) {
+      return;
+    }
+
+    const idx = ordersData.findIndex(x => x.id === selectedOrderId);
+    if (idx !== -1) {
+      ordersData.splice(idx, 1);
+    }
+
+    selectedOrderId = ordersData.length > 0 ? ordersData[0].id : '';
+    updateDashboardKpis();
+    renderOrdersTable();
+    renderInspector();
+    showToast(`Orden de cambio ${o.code} eliminada del proyecto.`);
+  }
+
+  // Switch Inspector Tab
+  function switchInspectorTab(tabId) {
+    document.querySelectorAll('.insp-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+    event.currentTarget.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+  }
+
+  // Workflow Transition
+  function transitionSelected(newStatus) {
+    const o = ordersData.find(x => x.id === selectedOrderId);
+    if (!o) return;
+
+    if (o.status === newStatus) {
+      showToast(`La orden ${o.code} ya se encuentra en estado ${newStatus}.`);
+      return;
+    }
+
+    o.status = newStatus;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('es-CL') + ' ' + now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    o.history.push({
+      date: dateStr,
+      user: 'Usuario Administrador',
+      text: `Transición de estado a «${newStatus}» registrada en auditoría del proyecto.`
+    });
+
+    updateDashboardKpis();
+    renderOrdersTable();
+    renderInspector();
+    showToast(`Orden ${o.code} actualizada con éxito a estado: ${newStatus}`);
+  }
+
+  // Modals
+  function openNewOrderModal() {
+    const nextNum = 'OC-' + String(ordersData.length + 1).padStart(3, '0');
+    document.getElementById('newOrderCode').value = nextNum;
+    document.getElementById('newOrderTitle').value = '';
+    document.getElementById('newOrderModal').style.display = 'flex';
+    document.getElementById('newOrderTitle').focus();
+  }
+
+  function closeNewOrderModal() {
+    document.getElementById('newOrderModal').style.display = 'none';
+  }
+
+  function submitNewOrder() {
+    const code = document.getElementById('newOrderCode').value;
+    const title = document.getElementById('newOrderTitle').value.trim();
+    const author = document.getElementById('newOrderAuthor').value.trim();
+    const ref = document.getElementById('newOrderRef').value.trim() || 'S/Ref';
+    const note = document.getElementById('newOrderNote').value.trim();
+
+    if (!title) {
+      alert('Por favor ingrese un título descriptivo para la orden de cambio.');
+      return;
+    }
+
+    const newOrder = {
+      id: code,
+      code: code,
+      title: title,
+      status: 'Borrador',
+      date: new Date().toLocaleDateString('es-CL'),
+      author: author,
+      ref: ref,
+      tags: ['○ En Edición', '🔒 P.U. Congelado'],
+      ggPct: 12,
+      utilidadPct: 15,
+      note: note,
+      partidas: [
+        { item: '1.2.1', desc: 'Canalización embutida en muro y losa Tubería PVC 20mm', baseQty: 950, addQty: 25, puUf: 0.145, frozen: true }
+      ],
+      materiales: [
+        { name: 'Tubería Conduit PVC 20mm x 3m', unit: 'TIR', qty: 9, puClp: 7200, totalClp: 64800 }
+      ],
+      history: [
+        { date: new Date().toLocaleDateString('es-CL') + ' ' + new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }), user: author, text: 'Borrador inicial creado en sistema.' }
+      ]
+    };
+
+    ordersData.unshift(newOrder);
+    closeNewOrderModal();
+    selectedOrderId = code;
+    updateDashboardKpis();
+    renderOrdersTable();
+    renderInspector();
+    showToast(`Nueva orden ${code} creada en estado Borrador.`);
+  }
+
+  function exportActaMandante() {
+    showToast(`Generando Acta Oficial de Adicionales para ITO / Mandante (PDF)...`);
+  }
+
+  function refreshData() {
+    updateDashboardKpis();
+    renderOrdersTable();
+    renderInspector();
+    showToast('Datos de adicionales y métricas sincronizados.');
+  }
+
+  function showToast(msg) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#38BDF8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      <span>${msg}</span>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+      toast.style.transition = 'all 0.3s';
+      setTimeout(() => toast.remove(), 300);
+    }, 2800);
+  }
+
+  // Initial Load
+  updateDashboardKpis();
+  renderOrdersTable();
+  renderInspector();
+</script>
+
+</body>
+</html>

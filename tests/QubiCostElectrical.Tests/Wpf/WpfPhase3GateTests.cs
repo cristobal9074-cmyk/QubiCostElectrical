@@ -8,8 +8,20 @@ namespace QubiCostElectrical.Tests.Wpf;
 /// </summary>
 public sealed class WpfPhase3GateTests
 {
-    private static string RepoRoot =>
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+    private static string RepoRoot
+    {
+        get
+        {
+            var dir = new DirectoryInfo(AppContext.BaseDirectory);
+            while (dir != null)
+            {
+                if (File.Exists(Path.Combine(dir.FullName, "QubiCostElectrical.Wpf.sln")))
+                    return dir.FullName;
+                dir = dir.Parent;
+            }
+            return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        }
+    }
 
     private static string ReadRepoFile(string relativePath) =>
         File.ReadAllText(Path.Combine(RepoRoot, relativePath.Replace('/', Path.DirectorySeparatorChar)));

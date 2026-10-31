@@ -59,6 +59,7 @@ public sealed class SolicitudesViewSmokeTests
         {
             try
             {
+                QubiCostElectrical.Wpf.Controls.AppMessageDialog.DialogHandlerForTesting = (_, _) => QubiCostElectrical.Wpf.Controls.AppMessageDialogResult.Primary;
                 var host = WpfAppHost.Current;
                 var session = host.Session;
 
@@ -156,6 +157,7 @@ public sealed class SolicitudesViewSmokeTests
             }
             finally
             {
+                QubiCostElectrical.Wpf.Controls.AppMessageDialog.DialogHandlerForTesting = null;
                 ClearApplicationCurrent();
             }
         });

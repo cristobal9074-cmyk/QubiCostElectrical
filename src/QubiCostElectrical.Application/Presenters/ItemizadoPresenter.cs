@@ -46,9 +46,14 @@ public sealed class ItemizadoPresenter
             _session.Apus,
             _session.Itemizado);
 
-    public (ItemizadoImportPlan? Plan, string? Error) TryBuildImportPlan(string filePath, string actionLabel = "Importar itemizado")
+    public IReadOnlyList<ExcelSheetSummary> InspectWorksheets(string filePath) =>
+        _services.ItemizadoSpreadsheet.InspectWorksheets(filePath);
+
+    public (ItemizadoImportPlan? Plan, string? Error) TryBuildImportPlan(string filePath, string? sheetName = null, string actionLabel = "Importar itemizado")
     {
-        var table = _services.ItemizadoSpreadsheet.ReadFirstWorksheet(filePath);
+        var table = string.IsNullOrWhiteSpace(sheetName)
+            ? _services.ItemizadoSpreadsheet.ReadFirstWorksheet(filePath)
+            : _services.ItemizadoSpreadsheet.ReadWorksheet(filePath, sheetName);
         return TryBuildImportPlanFromTable(table, actionLabel);
     }
 

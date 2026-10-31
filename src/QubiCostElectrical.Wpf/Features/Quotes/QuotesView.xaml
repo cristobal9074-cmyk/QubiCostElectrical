@@ -16,25 +16,16 @@
       <Setter Property="Margin" Value="0,0,10,0" />
     </Style>
   </UserControl.Resources>
-  <Grid Background="{DynamicResource Brush.Canvas}" Margin="20,14,20,14">
+  <DockPanel Background="{DynamicResource Brush.Canvas}" Margin="20,14,20,14">
     <ctrl:SkeletonOverlayControl Panel.ZIndex="20" Message="Cargando cotizaciones…"
                                  Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
-    <ctrl:EmptyStateControl Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
-                            IconData="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8"
-                            Title="Sin cotizaciones"
-                            Description="Importe una cotización de proveedor para comparar precios y aplicarlos al banco.">
-      <ctrl:EmptyStateControl.Actions>
-        <Button Style="{StaticResource Button.Primary}" Content="Importar cotización" Command="{Binding ImportQuoteCommand}" MinWidth="180" />
-      </ctrl:EmptyStateControl.Actions>
-    </ctrl:EmptyStateControl>
 
-  <DockPanel HorizontalAlignment="Stretch"
-             Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-
-    <!-- View header -->
-    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12" LastChildFill="False">
+    <!-- View header Siempre Visible -->
+    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14" LastChildFill="False">
       <StackPanel DockPanel.Dock="Left">
-        <TextBlock Text="Cotizaciones" Style="{StaticResource Text.ViewTitle}" />
+        <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,0,3" HorizontalAlignment="Left"><TextBlock Text="GESTIÓN DE PROVEEDORES &amp; COTIZACIONES" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" /></Border>
+        <TextBlock Text="Cotizaciones de Proveedores" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
+        <TextBlock Text="Comparativa de ofertas por material, análisis de ahorro comercial y aplicación de mejores precios." FontSize="11" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
       </StackPanel>
       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
         <Button Style="{StaticResource Button.Primary}" Content="Aplicar selección al banco"
@@ -48,8 +39,62 @@
       </StackPanel>
     </DockPanel>
 
-    <!-- Main 2-col layout: proveedores | detalle -->
-    <Grid>
+    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+      <!-- Empty state con dropzone interactiva de 2px punteada -->
+      <Border Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}}"
+              HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="580">
+        <Border Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Line}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource Radius.Lg}"
+                Padding="32">
+          <StackPanel HorizontalAlignment="Center">
+            <Grid x:Name="EmptyDropZonePanel"
+                  AllowDrop="True"
+                  Cursor="Hand"
+                  ToolTip="Arrastra archivos de cotización Excel (.xlsx, .xls, .csv) o PDF (.pdf) aquí, o haz clic para examinar"
+                  DragEnter="OnDropZoneDragEnter"
+                  DragOver="OnDropZoneDragOver"
+                  DragLeave="OnDropZoneDragLeave"
+                  Drop="OnDropZoneDrop"
+                  MouseLeftButtonUp="OnDropZoneClick"
+                  Width="480" Height="220">
+              <Rectangle x:Name="EmptyDropZoneBorder"
+                         Stroke="{DynamicResource Brush.Blue}"
+                         StrokeThickness="2"
+                         StrokeDashArray="3 2"
+                         RadiusX="10" RadiusY="10"
+                         Fill="{DynamicResource Brush.Canvas}" />
+              <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24" IsHitTestVisible="False">
+                <Border Background="{DynamicResource Brush.BlueSoft}" CornerRadius="24" Width="48" Height="48" Margin="0,0,0,12" HorizontalAlignment="Center">
+                  <Path Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M12 18v-6 M9 15l3-3 3 3"
+                        Style="{StaticResource Icon.Vector}"
+                        Stroke="{DynamicResource Brush.Blue}"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Text="Arrastra cotizaciones de proveedores aquí"
+                           FontSize="15"
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource Brush.Ink}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="Compatible con planillas Excel (.xlsx, .xls, .csv) y documentos PDF (.pdf)"
+                           FontSize="11"
+                           Foreground="{DynamicResource Brush.Muted}"
+                           HorizontalAlignment="Center"
+                           Margin="0,4,0,16" />
+                <Button Style="{StaticResource Button.Primary}"
+                        Content="Examinar archivos (Ctrl+I)"
+                        HorizontalAlignment="Center"
+                        IsHitTestVisible="False"
+                        Padding="18,6" />
+              </StackPanel>
+            </Grid>
+          </StackPanel>
+        </Border>
+      </Border>
+
+      <!-- Main 2-col layout: proveedores | detalle -->
+      <Grid Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="280" MinWidth="240" />
       <ColumnDefinition Width="12" />
@@ -62,10 +107,11 @@
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Style="{StaticResource Card.Section}" Padding="10" Margin="0,0,0,10">
+        <Border Style="{StaticResource Card.Section}" Padding="10" Margin="0,0,0,8">
           <StackPanel>
             <Grid>
               <TextBox x:Name="SearchBox"
@@ -73,15 +119,9 @@
                        Tag="Buscar proveedor o material… (Ctrl+F)"
                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                        Padding="26,4,24,4" />
-              <TextBlock Text="🔍"
-                         FontSize="11"
-                         Foreground="{DynamicResource Brush.Muted}"
-                         VerticalAlignment="Center"
-                         HorizontalAlignment="Left"
-                         Margin="8,0,0,0"
-                         IsHitTestVisible="False" />
+              <Path Data="{StaticResource Geo.Search}" Style="{StaticResource Icon.Vector.Sm}" Stroke="{DynamicResource Brush.Muted}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="8,0,0,0" IsHitTestVisible="False" />
               <Button Style="{StaticResource Button.Ghost}"
-                      Content="✕"
+                      Content=""
                       Padding="0"
                       Width="18" Height="18"
                       FontSize="10"
@@ -99,7 +139,49 @@
           </StackPanel>
         </Border>
 
-        <Border Grid.Row="1" Style="{StaticResource Card.Section}" Padding="0">
+        <!-- Zona Drag & Drop interactiva con borde punteado de 2px -->
+        <Border Grid.Row="1" Margin="0,0,0,8" CornerRadius="{StaticResource Radius.Md}">
+          <Grid x:Name="DropZonePanel"
+                AllowDrop="True"
+                Cursor="Hand"
+                ToolTip="Arrastra archivos de cotización Excel (.xlsx, .xls, .csv) o PDF (.pdf) aquí, o haz clic para examinar"
+                DragEnter="OnDropZoneDragEnter"
+                DragOver="OnDropZoneDragOver"
+                DragLeave="OnDropZoneDragLeave"
+                Drop="OnDropZoneDrop"
+                MouseLeftButtonUp="OnDropZoneClick"
+                MinHeight="68">
+            <Rectangle x:Name="DropZoneBorder"
+                       Stroke="{DynamicResource Brush.Line}"
+                       StrokeThickness="2"
+                       StrokeDashArray="3 2"
+                       RadiusX="6" RadiusY="6"
+                       Fill="{DynamicResource Brush.Canvas}" />
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,8" IsHitTestVisible="False">
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Path x:Name="DropZoneIcon"
+                      Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M12 18v-6 M9 15l3-3 3 3"
+                      Style="{StaticResource Icon.Vector.Sm}"
+                      Stroke="{DynamicResource Brush.Blue}"
+                      VerticalAlignment="Center"
+                      Margin="0,0,6,0" />
+                <TextBlock x:Name="DropZoneTitle"
+                           Text="Arrastrar cotización aquí"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Ink}"
+                           VerticalAlignment="Center" />
+              </StackPanel>
+              <TextBlock Text="Excel (.xlsx, .xls) o PDF (.pdf)"
+                         FontSize="9.5"
+                         Foreground="{DynamicResource Brush.Muted}"
+                         HorizontalAlignment="Center"
+                         Margin="0,2,0,0" />
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Style="{StaticResource Card.Section}" Padding="0">
           <DataGrid ItemsSource="{Binding FilteredProviderSummaries}"
                     SelectedItem="{Binding SelectedProvider}"
                     AutoGenerateColumns="False"
@@ -244,6 +326,6 @@
       </Grid>
     </Border>
     </Grid>
+    </Grid>
   </DockPanel>
-  </Grid>
 </UserControl>

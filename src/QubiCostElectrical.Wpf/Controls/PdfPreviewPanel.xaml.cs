@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 using QubiCostElectrical.Wpf.Infrastructure;
 
 namespace QubiCostElectrical.Wpf.Controls;
@@ -43,22 +44,37 @@ public partial class PdfPreviewPanel : UserControl
             return;
 
         if (trackedViewModel is not null)
+        {
             trackedViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            trackedViewModel.RequestFitPage -= OnRequestFitPage;
+        }
 
         trackedViewModel = e.NewValue as PdfPreviewViewModel;
 
         if (trackedViewModel is not null)
+        {
             trackedViewModel.PropertyChanged += OnViewModelPropertyChanged;
+            trackedViewModel.RequestFitPage += OnRequestFitPage;
+        }
 
         ResetView();
     }
 
+    private void OnRequestFitPage(object? sender, EventArgs e)
+    {
+        Relayout(keepCenter: false, fitPage: true);
+    }
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PdfPreviewViewModel.CurrentPageImage))
+        if (e.PropertyName is nameof(PdfPreviewViewModel.CurrentPageImage) or nameof(PdfPreviewViewModel.SecondPageImage))
+        {
             ResetView();
+        }
         else if (e.PropertyName == nameof(PdfPreviewViewModel.Zoom))
+        {
             Relayout(keepCenter: true);
+        }
     }
 
     private void ResetView()
@@ -70,7 +86,7 @@ public partial class PdfPreviewPanel : UserControl
         Relayout(keepCenter: false);
     }
 
-    private void Relayout(bool keepCenter)
+    private void Relayout(bool keepCenter, bool fitPage = false)
     {
         if (PART_Scroll is null || PART_Page is null || PART_Image is null)
             return;
@@ -80,10 +96,12 @@ public partial class PdfPreviewPanel : UserControl
         if (viewportWidth <= 0 || viewportHeight <= 0)
             return;
 
-        if (PART_Image.Source is not System.Windows.Media.Imaging.BitmapSource bitmap
-            || bitmap.PixelWidth <= 0 || bitmap.PixelHeight <= 0)
+        if (PART_Image.Source is not BitmapSource bitmap || bitmap.PixelWidth <= 0 || bitmap.PixelHeight <= 0)
         {
             PART_Page.Visibility = Visibility.Collapsed;
+            if (PART_Page2 is not null)
+                PART_Page2.Visibility = Visibility.Collapsed;
+
             PART_Image.Width = double.NaN;
             PART_Image.Height = double.NaN;
             lastExtentWidth = -1;
@@ -92,31 +110,49 @@ public partial class PdfPreviewPanel : UserControl
         }
 
         PART_Page.Visibility = Visibility.Visible;
+        bool hasSecond = trackedViewModel?.HasSecondPage == true && PART_Image2?.Source is BitmapSource;
+        if (PART_Page2 is not null)
+            PART_Page2.Visibility = hasSecond ? Visibility.Visible : Visibility.Collapsed;
 
-        double zoom = (DataContext as PdfPreviewViewModel)?.Zoom ?? 1.0;
-        double extentMargin = PageMargin * 2;
+        int pageMultiplier = hasSecond ? 2 : 1;
+        double extentMargin = PageMargin * 2 * pageMultiplier;
         double scrollbar = SystemParameters.VerticalScrollBarWidth;
         double horizontalBar = SystemParameters.HorizontalScrollBarHeight;
 
-        // Ajuste a ancho (base 100%) con iteración por las barras de scroll.
+        if (fitPage && trackedViewModel is not null)
+        {
+            double availableFitW = Math.Max(1, viewportWidth - (PageMargin * 2 * pageMultiplier) - 16);
+            double availableFitH = Math.Max(1, viewportHeight - (PageMargin * 2) - 20);
+
+            double targetWidthPerSinglePage = availableFitW / pageMultiplier;
+            double scaleW = targetWidthPerSinglePage / bitmap.PixelWidth;
+            double scaleH = availableFitH / bitmap.PixelHeight;
+
+            double fitFactor = Math.Min(scaleW, scaleH);
+            trackedViewModel.SetZoomDirect(Math.Round(fitFactor, 2));
+            return;
+        }
+
+        double zoom = trackedViewModel?.Zoom ?? 1.0;
+
+        // Ajuste iterativo considerando scrollbars
         bool verticalBarVisible = true;
         bool horizontalBarVisible = false;
-        double width = 0;
-        double height = 0;
+        double singleWidth = 0;
+        double singleHeight = 0;
+
         for (int i = 0; i < 4; i++)
         {
-            double availableWidth = Math.Max(1, viewportWidth - extentMargin
-                - (verticalBarVisible ? scrollbar : 0));
-            double availableHeight = Math.Max(1, viewportHeight - extentMargin
-                - (horizontalBarVisible ? horizontalBar : 0));
-            _ = availableHeight;
-
+            double availableWidth = Math.Max(1, (viewportWidth - extentMargin - (verticalBarVisible ? scrollbar : 0)) / pageMultiplier);
             double scale = availableWidth / bitmap.PixelWidth * zoom;
-            width = bitmap.PixelWidth * scale;
-            height = bitmap.PixelHeight * scale;
+            singleWidth = bitmap.PixelWidth * scale;
+            singleHeight = bitmap.PixelHeight * scale;
 
-            bool needsVerticalBar = height + extentMargin > viewportHeight + 0.5;
-            bool needsHorizontalBar = width + extentMargin > viewportWidth + 0.5;
+            double totalW = singleWidth * pageMultiplier + extentMargin;
+            double totalH = singleHeight + (PageMargin * 2);
+
+            bool needsVerticalBar = totalH > viewportHeight + 0.5;
+            bool needsHorizontalBar = totalW > viewportWidth + 0.5;
             if (needsVerticalBar == verticalBarVisible && needsHorizontalBar == horizontalBarVisible)
                 break;
 
@@ -124,18 +160,27 @@ public partial class PdfPreviewPanel : UserControl
             horizontalBarVisible = needsHorizontalBar;
         }
 
-        PART_Image.Width = width;
-        PART_Image.Height = height;
+        PART_Image.Width = singleWidth;
+        PART_Image.Height = singleHeight;
 
-        double extentWidth = width + extentMargin;
-        double extentHeight = height + extentMargin;
+        if (PART_Image2 is not null && hasSecond)
+        {
+            PART_Image2.Width = singleWidth;
+            PART_Image2.Height = singleHeight;
+        }
 
-        PART_Page.HorizontalAlignment = extentWidth <= viewportWidth + 0.5
-            ? HorizontalAlignment.Center
-            : HorizontalAlignment.Left;
-        PART_Page.VerticalAlignment = extentHeight <= viewportHeight + 0.5
-            ? VerticalAlignment.Center
-            : VerticalAlignment.Top;
+        double extentWidth = singleWidth * pageMultiplier + extentMargin;
+        double extentHeight = singleHeight + (PageMargin * 2);
+
+        if (PART_PagesContainer is not null)
+        {
+            PART_PagesContainer.HorizontalAlignment = extentWidth <= viewportWidth + 0.5
+                ? HorizontalAlignment.Center
+                : HorizontalAlignment.Left;
+            PART_PagesContainer.VerticalAlignment = extentHeight <= viewportHeight + 0.5
+                ? VerticalAlignment.Center
+                : VerticalAlignment.Top;
+        }
 
         double offsetX;
         double offsetY;

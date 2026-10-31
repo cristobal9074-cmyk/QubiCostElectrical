@@ -178,6 +178,23 @@ public partial class CubicacionView : UserControl
                 ApplyGridMode();
             }
 
+            if (e.PropertyName == nameof(CubicacionViewModel.PartidaCantidadText))
+            {
+                Dispatcher.InvokeAsync(() =>
+                {
+                    if (_templateCantBox != null && !_templateCantBox.IsKeyboardFocused)
+                    {
+                        _templateCantBox.Text = vm.PartidaCantidadText;
+                        BindingOperations.GetBindingExpression(_templateCantBox, TextBox.TextProperty)?.UpdateTarget();
+                    }
+                    if (CantHeaderBox != null && !CantHeaderBox.IsKeyboardFocused)
+                    {
+                        CantHeaderBox.Text = vm.PartidaCantidadText;
+                        BindingOperations.GetBindingExpression(CantHeaderBox, TextBox.TextProperty)?.UpdateTarget();
+                    }
+                }, System.Windows.Threading.DispatcherPriority.Input);
+            }
+
             if (e.PropertyName == nameof(CubicacionViewModel.SelectedPartida))
             {
                 if (Vm.SuppressPartidaFocus)
@@ -628,6 +645,7 @@ public partial class CubicacionView : UserControl
 
         int visibleCount = CalculateSectorVisibleCount();
         var sectorHeaderStyle = (Style)FindResource("DataGridColumnHeader.CasillasGeneral");
+        var zebraHeaderStyle = (Style)FindResource("DataGridColumnHeader.CasillasZebra");
 
         for (int slot = 0; slot < _sectorColumns.Count; slot++)
         {
@@ -636,8 +654,10 @@ public partial class CubicacionView : UserControl
             if (column.Visibility != (shouldBeVisible ? Visibility.Visible : Visibility.Collapsed))
                 column.Visibility = shouldBeVisible ? Visibility.Visible : Visibility.Collapsed;
 
-            if (column.HeaderStyle != sectorHeaderStyle)
-                column.HeaderStyle = sectorHeaderStyle;
+            bool isOddZone = (slot % 2 == 0);
+            var targetHeaderStyle = isOddZone ? zebraHeaderStyle : sectorHeaderStyle;
+            if (column.HeaderStyle != targetHeaderStyle)
+                column.HeaderStyle = targetHeaderStyle;
 
             if (shouldBeVisible)
             {
@@ -663,6 +683,8 @@ public partial class CubicacionView : UserControl
         var elementStyle = new Style(typeof(TextBlock));
         elementStyle.Setters.Add(new Setter(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Right));
         elementStyle.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(3, 0, 7, 0)));
+        elementStyle.Setters.Add(new Setter(TextBlock.FontFamilyProperty, (System.Windows.Media.FontFamily)FindResource("Font.Mono")));
+        elementStyle.Setters.Add(new Setter(TextBlock.FontSizeProperty, 11.0));
 
         var baseTransparentEditStyle = (Style)FindResource("DataGrid.CellEditTransparent");
         var editingStyle = new Style(typeof(TextBox), baseTransparentEditStyle);
@@ -672,9 +694,11 @@ public partial class CubicacionView : UserControl
         editingStyle.Setters.Add(new Setter(Control.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
 
         var baseCellStyle = (Style)FindResource("DataGridCell.Excel");
-        var surf2Brush = (System.Windows.Media.Brush)FindResource("Brush.Surface2");
+        var surfaceBrush = (System.Windows.Media.Brush)FindResource("Brush.Surface");
+        var zebraOddBrush = (System.Windows.Media.Brush)FindResource("Brush.ChapterRowBg");
         var blueSoftBrush = (System.Windows.Media.Brush)FindResource("Brush.BlueSoft");
         var blueBrush = (System.Windows.Media.Brush)FindResource("Brush.Blue");
+        var zebraHeaderStyle = (Style)FindResource("DataGridColumnHeader.CasillasZebra");
 
         for (int slot = 0; slot < CubicacionViewModel.SectorWindowSize; slot++)
         {
@@ -700,8 +724,27 @@ public partial class CubicacionView : UserControl
                 VerticalAlignment = VerticalAlignment.Center
             });
 
+            bool isOddZone = (slot % 2 == 0); // Slot 0 = ZONA 1 (impar), Slot 1 = ZONA 2 (par)...
             var cellStyle = new Style(typeof(DataGridCell), baseCellStyle);
-            cellStyle.Setters.Add(new Setter(Control.BackgroundProperty, surf2Brush));
+            var colBg = isOddZone ? zebraOddBrush : surfaceBrush;
+            cellStyle.Setters.Add(new Setter(Control.BackgroundProperty, colBg));
+
+            // Override base DataGridCell.Excel triggers so zebra pattern applies to normal resting state
+            var readOnlyFalseTrigger = new Trigger
+            {
+                Property = DataGridCell.IsReadOnlyProperty,
+                Value = false
+            };
+            readOnlyFalseTrigger.Setters.Add(new Setter(Control.BackgroundProperty, colBg));
+            cellStyle.Triggers.Add(readOnlyFalseTrigger);
+
+            var readOnlyTrueTrigger = new Trigger
+            {
+                Property = DataGridCell.IsReadOnlyProperty,
+                Value = true
+            };
+            readOnlyTrueTrigger.Setters.Add(new Setter(Control.BackgroundProperty, colBg));
+            cellStyle.Triggers.Add(readOnlyTrueTrigger);
 
             var pickTrigger = new DataTrigger
             {
@@ -720,7 +763,7 @@ public partial class CubicacionView : UserControl
             var column = new DisplayBindingTextColumn
             {
                 Header = header,
-                HeaderStyle = sectorHeaderStyle,
+                HeaderStyle = isOddZone ? zebraHeaderStyle : sectorHeaderStyle,
                 SectorSlot = absoluteOffset,
                 Width = 52,
                 MinWidth = 52,

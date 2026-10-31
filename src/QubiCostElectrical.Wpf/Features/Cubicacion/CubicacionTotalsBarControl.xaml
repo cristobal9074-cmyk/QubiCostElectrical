@@ -7,12 +7,12 @@
     <!-- Totales -->
     <Border Background="{DynamicResource Brush.Surface}"
             BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0"
-            Padding="12,8">
-        <!-- ScrollViewer horizontal: en ventanas angostas las 5 cajas se vuelven scrolleables en vez de comprimirse hasta truncar el texto. -->
+            Padding="10,4">
+        <!-- ScrollViewer horizontal: en ventanas angostas las cajas se vuelven scrolleables en vez de comprimirse hasta truncar el texto. -->
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
             <StackPanel Orientation="Horizontal">
                 <!-- Materiales -->
-                <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140">
+                <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="2,1" Padding="10,4" MinWidth="125">
                     <StackPanel>
                         <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="MATERIALES" />
                         <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalMateriales, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
@@ -21,7 +21,7 @@
                     </StackPanel>
                 </Border>
                 <!-- Mano de obra: Σ (MoClp unitario × cantidad) de todos los recursos de la partida, en CLP -->
-                <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140"
+                <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="2,1" Padding="10,4" MinWidth="125"
                         ToolTip="Suma de MO $ × cantidad de cada recurso de esta partida (CLP)">
                     <StackPanel>
                         <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="MANO DE OBRA" />
@@ -31,7 +31,7 @@
                     </StackPanel>
                 </Border>
                 <!-- Costo directo -->
-                <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140">
+                <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="2,1" Padding="10,4" MinWidth="125">
                     <StackPanel>
                         <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIRECTO" />
                         <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalCostoDirecto, StringFormat='$ {0:N0}'}" Foreground="{DynamicResource Brush.Blue}" FontWeight="SemiBold" />
@@ -40,7 +40,7 @@
                     </StackPanel>
                 </Border>
                 <!-- Costo Dir. Unitario -->
-                <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="4" MinWidth="140">
+                <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="2,1" Padding="10,4" MinWidth="125">
                     <StackPanel>
                         <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIR. UNIT." />
                         <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding PrecioUnitario, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
@@ -49,13 +49,48 @@
                     </StackPanel>
                 </Border>
                 <!-- Costo Dir. Total -->
-                <Border Style="{StaticResource Card.Kpi.Hero}" Margin="4" MinWidth="140">
+                <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="2,1" Padding="10,4" MinWidth="125">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIR. TOTAL" Foreground="{DynamicResource Brush.Blue}" />
-                        <TextBlock Style="{StaticResource Text.TotalsValue}" FontSize="14" FontWeight="Bold"
+                        <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="COSTO DIR. TOTAL" />
+                        <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding TotalPartida, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding TotalPartidaUf, StringFormat='{}{0:N3} UF'}"
+                                   Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Separador vertical sutil -->
+                <Rectangle Width="1" Margin="6,4" Fill="{DynamicResource Brush.Line}" />
+
+                <!-- P.U. Venta (Itemizado) -->
+                <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" Margin="2,1" Padding="10,4" MinWidth="125"
+                        ToolTip="Precio unitario de venta de la partida como se muestra en Itemizado">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="P.U. VENTA" Margin="0,0,5,0" />
+                            <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="3" Padding="3,0" VerticalAlignment="Center">
+                                <TextBlock Text="Itemizado" FontSize="8" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource Text.TotalsValue}" Text="{Binding PrecioVentaUnitario, StringFormat='$ {0:N0}'}" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding PrecioVentaUnitarioUf, StringFormat='{}{0:N3} UF'}"
+                                   Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Total Venta (Itemizado) -->
+                <Border Style="{StaticResource Card.Summary}" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1.5" Margin="2,1" Padding="10,4" MinWidth="130"
+                        ToolTip="Precio total de venta de la partida como se muestra en Itemizado">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Style="{StaticResource Text.TotalsLabel}" Text="TOTAL VENTA" Foreground="{DynamicResource Brush.Blue}" Margin="0,0,5,0" />
+                            <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="3" Padding="3,0" VerticalAlignment="Center">
+                                <TextBlock Text="Itemizado" FontSize="8" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource Text.TotalsValue}" FontSize="13" FontWeight="Bold"
                                    Foreground="{DynamicResource Brush.Ink}"
-                                   Text="{Binding TotalPartida, StringFormat='$ {0:N0}'}" />
-                        <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding TotalPartidaUf, StringFormat='{}{0:N3} UF'}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"
+                                   Text="{Binding TotalVentaPartida, StringFormat='$ {0:N0}'}" />
+                        <TextBlock Style="{StaticResource Text.TotalsHint}" Text="{Binding TotalVentaPartidaUf, StringFormat='{}{0:N3} UF'}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Blue}"
                                    Visibility="{Binding MuestraUf, Converter={StaticResource BoolToVisibility}}" />
                     </StackPanel>
                 </Border>

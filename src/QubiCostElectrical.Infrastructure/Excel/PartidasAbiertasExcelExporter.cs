@@ -76,17 +76,17 @@ public sealed class PartidasAbiertasExcelExporter : IPartidasAbiertasExcelExport
 
         bool hasTheme = theme?.Enabled == true;
         string companyName = !string.IsNullOrWhiteSpace(offer.CompanyName) ? offer.CompanyName
-            : (hasTheme && !string.IsNullOrWhiteSpace(theme!.CompanyName) ? theme.CompanyName : "INGELSAM SPA");
+            : (hasTheme && !string.IsNullOrWhiteSpace(theme!.CompanyName) ? theme.CompanyName : "EMPRESA CONTRATISTA");
         string companyRut = !string.IsNullOrWhiteSpace(offer.CompanyRut) ? offer.CompanyRut.Trim() : "";
-        string companyAddress = !string.IsNullOrWhiteSpace(offer.CompanyAddress) ? offer.CompanyAddress.Trim() : "Av. Capellán Benavides 2077. Maipú, Santiago";
-        string companyPhone = !string.IsNullOrWhiteSpace(offer.CompanyPhone) ? offer.CompanyPhone.Trim() : "9 5856 3557";
-        string companyEmail = !string.IsNullOrWhiteSpace(offer.CompanyEmail) ? offer.CompanyEmail.Trim() : "cperez@ingelsam.cl";
+        string companyAddress = !string.IsNullOrWhiteSpace(offer.CompanyAddress) ? offer.CompanyAddress.Trim() : "";
+        string companyPhone = !string.IsNullOrWhiteSpace(offer.CompanyPhone) ? offer.CompanyPhone.Trim() : "";
+        string companyEmail = !string.IsNullOrWhiteSpace(offer.CompanyEmail) ? offer.CompanyEmail.Trim() : "";
 
         string? logoPath = !string.IsNullOrWhiteSpace(offer.LogoPath) && File.Exists(offer.LogoPath) ? offer.LogoPath
             : (hasTheme && !string.IsNullOrWhiteSpace(theme!.LogoPath) && File.Exists(theme.LogoPath) ? theme.LogoPath : null);
 
         var date = offer.OfferDate == default ? DateTime.Today : offer.OfferDate;
-        string folio = !string.IsNullOrWhiteSpace(offer.OfferNumber) ? offer.OfferNumber.Trim() : "PEL024F2026";
+        string folio = !string.IsNullOrWhiteSpace(offer.OfferNumber) ? offer.OfferNumber.Trim() : $"OFT-{date:yyyyMMdd}-01";
 
         decimal valorUf = project.ValorUfClp > 0m ? project.ValorUfClp : PriceConversion.DefaultValorUfClp;
         bool muestraUf = ctx.MuestraUf;
@@ -465,7 +465,7 @@ public sealed class PartidasAbiertasExcelExporter : IPartidasAbiertasExcelExport
         if (stream == null)
         {
             var asm = typeof(PartidasAbiertasExcelExporter).Assembly;
-            stream = asm.GetManifestResourceStream("QubiCostElectrical.Assets.ingelsam_logo.png");
+            stream = null;
         }
 
         if (stream != null)

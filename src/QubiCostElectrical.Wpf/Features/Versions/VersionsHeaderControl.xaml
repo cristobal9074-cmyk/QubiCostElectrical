@@ -4,61 +4,76 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
-  <!-- ════ Cabecera Slim ════ -->
-  <DockPanel Margin="0,0,0,3" LastChildFill="False">
-    <StackPanel DockPanel.Dock="Left">
-      <TextBlock Text="Cambio de versión y comparador de revisiones"
-                 FontSize="13.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" />
-      <TextBlock Text="{Binding StatusMessage}"
-                 FontSize="9.5" Foreground="{DynamicResource Brush.Ink3}"
-                 TextWrapping="Wrap" MaxWidth="720" Margin="0,1,0,0" />
-    </StackPanel>
+  <!-- ════ Cabecera Ejecutiva ($20B+ Market Standard) ════ -->
+  <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}"
+          BorderThickness="1" CornerRadius="10" Padding="16,11" Margin="0,0,0,10">
+    <DockPanel LastChildFill="True">
+      <!-- Botones de Acción a la derecha -->
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+        <Border Style="{StaticResource Badge.Warn}" Margin="0,0,8,0" VerticalAlignment="Center"
+                Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisibility}}">
+          <TextBlock Text="Solo lectura" FontSize="9.5" FontWeight="SemiBold"
+                     Foreground="{DynamicResource Brush.Amber}" />
+        </Border>
 
-    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-      <Border Style="{StaticResource Badge.Warn}" Margin="0,0,8,0" VerticalAlignment="Center"
-              Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisibility}}">
-        <TextBlock Text="Solo lectura" FontSize="9.5" FontWeight="SemiBold"
-                   Foreground="{DynamicResource Brush.Amber}" />
-      </Border>
-      <Button Style="{StaticResource Button.Secondary}" Height="24" Padding="7,0" FontSize="10"
-              Command="{Binding CompareWithProjectFileCommand}"
-              ToolTip="Seleccionar un archivo .qce en disco para contrastar diferencias con el presupuesto abierto"
-              Margin="0,0,5,0">
-        <StackPanel Orientation="Horizontal">
-          <Path Style="{StaticResource Versions.Icon.Compare}" Stroke="{DynamicResource Brush.Ink2}" Width="11" Height="11" />
-          <TextBlock Text="Comparar con archivo .qce…" FontSize="10" FontWeight="SemiBold"
-                     Foreground="{DynamicResource Brush.Ink2}" Margin="5,0,0,0" />
+        <Button Style="{StaticResource Button.Secondary}" Height="30" Padding="12,0" FontSize="11"
+                Command="{Binding CompareWithProjectFileCommand}"
+                ToolTip="Seleccionar un archivo .qce en disco para contrastar diferencias con el presupuesto abierto"
+                Margin="0,0,6,0">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Path Style="{StaticResource Versions.Icon.Compare}" Stroke="{DynamicResource Brush.Ink2}" Width="12" Height="12" VerticalAlignment="Center" />
+            <TextBlock Text="Comparar con archivo .qce…" FontSize="11" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.Ink2}" Margin="6,0,0,0" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <Button Style="{StaticResource Button.Secondary}" Height="30" Padding="12,0" FontSize="11"
+                Command="{Binding SaveAsNewVersionCommand}"
+                ToolTip="Congela la versión previa y guarda el proyecto con la siguiente letra de revisión (ej: Rev B)"
+                Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
+                Margin="0,0,6,0">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Path Style="{StaticResource Versions.Icon.Save}" Stroke="{DynamicResource Brush.Ink2}" Width="12" Height="12" VerticalAlignment="Center" />
+            <TextBlock Text="Guardar como nueva versión…" FontSize="11" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.Ink2}" Margin="6,0,0,0" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <Button Style="{StaticResource Button.Secondary}" Width="30" Height="30" Padding="0"
+                Command="{Binding RefreshCommand}" ToolTip="Actualizar versiones (F5)"
+                Margin="0,0,6,0">
+          <Button.Content>
+            <Path Style="{StaticResource Versions.Icon.Refresh}" Width="13" Height="13"
+                  Stroke="{DynamicResource Brush.Ink2}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Button.Content>
+        </Button>
+
+        <Button Style="{StaticResource Button.Primary}" Height="30" Padding="14,0" FontSize="11"
+                Command="{Binding NewCommand}"
+                ToolTip="Crear nueva versión / snapshot del presupuesto (Ctrl+N)"
+                Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Path Style="{StaticResource Versions.Icon.Plus}" Stroke="{DynamicResource Brush.White}" Width="11" Height="11" VerticalAlignment="Center" />
+            <TextBlock Text="Nueva versión (Ctrl+N)" FontSize="11" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.White}" Margin="6,0,0,0" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
+
+      <!-- Título y categoría a la izquierda -->
+      <StackPanel VerticalAlignment="Center">
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+          <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Blue}"
+                  BorderThickness="1" CornerRadius="10" Padding="8,2" Margin="0,0,8,0" VerticalAlignment="Center">
+            <TextBlock Text="HISTORIAL DE REVISIONES &amp; AUDITORÍA" FontSize="9.5" FontWeight="Bold"
+                       Foreground="{DynamicResource Brush.Blue}"/>
+          </Border>
+          <TextBlock Text="Control de Versiones &amp; Comparador Diff" FontSize="18" FontWeight="Bold"
+                     Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center"/>
         </StackPanel>
-      </Button>
-      <Button Style="{StaticResource Button.Secondary}" Height="24" Padding="7,0" FontSize="10"
-              Command="{Binding SaveAsNewVersionCommand}"
-              ToolTip="Congela la versión previa y guarda el proyecto con la siguiente letra de revisión (ej: Rev B)"
-              Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}"
-              Margin="0,0,5,0">
-        <StackPanel Orientation="Horizontal">
-          <Path Style="{StaticResource Versions.Icon.Save}" Stroke="{DynamicResource Brush.Ink2}" Width="11" Height="11" />
-          <TextBlock Text="Guardar como nueva versión…" FontSize="10" FontWeight="SemiBold"
-                     Foreground="{DynamicResource Brush.Ink2}" Margin="5,0,0,0" />
-        </StackPanel>
-      </Button>
-      <Button Style="{StaticResource Button.Secondary}" Width="24" Height="24" Padding="0"
-              Command="{Binding RefreshCommand}" ToolTip="Actualizar versiones (F5)"
-              Margin="0,0,5,0">
-        <Button.Content>
-          <Path Style="{StaticResource Versions.Icon.Refresh}" Width="12" Height="12"
-                Stroke="{DynamicResource Brush.Ink2}" />
-        </Button.Content>
-      </Button>
-      <Button Style="{StaticResource Button.Primary}" Height="24" Padding="9,0" FontSize="10"
-              Command="{Binding NewCommand}"
-              ToolTip="Crear nueva versión / snapshot del presupuesto (Ctrl+N)"
-              Visibility="{Binding IsReadOnly, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-        <StackPanel Orientation="Horizontal">
-          <Path Style="{StaticResource Versions.Icon.Plus}" Stroke="{DynamicResource Brush.White}" Width="10" Height="10" />
-          <TextBlock Text="Nueva versión (Ctrl+N)" FontSize="10" FontWeight="SemiBold"
-                     Foreground="{DynamicResource Brush.White}" Margin="5,0,0,0" />
-        </StackPanel>
-      </Button>
-    </StackPanel>
-  </DockPanel>
+        <TextBlock Text="{Binding StatusMessage}" FontSize="11.5" Foreground="{DynamicResource Brush.Muted}"
+                   TextWrapping="Wrap" MaxWidth="760"/>
+      </StackPanel>
+    </DockPanel>
+  </Border>
 </UserControl>

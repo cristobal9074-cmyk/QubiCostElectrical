@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace QubiCostElectrical.Wpf.Features.Purchases;
@@ -76,5 +77,13 @@ public partial class PurchaseListView : UserControl
     {
         if (vm != null)
             vm.ActiveTab = 0;
+    }
+
+    private void OnExportGroupPurchaseOrderClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is CollectionViewGroup group && vm != null)
+        {
+            vm.ExportPurchaseOrderForGroup(group);
+        }
     }
 }

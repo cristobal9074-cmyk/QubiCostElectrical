@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -40,7 +40,7 @@ public sealed class EstadoPagoExcelExporter : IEstadoPagoExcelExporter
         var t = mes.Totales;
         var cfg = request.Config;
         // Con CLP los montos (que el motor lleva en UF) se escriben en pesos y sin rótulo UF.
-        int cols = request.MuestraUf ? 8 : 7;
+        int cols = request.MuestraUf ? 15 : 14;
         string fmt = ClosedXmlExportStyler.ProjectCurrencyExcelFormat(request.MonedaPresupuesto);
         string Hdr(string concepto) => $"{concepto} {(request.MuestraUf ? "UF" : "$")}";
 
@@ -57,8 +57,9 @@ public sealed class EstadoPagoExcelExporter : IEstadoPagoExcelExporter
         int headerRow = 5;
         var headers = new List<string>
         {
-            "CÓDIGO", "PARTIDA (ITEMIZADO)", Hdr("MONTO CONTRATADO"), "AVANCE ANTERIOR %",
-            "AVANCE MES %", Hdr("MONTO DEL MES"), "ACUMULADO %"
+            "CÓDIGO", "PARTIDA (ITEMIZADO)", "UNIDAD", "CANT. BASE", Hdr("P.U."), Hdr("MONTO BASE"),
+            "CANT. ANT.", "CANT. MES", "AVANCE MES %", Hdr("MONTO DEL MES"),
+            "CANT. ACUM.", "ACUMULADO %", "SALDO CANT.", Hdr("SALDO MONTO")
         };
         if (request.MuestraUf)
             headers.Add("EQUIV. $");
@@ -78,27 +79,40 @@ public sealed class EstadoPagoExcelExporter : IEstadoPagoExcelExporter
 
             foreach (var f in sec.Filas)
             {
+                decimal cantAnt = f.Cantidad * (f.AvanceAnterior / 100m);
                 ws.Cell(row, 1).Value = f.Item;
                 ws.Cell(row, 2).Value = f.Descripcion;
-                ws.Cell(row, 3).SetValue(ClosedXmlExportStyler.ToDouble(Valor(f.Monto, request)));
-                ws.Cell(row, 4).SetValue(ClosedXmlExportStyler.ToDouble(f.AvanceAnterior / 100m));
-                ws.Cell(row, 5).SetValue(ClosedXmlExportStyler.ToDouble(f.AvanceMes / 100m));
-                ws.Cell(row, 6).SetValue(ClosedXmlExportStyler.ToDouble(Valor(f.MontoMes, request)));
-                ws.Cell(row, 7).SetValue(ClosedXmlExportStyler.ToDouble(f.AcumPct / 100m));
+                ws.Cell(row, 3).Value = f.Unidad;
+                ws.Cell(row, 4).SetValue(ClosedXmlExportStyler.ToDouble(f.Cantidad));
+                ws.Cell(row, 5).SetValue(ClosedXmlExportStyler.ToDouble(Valor(f.PrecioUnitario, request)));
+                ws.Cell(row, 6).SetValue(ClosedXmlExportStyler.ToDouble(Valor(f.Monto, request)));
+                ws.Cell(row, 7).SetValue(ClosedXmlExportStyler.ToDouble(cantAnt));
+                ws.Cell(row, 8).SetValue(ClosedXmlExportStyler.ToDouble(f.CantidadMes));
+                ws.Cell(row, 9).SetValue(ClosedXmlExportStyler.ToDouble(f.AvanceMes / 100m));
+                ws.Cell(row, 10).SetValue(ClosedXmlExportStyler.ToDouble(Valor(f.MontoMes, request)));
+                ws.Cell(row, 11).SetValue(ClosedXmlExportStyler.ToDouble(f.CantidadAcum));
+                ws.Cell(row, 12).SetValue(ClosedXmlExportStyler.ToDouble(f.AcumPct / 100m));
+                ws.Cell(row, 13).SetValue(ClosedXmlExportStyler.ToDouble(f.SaldoCantidad));
+                ws.Cell(row, 14).SetValue(ClosedXmlExportStyler.ToDouble(Valor(f.SaldoMonto, request)));
                 if (request.MuestraUf)
-                    ws.Cell(row, 8).SetValue(ClosedXmlExportStyler.ToDouble(Equivalente(f.MontoMes, request)));
+                    ws.Cell(row, 15).SetValue(ClosedXmlExportStyler.ToDouble(Equivalente(f.MontoMes, request)));
                 row++;
             }
         }
 
         int lastRow = Math.Max(row - 1, headerRow);
         ClosedXmlExportStyler.StyleClosedXmlTable(ws, headerRow, 1, lastRow, cols, "tbl_estado_pago");
-        ws.Range(headerRow + 1, 3, lastRow, 3).Style.NumberFormat.Format = fmt;
-        ws.Range(headerRow + 1, 4, lastRow, 5).Style.NumberFormat.Format = "0.00%";
-        ws.Range(headerRow + 1, 6, lastRow, 6).Style.NumberFormat.Format = fmt;
-        ws.Range(headerRow + 1, 7, lastRow, 7).Style.NumberFormat.Format = "0.00%";
+        ws.Range(headerRow + 1, 4, lastRow, 4).Style.NumberFormat.Format = "#,##0.00";
+        ws.Range(headerRow + 1, 5, lastRow, 6).Style.NumberFormat.Format = fmt;
+        ws.Range(headerRow + 1, 7, lastRow, 8).Style.NumberFormat.Format = "#,##0.00";
+        ws.Range(headerRow + 1, 9, lastRow, 9).Style.NumberFormat.Format = "0.00%";
+        ws.Range(headerRow + 1, 10, lastRow, 10).Style.NumberFormat.Format = fmt;
+        ws.Range(headerRow + 1, 11, lastRow, 11).Style.NumberFormat.Format = "#,##0.00";
+        ws.Range(headerRow + 1, 12, lastRow, 12).Style.NumberFormat.Format = "0.00%";
+        ws.Range(headerRow + 1, 13, lastRow, 13).Style.NumberFormat.Format = "#,##0.00";
+        ws.Range(headerRow + 1, 14, lastRow, 14).Style.NumberFormat.Format = fmt;
         if (request.MuestraUf)
-            ws.Range(headerRow + 1, 8, lastRow, 8).Style.NumberFormat.Format = ClosedXmlExportStyler.ClpExcelFormat();
+            ws.Range(headerRow + 1, 15, lastRow, 15).Style.NumberFormat.Format = ClosedXmlExportStyler.ClpExcelFormat();
 
         int tot = lastRow + 2;
         ws.Range(tot, 1, tot, cols).Merge();

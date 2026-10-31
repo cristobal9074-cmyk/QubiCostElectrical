@@ -79,7 +79,7 @@
               <Button Style="{StaticResource Button.Secondary}" Content="Coeficientes" Padding="6,2" FontSize="{StaticResource Font.Size.sm}"
                       Command="{Binding ToggleCoefficientsCommand}" Margin="0,0,4,0"/>
             </StackPanel>
-            <TextBlock Text="PARTIDAS" Style="{StaticResource Text.PartidaPanelTitle}" VerticalAlignment="Center" />
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="4" Padding="5,1" Margin="0,0,6,0"><TextBlock Text="APU" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" /></Border><TextBlock Text="PARTIDAS" Style="{StaticResource Text.PartidaPanelTitle}" VerticalAlignment="Center" /></StackPanel>
           </DockPanel>
         </Border>
 
@@ -90,13 +90,12 @@
                      Style="{StaticResource Form.SearchBox}"
                      Tag="Buscar partida…"
                      Padding="26,4,24,4"/>
-            <TextBlock Text="🔍"
-                       FontSize="11"
-                       Foreground="{DynamicResource Brush.Muted}"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Left"
-                       Margin="8,0,0,0"
-                       IsHitTestVisible="False"/>
+            <Path Style="{StaticResource Icon.Vector.Sm}" Data="{StaticResource Geo.Search}"
+                  Stroke="{DynamicResource Brush.Muted}"
+                  VerticalAlignment="Center"
+                  HorizontalAlignment="Left"
+                  Margin="8,0,0,0"
+                  IsHitTestVisible="False"/>
             <Button Style="{StaticResource Button.Ghost}"
                     Content="✕"
                     Padding="0"
@@ -208,10 +207,8 @@
 
             <StackPanel Grid.Row="0" Grid.Column="0">
               <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
-                <TextBlock Text="{Binding ActiveItemCode}" FontSize="{StaticResource Font.Size.md}" FontWeight="Bold"
-                           Foreground="{DynamicResource Brush.Blue}" Margin="0,0,8,0"/>
-                <TextBlock Text="{Binding ActiveDescripcion}" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold"
-                           Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis"/>
+                <Border Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.BlueFocus}" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="0,0,8,0" VerticalAlignment="Center"><TextBlock Text="{Binding ActiveItemCode}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" /></Border>
+                <TextBlock Text="{Binding ActiveDescripcion}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
               </StackPanel>
               <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Unidad:" FontSize="{StaticResource Font.Size.sm}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,4,0"/>
@@ -339,21 +336,21 @@
               </Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Material"
+              <Button Style="{StaticResource Button.Toolbar}" Content="+ Material"
                       Command="{Binding AddMaterialInlineCommand}"
                       ToolTip="Agrega un material inline con autocompletado predictivo (Ctrl+M)" />
               <Button Style="{StaticResource Button.Secondary}" Content="Catálogo"
                       Command="{Binding OpenMaterialPickerCommand}"
                       ToolTip="Abrir catálogo modal de materiales" />
-              <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ M.O."
+              <Button Style="{StaticResource Button.Toolbar}" Content="+ M.O."
                       Command="{Binding AddRecursoCommand}" CommandParameter="MO" />
-              <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Equipo"
+              <Button Style="{StaticResource Button.Toolbar}" Content="+ Equipo"
                       Command="{Binding AddRecursoCommand}" CommandParameter="EQ" />
-              <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Subcontrato"
+              <Button Style="{StaticResource Button.Toolbar}" Content="+ Subcontrato"
                       Command="{Binding AddRecursoCommand}" CommandParameter="SC" />
-              <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Transporte"
+              <Button Style="{StaticResource Button.Toolbar}" Content="+ Transporte"
                       Command="{Binding AddRecursoCommand}" CommandParameter="TR" />
-              <Button Style="{StaticResource Button.ToolbarPrimary}" Content="+ Otro"
+              <Button Style="{StaticResource Button.Toolbar}" Content="+ Otro"
                       Command="{Binding AddRecursoCommand}" CommandParameter="OTROS" />
             </StackPanel>
           </DockPanel>
@@ -687,16 +684,53 @@
             </Border>
           </Grid>
 
-          <!-- Estado cuando la partida aún no tiene APU -->
-          <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                      Visibility="{Binding TieneApu, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
-            <TextBlock Text="Esta partida todavía no tiene APU" FontSize="{StaticResource Font.Size.lg}" FontWeight="SemiBold"
-                       Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center"/>
-            <TextBlock Text="Genere el APU desde la cubicación valorizada para revisar materiales, mano de obra y precio final." FontSize="{StaticResource Font.Size.md}"
-                       Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,4,0,16"/>
-            <Button Style="{StaticResource Button.Primary}" Content="Generar APU desde cubicación"
-                    Command="{Binding GenerarApuCommand}" Padding="16,8" HorizontalAlignment="Center"/>
-          </StackPanel>
+          <!-- Estado cuando la partida aún no tiene APU: Blueprint técnico -->
+          <Border VerticalAlignment="Center" HorizontalAlignment="Center"
+                  Background="{DynamicResource Brush.Surface}"
+                  BorderBrush="{DynamicResource Brush.Line}"
+                  BorderThickness="1"
+                  CornerRadius="10"
+                  Padding="36,28"
+                  MaxWidth="620"
+                  Visibility="{Binding TieneApu, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}">
+            <StackPanel HorizontalAlignment="Center">
+              <!-- Icono técnico -->
+              <Border Width="48" Height="48" CornerRadius="10"
+                      Background="{DynamicResource Brush.BlueSoft}"
+                      BorderBrush="{DynamicResource Brush.BlueFocus}"
+                      BorderThickness="1"
+                      HorizontalAlignment="Center"
+                      Margin="0,0,0,14">
+                <Path Data="{StaticResource Geo.Grid}" Style="{StaticResource Icon.Vector.Md}"
+                      Stroke="{DynamicResource Brush.Blue}"
+                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <TextBlock Text="Partida sin Análisis de Precios Unitarios (APU)"
+                         FontSize="15" FontWeight="Bold"
+                         Foreground="{DynamicResource Brush.Ink}"
+                         HorizontalAlignment="Center" Margin="0,0,0,6"/>
+              <TextBlock Text="Genere automáticamente el desglose desde los materiales y mediciones de cubicación viva, o ingrese recursos de forma manual con autocompletado."
+                         FontSize="12"
+                         Foreground="{DynamicResource Brush.Ink3}"
+                         TextAlignment="Center"
+                         TextWrapping="Wrap"
+                         MaxWidth="480"
+                         Margin="0,0,0,20"/>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Style="{StaticResource Button.Primary}"
+                        Content="Generar APU desde cubicación"
+                        Command="{Binding GenerarApuCommand}"
+                        Height="34" Padding="18,4"
+                        FontSize="12" FontWeight="SemiBold"
+                        Margin="0,0,8,0" />
+                <Button Style="{StaticResource Button.Secondary}"
+                        Content="+ Agregar insumo manual"
+                        Command="{Binding AddMaterialInlineCommand}"
+                        Height="34" Padding="14,4"
+                        FontSize="12" FontWeight="SemiBold" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
         </Grid>
 
         <!-- Totales strip -->
@@ -707,12 +741,13 @@
               <GradientStop Color="{DynamicResource Color.Surface2}" Offset="1" />
             </LinearGradientBrush>
           </Border.Background>
-          <DockPanel>
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+          <DockPanel LastChildFill="False">
+            <!-- Totales acumulados destacados (Derecha) -->
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
               <StackPanel Margin="0,0,20,0">
                 <TextBlock Text="PRECIO VENTA" Style="{StaticResource Text.TotalsLabel}"/>
                 <TextBlock Text="{Binding VentaUnitDisplay}" Style="{StaticResource Text.TotalsValue}"
-                           Foreground="{DynamicResource Brush.Green}"/>
+                           Foreground="{DynamicResource Brush.Success}"/>
               </StackPanel>
               <StackPanel>
                 <TextBlock Text="TOTAL PARTIDA" Style="{StaticResource Text.TotalsLabel}"/>
@@ -721,7 +756,8 @@
               </StackPanel>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal">
+            <!-- Desglose de costo unitario acumulado (Izquierda) -->
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
               <StackPanel Margin="0,0,20,0">
                 <TextBlock Text="COSTO DIRECTO" Style="{StaticResource Text.TotalsLabel}"/>
                 <TextBlock Text="{Binding CostoDirectoDisplay}" Style="{StaticResource Text.TotalsValue}"/>
@@ -738,6 +774,20 @@
                 <TextBlock Text="P. UNITARIO" Style="{StaticResource Text.TotalsLabel}"/>
                 <TextBlock Text="{Binding PrecioUnitDisplay}" Style="{StaticResource Text.TotalsValue}"/>
               </StackPanel>
+            </StackPanel>
+
+            <!-- Botones de acción en footer atenuados (Ghost / Sobrios para no competir visualmente con el subtotal acumulado) -->
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+              <Border Height="18" Width="1" Background="{DynamicResource Brush.Line}" Margin="0,0,14,0" VerticalAlignment="Center" />
+              <Button Style="{StaticResource Button.Ghost}" Content="💾 Guardar" Padding="7,3" FontSize="11"
+                      Foreground="{DynamicResource Brush.Ink3}" Command="{Binding SaveCommand}"
+                      ToolTip="Guardar cambios del APU y del proyecto (Ctrl+S)" Margin="0,0,6,0" />
+              <Button Style="{StaticResource Button.Ghost}" Content="🔄 Precios" Padding="7,3" FontSize="11"
+                      Foreground="{DynamicResource Brush.Ink3}" Command="{Binding RefrescarPreciosCommand}"
+                      ToolTip="Actualizar precios de insumos desde el banco de precios" Margin="0,0,6,0" />
+              <Button Style="{StaticResource Button.Ghost}" Content="⚡ Recalcular" Padding="7,3" FontSize="11"
+                      Foreground="{DynamicResource Brush.Ink3}" Command="{Binding GenerarApuCommand}"
+                      ToolTip="Regenerar o sincronizar APU desde cubicación viva" />
             </StackPanel>
           </DockPanel>
         </Border>

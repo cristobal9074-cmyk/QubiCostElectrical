@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -40,11 +40,7 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     // grilla; se invalida solo cuando el catálogo de materiales realmente cambia.
     private IReadOnlyDictionary<string, MaterialRow>? validationMaterialesIndex;
     // Totales
-    private decimal totalMateriales;
-    private decimal totalManoObra;
-    private decimal totalCostoDirecto;
-    private decimal precioUnitario;
-    private decimal totalPartida;
+    private decimal totalMateriales, totalManoObra, totalCostoDirecto, precioUnitario, totalPartida, precioVentaUnitario, totalVentaPartida;
 
     // Panel contextual
     public CubicacionRightPanelVm RightPanel { get; }
@@ -456,6 +452,8 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
 
     public string PartidaPositionText => partidaCoordinator.PartidaPositionText;
 
+    public bool TryReevaluatePartidaCantidadFormula() => partidaCoordinator.TryReevaluatePartidaCantidadFormula();
+
     public string PartidaCantidadText
     {
         get => partidaCoordinator.PartidaCantidadText;
@@ -487,11 +485,15 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     public decimal TotalCostoDirecto { get => totalCostoDirecto; private set => SetProperty(ref totalCostoDirecto, value); }
     public decimal PrecioUnitario { get => precioUnitario; private set => SetProperty(ref precioUnitario, value); }
     public decimal TotalPartida { get => totalPartida; private set => SetProperty(ref totalPartida, value); }
+    public decimal PrecioVentaUnitario { get => precioVentaUnitario; private set => SetProperty(ref precioVentaUnitario, value); }
+    public decimal TotalVentaPartida { get => totalVentaPartida; private set => SetProperty(ref totalVentaPartida, value); }
     public decimal TotalMaterialesUf => PriceConversion.ClpToUf(TotalMateriales, ValorUfVigente);
     public decimal TotalManoObraUf => PriceConversion.ClpToUf(TotalManoObra, ValorUfVigente);
     public decimal TotalCostoDirectoUf => PriceConversion.ClpToUf(TotalCostoDirecto, ValorUfVigente);
     public decimal PrecioUnitarioUf => PriceConversion.ClpToUf(PrecioUnitario, ValorUfVigente);
     public decimal TotalPartidaUf => PriceConversion.ClpToUf(TotalPartida, ValorUfVigente);
+    public decimal PrecioVentaUnitarioUf => PriceConversion.ClpToUf(PrecioVentaUnitario, ValorUfVigente);
+    public decimal TotalVentaPartidaUf => PriceConversion.ClpToUf(TotalVentaPartida, ValorUfVigente);
     private decimal ValorUfVigente => session.ValorUfClp > 0m ? session.ValorUfClp : PriceConversion.DefaultValorUfClp;
 
     /// <summary>
@@ -505,11 +507,13 @@ public sealed partial class CubicacionViewModel : ViewModelBase, IRefreshablePag
     internal void NotifyMonedaChanged()
     {
         OnPropertyChanged(nameof(MuestraUf));
-        OnPropertyChanged(nameof(TotalMaterialesUf));
-        OnPropertyChanged(nameof(TotalManoObraUf));
-        OnPropertyChanged(nameof(TotalCostoDirectoUf));
-        OnPropertyChanged(nameof(PrecioUnitarioUf));
-        OnPropertyChanged(nameof(TotalPartidaUf));
+        NotifyTotalsUfChanged();
+    }
+
+    private void NotifyTotalsUfChanged()
+    {
+        OnPropertyChanged(nameof(TotalMaterialesUf)); OnPropertyChanged(nameof(TotalManoObraUf)); OnPropertyChanged(nameof(TotalCostoDirectoUf));
+        OnPropertyChanged(nameof(PrecioUnitarioUf)); OnPropertyChanged(nameof(TotalPartidaUf)); OnPropertyChanged(nameof(PrecioVentaUnitarioUf)); OnPropertyChanged(nameof(TotalVentaPartidaUf));
     }
 
     // Comandos

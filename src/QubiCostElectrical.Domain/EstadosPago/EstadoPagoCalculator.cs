@@ -5,7 +5,14 @@ using System.Linq;
 namespace QubiCostElectrical;
 
 /// <summary>Partida base (hoja del Itemizado) para el cálculo de estados de pago.</summary>
-public sealed record EstadoPagoPartidaInput(string Id, string Item, string Descripcion, decimal Monto);
+public sealed record EstadoPagoPartidaInput(
+    string Id,
+    string Item,
+    string Descripcion,
+    decimal Monto,
+    string Unidad = Unidades.GL,
+    decimal Cantidad = 1m,
+    decimal PrecioUnitario = 0m);
 
 /// <summary>Fila calculada de la tabla de detalle del mes.</summary>
 public sealed record EstadoPagoPartidaCalc(
@@ -16,7 +23,14 @@ public sealed record EstadoPagoPartidaCalc(
     decimal AvanceAnterior,
     decimal AvanceMes,
     decimal MontoMes,
-    decimal AcumPct);
+    decimal AcumPct,
+    string Unidad = Unidades.GL,
+    decimal Cantidad = 1m,
+    decimal PrecioUnitario = 0m,
+    decimal CantidadMes = 0m,
+    decimal CantidadAcum = 0m,
+    decimal SaldoCantidad = 0m,
+    decimal SaldoMonto = 0m);
 
 /// <summary>Totales calculados de un estado de pago mensual.</summary>
 public sealed record EstadoPagoMesCalc(
@@ -53,19 +67,53 @@ public sealed record EstadoPagoKpis(
 /// </summary>
 public static class EstadoPagoCalculator
 {
+    /// <summary>Calcula el mes anterior (retrocediendo de año si mes == 1).</summary>
+    public static (int Anio, int Mes) PreviousMonth(int anio, int mes) =>
+        mes <= 1 ? (anio - 1, 12) : (anio, mes - 1);
+
+    /// <summary>Calcula el mes siguiente (avanzando de año si mes == 12).</summary>
+    public static (int Anio, int Mes) NextMonth(int anio, int mes) =>
+        mes >= 12 ? (anio + 1, 1) : (anio, mes + 1);
+
+    /// <summary>Calcula el año y mes calendario para un período dado según MesInicio y Anio.</summary>
+    public static (int Anio, int Mes) GetMonthForPeriod(EstadoPagoConfig cfg, int periodoIndex)
+    {
+        cfg ??= EstadoPagoConfig.Default();
+        int mesInicioClamped = Math.Clamp(cfg.MesInicio, 1, 12);
+        int totalMeses = (mesInicioClamped - 1) + Math.Max(0, periodoIndex);
+        int anio = cfg.Anio + (totalMeses / 12);
+        int mes = (totalMeses % 12) + 1;
+        return (anio, mes);
+    }
+
     /// <summary>
-    /// Acumulado % por partida considerando los meses generados hasta <paramref name="mesInclusive"/> (1–12).
+    /// Acumulado % por partida considerando los meses generados hasta <paramref name="mesInclusive"/> de <paramref name="anio"/>.
+    /// Orden cronológico multi-año para obras iniciadas en cualquier mes.
     /// </summary>
     public static Dictionary<string, decimal> BuildAcumulado(
         IEnumerable<EstadoPagoMesRow> meses,
         int anio,
-        int mesInclusive)
+        int mesInclusive,
+        int? anioInicio = null)
     {
+        int targetKey = anio * 12 + mesInclusive;
+        int minKey = anioInicio.HasValue ? anioInicio.Value * 12 + 1 : anio * 12 + 1;
         var acum = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
-        foreach (var row in meses)
+        foreach (var row in (meses ?? Enumerable.Empty<EstadoPagoMesRow>())
+                     .Where(r => r is not null)
+                     .OrderBy(r => r.Anio * 12 + r.Mes))
         {
-            if (row is null || row.Anio != anio || row.Mes > mesInclusive)
-                continue;
+            if (anioInicio.HasValue)
+            {
+                int rowKey = row.Anio * 12 + row.Mes;
+                if (rowKey < minKey || rowKey > targetKey)
+                    continue;
+            }
+            else
+            {
+                if (row.Anio != anio || row.Mes > mesInclusive)
+                    continue;
+            }
 
             foreach (var kv in row.AvancesPorItem)
             {
@@ -107,8 +155,14 @@ public static class EstadoPagoCalculator
             acumTotal += p.Monto * acum / 100m;
             total += p.Monto;
 
+            decimal cantMes = p.Cantidad * av / 100m;
+            decimal cantAcum = p.Cantidad * acum / 100m;
+            decimal saldoCant = Math.Max(0m, p.Cantidad - cantAcum);
+            decimal saldoMonto = Math.Max(0m, p.Monto - (p.Monto * acum / 100m));
+            decimal pu = p.PrecioUnitario > 0m ? p.PrecioUnitario : (p.Cantidad > 0m ? p.Monto / p.Cantidad : 0m);
+
             filas.Add(new EstadoPagoPartidaCalc(
-                p.Id, p.Item, p.Descripcion, p.Monto, anterior, av, montoMes, acum));
+                p.Id, p.Item, p.Descripcion, p.Monto, anterior, av, montoMes, acum, p.Unidad, p.Cantidad, pu, cantMes, cantAcum, saldoCant, saldoMonto));
         }
 
         return new EstadoPagoMesDetalle(filas, CalcularTotales(total, trabajoMes, acumAntesTotal, acumTotal, config));

@@ -127,6 +127,35 @@ internal sealed class CubicacionSectorService
         parent.MarkDirty();
     }
 
+    public void ManageTipologias()
+    {
+        if (session.IsReadOnly)
+            return;
+
+        decimal valorUf = session.ValorUfClp > 0m ? session.ValorUfClp : 38500m;
+        var dialog = new Tipologias.TipologiasEdificioDialog(session.Tipologias, valorUf);
+        if (dialog.ShowDialog() != true)
+            return;
+
+        undo.PushUndoPoint(session, "Configurar tipologías de departamentos");
+        session.Data.Tipologias = dialog.ResultData;
+        session.MarkDirty("tipologias_edificio");
+
+        if (dialog.ApplyToCubicacion)
+        {
+            var nuevasFilas = TipologiasEngine.GenerarFilasCubicacion(dialog.ResultData, session.Itemizado, valorUf);
+            if (nuevasFilas.Count > 0)
+            {
+                session.Cubicacion.RemoveAll(r => r.Area == "Departamentos");
+                session.Cubicacion.AddRange(nuevasFilas);
+                session.MarkDirty("cubicacion");
+                parent.LoadCubicacionRows();
+            }
+        }
+
+        parent.MarkDirty();
+    }
+
     public void InitializeSectorRow(CubicacionRowVm row)
     {
         row.SectorExpressionChanged = OnSectorExpressionChanged;
@@ -220,6 +249,7 @@ internal sealed class CubicacionSectorService
         // Siempre (la fórmula manda): una edición manual sobre una fila Operación se revierte
         // al valor de su fórmula en el mismo evento; el guard evita bucles durante una tanda.
         RecalcularOperaciones(row.Source.ItemId);
+        parent.TryReevaluatePartidaCantidadFormula();
     }
 
     // ── Recálculo en vivo de filas Operación (fórmula libre por fila) ──────────────────────
@@ -414,6 +444,7 @@ internal sealed class CubicacionSectorService
             row.RefreshDisplayProperties();
 
             cubicacionPresenter.AfterRowEdited(row.Source);
+            parent.TryReevaluatePartidaCantidadFormula();
 
             row.Source.QtyExpressions = compactedExpressions;
             row.Cantidad = calculatedQuantity;

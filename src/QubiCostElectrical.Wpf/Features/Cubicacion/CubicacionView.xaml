@@ -26,6 +26,17 @@
             <Setter Property="MaxHeight" Value="32" />
         </Style>
 
+        <!-- Estilo cebra ultra-sutil para encabezados de zonas impares -->
+        <Style x:Key="DataGridColumnHeader.CasillasZebra" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.CasillasGeneral}">
+            <Setter Property="Background" Value="{DynamicResource Brush.ChipBg}" />
+        </Style>
+
+        <!-- Encabezado distintivo de CANT fx con separador vertical de Freeze Pane -->
+        <Style x:Key="DataGridColumnHeader.FormulaFrozen" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Formula}">
+            <Setter Property="BorderThickness" Value="0,0,1.5,1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.InputBorder}" />
+        </Style>
+
         <!-- Estilo de encabezado integrado para UD y CANT en modo Casillas -->
         <Style x:Key="DataGridColumnHeader.PartidaHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeader.Prototype}">
             <Setter Property="Padding" Value="2,1" />
@@ -140,15 +151,20 @@
                     </Grid.RowDefinitions>
 
                     <!-- Encabezado izquierdo -->
-                    <Border Grid.Row="0" Style="{StaticResource Card.LeftPanelHeader}">
+                    <Border Grid.Row="0" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Padding="12,10">
                         <DockPanel LastChildFill="True">
-                            <TextBlock Text="PARTIDAS" Style="{StaticResource Text.PartidaPanelTitle}" VerticalAlignment="Center" />
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left">
+                                <TextBlock Text="PARTIDAS" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="8" Padding="6,1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding FilteredPartidas.Count, Mode=OneWay}" FontSize="9.5" FontWeight="SemiBold" FontFamily="{StaticResource Font.Mono}" Foreground="{DynamicResource Brush.Muted}" />
+                                </Border>
+                            </StackPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button Style="{StaticResource Button.Ghost}" Content="+" FontSize="14" FontWeight="Bold" Padding="6,1" Margin="0,0,2,0"
                                         Command="{Binding AddPartidaCommand}" ToolTip="Agregar nueva partida debajo de la seleccionada (Ctrl++)" />
                                 <Button Style="{StaticResource Button.Ghost}" Content="−" FontSize="14" FontWeight="Bold" Padding="6,1" Margin="0,0,4,0"
                                         Command="{Binding DeletePartidaCommand}" ToolTip="Eliminar la partida activa (Ctrl+-)" />
-                                <Button Style="{StaticResource Button.Ghost}" Content="Ir (Ctrl+G)" FontSize="10" Padding="6,2" Margin="0,0,4,0"
+                                <Button Style="{StaticResource Button.Secondary}" Content="Ir (Ctrl+G)" FontSize="10" Padding="6,2" Margin="0,0,4,0"
                                         Command="{Binding OpenQuickJumpCommand}" ToolTip="Buscador Spotlight para saltar rápido a cualquier partida (Ctrl+G)" />
                                 <Button Style="{StaticResource Button.Ghost}" Content="‹" FontSize="14" Padding="4,0"
                                         Command="{Binding CollapseLeftPanelCommand}" ToolTip="Contraer panel" />
@@ -157,20 +173,20 @@
                     </Border>
 
                     <!-- Buscador y Filtro Rápido de Estado -->
-                    <Border Grid.Row="1" Padding="8,6" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1">
+                    <Border Grid.Row="1" Padding="10,8" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1" Background="{DynamicResource Brush.Surface2}">
                         <StackPanel>
                             <DockPanel LastChildFill="True" Margin="0,0,0,6">
                                 <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="9"
                                            Foreground="{DynamicResource Brush.Muted}" Text="Ctrl++ / Ctrl+-"
                                            ToolTip="Ctrl++ agregar partida bajo la selección · Ctrl+- eliminar la partida activa" />
-                                <Border Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Height="26" VerticalAlignment="Center">
+                                <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="6,2" Height="28" VerticalAlignment="Center">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="🔍" FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                        <Path Grid.Column="0" Style="{StaticResource Icon.Vector.Sm}" Data="{StaticResource Geo.Search}" Stroke="{DynamicResource Brush.Muted}" Margin="0,0,6,0" VerticalAlignment="Center" />
                                         <Grid Grid.Column="1" VerticalAlignment="Center">
                                             <TextBlock Text="Buscar partida…" FontSize="11" Foreground="{DynamicResource Brush.Muted}" IsHitTestVisible="False" VerticalAlignment="Center"
                                                        Visibility="{Binding HasPartidaFilter, Converter={StaticResource BoolToVisibility}, ConverterParameter=Inverse}" />
@@ -186,7 +202,7 @@
                             </DockPanel>
 
                             <!-- Chips de Estado -->
-                            <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="7" Padding="2">
+                            <Border Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="7" Padding="2">
                                 <UniformGrid Columns="3">
                                     <RadioButton Content="{Binding TotalFilterLabel}" IsChecked="{Binding IsPartidaFilterTodos, Mode=TwoWay}"
                                                  GroupName="CubicacionStatusFilter" ToolTip="Mostrar todas las partidas" Style="{StaticResource FilterChip.Base}" />
@@ -302,13 +318,13 @@
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left">
                                 <TextBox x:Name="PartidaCodigoBox" Text="{Binding PartidaCodigo, UpdateSourceTrigger=LostFocus}"
                                          FontFamily="{StaticResource Font.Mono}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}"
-                                         Background="Transparent" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                         Background="{DynamicResource Brush.BlueSoft}" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="1"
                                          Padding="6,3" Margin="0,0,8,0" MinWidth="55" MaxWidth="120"
                                          ToolTip="Editar número de ítem de la partida (ej. 1.1) · Enter para guardar"
                                          PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
                                 <TextBox x:Name="PartidaDescripcionBox" Text="{Binding PartidaDescripcion, UpdateSourceTrigger=LostFocus}"
                                          FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
-                                         Background="Transparent" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                                         Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
                                          Padding="8,3" MinWidth="250" MaxWidth="850"
                                          ToolTip="Editar nombre/descripción de la partida · Enter para guardar"
                                          PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
@@ -423,6 +439,11 @@
                                     <Path Data="{StaticResource Geo.FileText}" Style="{StaticResource Icon.Vector.Md}" Stroke="{DynamicResource Brush.Blue}" />
                                 </Button>
 
+                                <!-- Tipologías de Edificio -->
+                                <Button Style="{StaticResource Button.ToolbarIcon}" Command="{Binding ManageTipologiasCommand}" ToolTip="Tipologías de Departamentos&#x0a;Cubicación paramétrica masiva por tipologías y pisos del edificio">
+                                    <TextBlock Text="🏢" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                </Button>
+
                                 <!-- Separador CAD -->
                                 <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Line}" Margin="2,0,5,0" VerticalAlignment="Center" />
 
@@ -450,6 +471,7 @@
                                             <MenuItem Header="Cargar Plantilla..." Command="{Binding AplicarConjuntoCommand}" ToolTip="Cargar una plantilla creada en la pesta&#241;a Plantillas sobre la partida seleccionada" />
                                             <MenuItem Header="Guardar como Plantilla..." Command="{Binding CrearConjuntoDesdePartidaCommand}" ToolTip="Crear una plantilla reutilizable en tu biblioteca global a partir de los materiales y f&#243;rmulas de esta partida" />
                                             <MenuItem Header="Zonas..." Command="{Binding ManageZonasCommand}" ToolTip="Definir las zonas del proyecto (nombres, orden y estado de los sectores)" />
+                                            <MenuItem Header="🏢 Tipologías de Departamentos..." Command="{Binding ManageTipologiasCommand}" ToolTip="Configurar departamentos tipo y matriz de distribución en el edificio (reemplaza matrices masivas)" />
                                         </ContextMenu>
                                     </Button.ContextMenu>
                                 </Button>
@@ -493,84 +515,91 @@
                 <!-- Fila de la partida (modo Detalle) -->
                 <Border Grid.Row="1" Background="{DynamicResource Brush.ActiveRowBg}" BorderBrush="{DynamicResource Brush.Blue}" BorderThickness="0,0,0,2"
                         ClipToBounds="True" Visibility="{Binding IsDetailHeaderVisible, Converter={StaticResource BoolToVisibility}}">
-                    <DockPanel x:Name="ItemRowHost" LastChildFill="True" Height="30">
-                        <DockPanel.RenderTransform>
-                            <TranslateTransform X="0" />
-                        </DockPanel.RenderTransform>
-                        <!-- Código de la partida (ej. 2.1) -->
-                        <Border x:Name="ItemRowCodigoCell" DockPanel.Dock="Left" Padding="8,0" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                            <TextBlock Text="{Binding PartidaCodigo}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
-                        </Border>
-                        <!-- Descripción / nombre de la partida (ej. Circuitos) -->
-                        <Border x:Name="ItemRowDescCell" DockPanel.Dock="Left" Padding="8,0" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                            <TextBlock Text="{Binding PartidaDescripcion}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                        </Border>
-                        <!-- Unidad de la partida — editable -->
-                        <Border x:Name="ItemRowUiCell" DockPanel.Dock="Left" Padding="1,2" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsPartidaUnidadMissing}" Value="True">
-                                            <Setter Property="Background" Value="#FEF3C7" /><Setter Property="BorderBrush" Value="#F59E0B" /><Setter Property="BorderThickness" Value="1,1,1,1" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <TextBox x:Name="UnidadHeaderBox" Text="{Binding PartidaUnidadText, UpdateSourceTrigger=LostFocus}"
-                                     IsReadOnly="{Binding IsReadOnly}" FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="Bold"
-                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
-                                     GotFocus="OnUnidadHeaderBoxGotFocus" LostFocus="OnUnidadHeaderBoxLostFocus" PreviewKeyDown="OnUnidadHeaderBoxPreviewKeyDown" TextChanged="OnUnidadHeaderBoxTextChanged"
-                                     ToolTip="Unidad de la partida, la misma del itemizado. No cambia la unidad de ningún material." />
-                        </Border>
-                        <!-- Cantidad oficial de la partida — número o fórmula tipo Excel (R1+R2...) -->
-                        <Border x:Name="ItemRowCantCell" DockPanel.Dock="Left" Padding="1,2" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsPartidaCantidadMissing}" Value="True">
-                                            <Setter Property="Background" Value="#FEF3C7" /><Setter Property="BorderBrush" Value="#F59E0B" /><Setter Property="BorderThickness" Value="1,1,1,1" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <TextBox x:Name="CantHeaderBox" Text="{Binding PartidaCantidadText, UpdateSourceTrigger=LostFocus}"
-                                     IsReadOnly="{Binding IsReadOnly}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="Bold"
-                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Success}"
-                                     GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus" PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown" PreviewTextInput="OnCantHeaderBoxPreviewTextInput"
-                                     ToolTip="{Binding PartidaCantidadToolTip}" />
-                        </Border>
-                        <!-- Etiquetas de columna (Detalle) -->
-                        <Border x:Name="ItemRowMatCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="Precio unitario de material en CLP (lista de precios)">
-                            <TextBlock Text="MAT $" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                        </Border>
-                        <Border x:Name="ItemRowMoCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="Precio unitario de mano de obra en CLP (lista de precios)">
-                            <TextBlock Text="MO $" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                        </Border>
-                        <Border x:Name="ItemRowTotalCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="MAT $ + MO $ (precio unitario total en CLP)">
-                            <TextBlock Text="$ UNIT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                        </Border>
-                        <Border x:Name="ItemRowSubtotalCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="$ UNIT × cantidad del recurso (CLP)">
-                            <TextBlock Text="SUBTOTAL" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                        </Border>
-                        <Border x:Name="ItemRowGgUtCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                            <TextBlock Text="GG+UT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                        </Border>
-                        <Border x:Name="ItemRowUfUnitCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                            <TextBlock Text="UF UNIT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                        </Border>
-                        <Border x:Name="ItemRowSubtotalUfCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
-                            <TextBlock Text="SUBTOTAL UF" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                        </Border>
-                        <!-- Observación de la partida -->
-                        <Border Background="{DynamicResource Brush.AmberSoft}" Padding="4,2">
-                            <TextBox x:Name="ObservacionHeaderBox" Text="{Binding PartidaObservacionesText, UpdateSourceTrigger=PropertyChanged}"
-                                     IsReadOnly="{Binding IsReadOnly}" FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="SemiBold"
-                                     VerticalContentAlignment="Center" Padding="4,0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
-                                     GotFocus="OnPartidaFieldGotFocus" PreviewKeyDown="OnPartidaFieldPreviewKeyDown"
-                                     ToolTip="Observación de la partida para el Resumen/oferta. Ctrl+←/→ para moverse entre Unidad, Cantidad y Observaciones." />
-                        </Border>
+                    <DockPanel LastChildFill="True" Height="30">
+                        <!-- Celdas fijas / congeladas de la partida (alineadas con FrozenColumnCount=5) -->
+                        <DockPanel DockPanel.Dock="Left">
+                            <!-- Codigo de la partida (ej. 2.1) -->
+                            <Border x:Name="ItemRowCodigoCell" DockPanel.Dock="Left" Padding="8,0" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                                <TextBlock Text="{Binding PartidaCodigo}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Blue}" VerticalAlignment="Center" />
+                            </Border>
+                            <!-- Descripcion / nombre de la partida (ej. Circuitos) -->
+                            <Border x:Name="ItemRowDescCell" DockPanel.Dock="Left" Padding="8,0" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                                <TextBlock Text="{Binding PartidaDescripcion}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Border>
+                            <!-- Unidad de la partida  editable -->
+                            <Border x:Name="ItemRowUiCell" DockPanel.Dock="Left" Padding="1,2" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPartidaUnidadMissing}" Value="True">
+                                                <Setter Property="Background" Value="#FEF3C7" /><Setter Property="BorderBrush" Value="#F59E0B" /><Setter Property="BorderThickness" Value="1,1,1,1" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBox x:Name="UnidadHeaderBox" Text="{Binding PartidaUnidadText, UpdateSourceTrigger=LostFocus}"
+                                         IsReadOnly="{Binding IsReadOnly}" FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="Bold"
+                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
+                                         GotFocus="OnUnidadHeaderBoxGotFocus" LostFocus="OnUnidadHeaderBoxLostFocus" PreviewKeyDown="OnUnidadHeaderBoxPreviewKeyDown" TextChanged="OnUnidadHeaderBoxTextChanged"
+                                         ToolTip="Unidad de la partida, la misma del itemizado. No cambia la unidad de ning&#243;n material." />
+                            </Border>
+                            <!-- Cantidad oficial de la partida con l&#243;nea de division Freeze Pane -->
+                            <Border x:Name="ItemRowCantCell" DockPanel.Dock="Left" Padding="1,2" BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="0,0,1.5,0">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{DynamicResource Brush.SuccessBg}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPartidaCantidadMissing}" Value="True">
+                                                <Setter Property="Background" Value="#FEF3C7" /><Setter Property="BorderBrush" Value="#F59E0B" /><Setter Property="BorderThickness" Value="1,1,1,1" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBox x:Name="CantHeaderBox" Text="{Binding PartidaCantidadText, UpdateSourceTrigger=LostFocus}"
+                                         IsReadOnly="{Binding IsReadOnly}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="Bold"
+                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Success}"
+                                         GotFocus="OnCantHeaderBoxGotFocus" LostFocus="OnCantHeaderBoxLostFocus" PreviewKeyDown="OnCantHeaderBoxPreviewKeyDown" PreviewTextInput="OnCantHeaderBoxPreviewTextInput"
+                                         ToolTip="{Binding PartidaCantidadToolTip}" />
+                            </Border>
+                        </DockPanel>
+
+                        <!-- Celdas desplazables con scroll horizontal (sincronizadas con columnas desplazables de ResourceGrid) -->
+                        <DockPanel x:Name="ItemRowHost" LastChildFill="True">
+                            <DockPanel.RenderTransform>
+                                <TranslateTransform X="0" />
+                            </DockPanel.RenderTransform>
+                            <!-- Etiquetas de columna (Detalle) -->
+                            <Border x:Name="ItemRowMatCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="Precio unitario de material en CLP (lista de precios)">
+                                <TextBlock Text="MAT $" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </Border>
+                            <Border x:Name="ItemRowMoCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="Precio unitario de mano de obra en CLP (lista de precios)">
+                                <TextBlock Text="MO $" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </Border>
+                            <Border x:Name="ItemRowTotalCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="MAT $ + MO $ (precio unitario total en CLP)">
+                                <TextBlock Text="$ UNIT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </Border>
+                            <Border x:Name="ItemRowSubtotalCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0" ToolTip="$ UNIT &#243;- cantidad del recurso (CLP)">
+                                <TextBlock Text="SUBTOTAL" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </Border>
+                            <Border x:Name="ItemRowGgUtCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                                <TextBlock Text="GG+UT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </Border>
+                            <Border x:Name="ItemRowUfUnitCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                                <TextBlock Text="UF UNIT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </Border>
+                            <Border x:Name="ItemRowSubtotalUfCell" DockPanel.Dock="Left" BorderBrush="{DynamicResource Brush.Line2}" BorderThickness="0,0,1,0">
+                                <TextBlock Text="SUBTOTAL UF" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink3}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </Border>
+                            <!-- Observacion de la partida -->
+                            <Border Background="{DynamicResource Brush.AmberSoft}" Padding="4,2">
+                                <TextBox x:Name="ObservacionHeaderBox" Text="{Binding PartidaObservacionesText, UpdateSourceTrigger=PropertyChanged}"
+                                         IsReadOnly="{Binding IsReadOnly}" FontFamily="{StaticResource Font.Ui}" FontSize="11" FontWeight="SemiBold"
+                                         VerticalContentAlignment="Center" Padding="4,0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Brush.Ink}"
+                                         GotFocus="OnPartidaFieldGotFocus" PreviewKeyDown="OnPartidaFieldPreviewKeyDown"
+                                         ToolTip="Observacion de la partida para el Resumen/oferta. Ctrl+/ para moverse entre Unidad, Cantidad y Observaciones." />
+                            </Border>
+                        </DockPanel>
                     </DockPanel>
                 </Border>
 
@@ -723,9 +752,11 @@
                             </DataGridTextColumn>
 
                             <!-- Cantidad -->
-                            <DataGridTextColumn x:Name="CantidadColumn" Header="CANT fx" Binding="{Binding CantidadDisplay}" Width="74" MinWidth="66" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.Formula}">
+                            <DataGridTextColumn x:Name="CantidadColumn" Header="CANT fx" Binding="{Binding CantidadDisplay}" Width="74" MinWidth="66" IsReadOnly="True" HeaderStyle="{StaticResource DataGridColumnHeader.FormulaFrozen}">
                                 <DataGridTextColumn.CellStyle>
                                     <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCell.Excel}">
+                                        <Setter Property="BorderThickness" Value="0,0,1.5,0" />
+                                        <Setter Property="BorderBrush" Value="{DynamicResource Brush.InputBorder}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsCantPickTarget}" Value="True">
                                                 <Setter Property="BorderBrush" Value="{DynamicResource Brush.Blue}" /><Setter Property="BorderThickness" Value="2" /><Setter Property="Background" Value="{DynamicResource Brush.BlueSoft}" />
@@ -738,7 +769,7 @@
                                         <Setter Property="HorizontalAlignment" Value="Right" /><Setter Property="Margin" Value="0,0,4,0" /><Setter Property="Foreground" Value="{DynamicResource Brush.CellFormulaInk}" /><Setter Property="FontFamily" Value="{StaticResource Font.Mono}" /><Setter Property="ToolTip" Value="Cantidad calculada desde la matriz de sectores o fórmula de medición" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding HasFormula}" Value="True">
-                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" /><Setter Property="FontStyle" Value="Italic" />
+                                                <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" /><Setter Property="FontWeight" Value="SemiBold" />
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding CantidadCellError, Converter={StaticResource StringNotEmptyToBool}}" Value="True">
                                                 <Setter Property="Background" Value="{DynamicResource Brush.RedSoft}" /><Setter Property="ToolTip" Value="{Binding CantidadCellError}" />

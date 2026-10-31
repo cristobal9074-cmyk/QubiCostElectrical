@@ -49,6 +49,60 @@ internal sealed class CostoBreakdownReportCoordinator
             ? $"Costo ejecución $ {directoClp:N0} · Total venta $ {ventaClp:N0} · Margen {cost.MargenRealPct:N1}%"
             : $"Costo ejecución {_vm.MoneyTextInternal(directoClp)} · Total venta {_vm.MoneyTextInternal(ventaClp)} · Margen {cost.MargenRealPct:N1}%";
         _vm.NegotiationSimulator.UpdateBase(directoClp, ventaClp, valorUf);
+
+        // Segmentación Financiera (Ratio Apilado WCAG AAA)
+        decimal indirectosClp = Math.Max(0m, cost.GastosGeneralesUf + cost.RiesgoUf + cost.ValorAgregadoEquiposUf);
+        if (cost.CostoProyectoUf > directoClp + indirectosClp && cost.UtilidadAditivaUf == 0m)
+        {
+            indirectosClp = cost.CostoProyectoUf - directoClp;
+        }
+        decimal margenFinancieroClp = Math.Max(0m, ventaClp - directoClp - indirectosClp);
+        decimal totalReparto = directoClp + indirectosClp + margenFinancieroClp;
+
+        if (totalReparto > 0m && ventaClp > 0m)
+        {
+            double pctDir = (double)(directoClp / totalReparto * 100m);
+            double pctInd = (double)(indirectosClp / totalReparto * 100m);
+            double pctMar = (double)(margenFinancieroClp / totalReparto * 100m);
+
+            _vm.FinancialRatioDirectosStar = new System.Windows.GridLength(Math.Max(0.001, pctDir), System.Windows.GridUnitType.Star);
+            _vm.FinancialRatioIndirectosStar = new System.Windows.GridLength(Math.Max(0.001, pctInd), System.Windows.GridUnitType.Star);
+            _vm.FinancialRatioMargenStar = new System.Windows.GridLength(Math.Max(0.001, pctMar), System.Windows.GridUnitType.Star);
+
+            _vm.FinancialRatioDirectosPct = $"{pctDir:N1}%";
+            _vm.FinancialRatioIndirectosPct = $"{pctInd:N1}%";
+            _vm.FinancialRatioMargenPct = $"{pctMar:N1}%";
+
+            var pairDir = _vm.FormatMoneyPair(directoClp);
+            var pairInd = _vm.FormatMoneyPair(indirectosClp);
+            var pairMar = _vm.FormatMoneyPair(margenFinancieroClp);
+
+            _vm.FinancialRatioDirectosMonto = pairDir.Primary;
+            _vm.FinancialRatioDirectosSub = pairDir.Secondary;
+            _vm.FinancialRatioIndirectosMonto = pairInd.Primary;
+            _vm.FinancialRatioIndirectosSub = pairInd.Secondary;
+            _vm.FinancialRatioMargenMonto = pairMar.Primary;
+            _vm.FinancialRatioMargenSub = pairMar.Secondary;
+
+            _vm.HasFinancialRatioData = true;
+        }
+        else
+        {
+            _vm.FinancialRatioDirectosStar = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star);
+            _vm.FinancialRatioIndirectosStar = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star);
+            _vm.FinancialRatioMargenStar = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star);
+            _vm.FinancialRatioDirectosPct = "—";
+            _vm.FinancialRatioIndirectosPct = "—";
+            _vm.FinancialRatioMargenPct = "—";
+            _vm.FinancialRatioDirectosMonto = "—";
+            _vm.FinancialRatioIndirectosMonto = "—";
+            _vm.FinancialRatioMargenMonto = "—";
+            _vm.FinancialRatioDirectosSub = "";
+            _vm.FinancialRatioIndirectosSub = "";
+            _vm.FinancialRatioMargenSub = "";
+            _vm.HasFinancialRatioData = false;
+        }
+
         _vm.Tabs.Update(cost, project, _vm.Familias, _vm.FormatMoneyPrimary, clp => _vm.FormatMoneyPair(clp).Secondary);
     }
 

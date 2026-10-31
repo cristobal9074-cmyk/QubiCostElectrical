@@ -77,6 +77,20 @@ internal static class CubicacionPartidaHelper
             }
         }
 
+        // Suma por sector/zona (Z1..Zn)
+        for (int c = 0; c < 30; c++)
+        {
+            decimal sumZone = 0m;
+            for (int r = 0; r < rowList.Count; r++)
+            {
+                if (dict.TryGetValue($"F{r + 1}C{c + 1}", out decimal cellVal))
+                    sumZone += cellVal;
+            }
+            dict[$"Z{c + 1}"] = sumZone;
+            dict[$"ZONA{c + 1}"] = sumZone;
+            dict[$"ZONA_{c + 1}"] = sumZone;
+        }
+
         foreach (var kv in session.ProjectVariables)
         {
             if (QuantityFormulaService.IsValidVariableName(kv.Key))

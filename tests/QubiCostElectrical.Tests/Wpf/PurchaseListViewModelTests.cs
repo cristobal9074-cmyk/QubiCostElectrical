@@ -1,5 +1,9 @@
-using System.Linq;
+using System;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Data;
 using QubiCostElectrical;
 using QubiCostElectrical.Wpf.Features.Purchases;
 using QubiCostElectrical.Wpf.Infrastructure;
@@ -59,6 +63,7 @@ public sealed class PurchaseListViewModelTests
         Assert.Equal("Sin proyecto abierto.", vm.ProjectSummary);
         Assert.Contains("Abre o crea un proyecto", vm.StatusMessage);
         Assert.False(vm.ExportExcelCommand.CanExecute(null));
+        Assert.False(vm.ExportPurchaseOrderCommand.CanExecute(null));
         Assert.Equal("Todas", vm.CategoryOptions[0]);
     }
 
@@ -114,6 +119,7 @@ public sealed class PurchaseListViewModelTests
         Assert.Equal("Proyecto compra · 2 recursos", vm.ProjectSummary);
         Assert.Contains("Lista consolidada", vm.StatusMessage);
         Assert.True(vm.ExportExcelCommand.CanExecute(null));
+        Assert.True(vm.ExportPurchaseOrderCommand.CanExecute(null));
         Assert.Contains(vm.CategoryOptions, x => x == "Cables");
         Assert.Contains(vm.CategoryOptions, x => x == "Conductores");
     }
@@ -170,5 +176,51 @@ public sealed class PurchaseListViewModelTests
         Assert.Single(visible);
         Assert.Equal("PVC20", visible[0].Codigo);
         Assert.Contains("1 visibles", vm.SummaryText);
+    }
+
+    [Fact]
+    public void GroupingOptions_AutoGroupsByProvider_AndSwitchesBetweenModes()
+    {
+        var vm = new PurchaseListViewModel(new FakeShellHost(), WpfAppHost.Current);
+
+        Assert.Contains(PurchaseListViewModel.GroupingByProvider, vm.GroupingOptions);
+        Assert.Contains(PurchaseListViewModel.GroupingByFamily, vm.GroupingOptions);
+        Assert.Contains(PurchaseListViewModel.GroupingNone, vm.GroupingOptions);
+
+        // Auto-grouping defaults to "Por proveedor"
+        Assert.Equal(PurchaseListViewModel.GroupingByProvider, vm.SelectedGroupingOption);
+        Assert.True(vm.IsGroupedByProvider);
+        Assert.False(vm.IsGroupedByFamily);
+        Assert.True(vm.IsGrouped);
+
+        // Switch to Family
+        vm.SelectedGroupingOption = PurchaseListViewModel.GroupingByFamily;
+        Assert.False(vm.IsGroupedByProvider);
+        Assert.True(vm.IsGroupedByFamily);
+        Assert.True(vm.IsGrouped);
+
+        // Switch to None
+        vm.SelectedGroupingOption = PurchaseListViewModel.GroupingNone;
+        Assert.False(vm.IsGroupedByProvider);
+        Assert.False(vm.IsGroupedByFamily);
+        Assert.False(vm.IsGrouped);
+    }
+
+    [Fact]
+    public void CompraMaterialViewModel_GrupoProperties_ReturnCorrectGroupingKeys()
+    {
+        var matWithProvider = new CompraMaterialViewModel(
+            "MAT01", "Conductor Eva 2.5", "ML", "Conductores", "Dartel Electricidad",
+            100m, 5m, 105m, 0.12m, 12m, 12.6m, 1, 4500m, 450000m, 472500m);
+
+        Assert.Equal("Dartel Electricidad", matWithProvider.GrupoProveedor);
+        Assert.Equal("Conductores", matWithProvider.GrupoFamilia);
+
+        var matWithoutProvider = new CompraMaterialViewModel(
+            "MAT02", "Caja Chuqui", "UN", "Accesorios", "",
+            10m, 0m, 10m, 0.05m, 0.5m, 0.5m, 1, 1200m, 12000m, 12000m);
+
+        Assert.Contains("Accesorios", matWithoutProvider.GrupoProveedor);
+        Assert.Equal("Accesorios", matWithoutProvider.GrupoFamilia);
     }
 }

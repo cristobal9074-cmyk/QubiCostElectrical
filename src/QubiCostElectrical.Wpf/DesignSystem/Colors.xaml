@@ -57,6 +57,16 @@
     <Color x:Key="Color.DangerBg">#FDECEC</Color>
     <Color x:Key="Color.DangerBorder">#FECACA</Color>
 
+    <!-- ── WCAG AAA Financial Ratio Colors (Contrast > 7:1) ───────────────── -->
+    <Color x:Key="Color.Finance.Direct">#1E3A8A</Color>
+    <Color x:Key="Color.Finance.Indirect">#78350F</Color>
+    <Color x:Key="Color.Finance.Margin">#14532D</Color>
+    <Color x:Key="Color.Finance.DirectSoft">#DBEAFE</Color>
+    <Color x:Key="Color.Finance.IndirectSoft">#FEF3C7</Color>
+    <Color x:Key="Color.Finance.MarginSoft">#DCFCE7</Color>
+    <Color x:Key="Color.Finance.Track">#E2E8F0</Color>
+    <Color x:Key="Color.Finance.TrackBorder">#94A3B8</Color>
+
     <!-- ── Info / Purple (recurso MO) ──────────────────────────────────────── -->
     <Color x:Key="Color.Info">#2B5AA0</Color>
     <Color x:Key="Color.InfoBg">#E8EFFA</Color>
@@ -88,11 +98,11 @@
     <Color x:Key="Color.WorkspaceBar">#F8FAFC</Color>
     <Color x:Key="Color.PanelHeader">#FAFBFD</Color>
     <Color x:Key="Color.PanelSidebar">#FAFBFD</Color>
-    <Color x:Key="Color.InputBorder">#DCE3EC</Color>
+    <Color x:Key="Color.InputBorder">#CBD5E1</Color>
     <Color x:Key="Color.DropdownHover">#F1F5FA</Color>
     <Color x:Key="Color.RowHover">#F1F5FB</Color>
     <Color x:Key="Color.ChipBg">#F1F4F8</Color>
-    <Color x:Key="Color.ChapterRowBg">#F4F7FB</Color>
+    <Color x:Key="Color.ChapterRowBg">#EEF3F8</Color>
     <Color x:Key="Color.ActiveRowBg">#E6EFFD</Color>
     <Color x:Key="Color.ActiveRowHoverBg">#DCE8FC</Color>
     <Color x:Key="Color.CellFormulaBg">#F1F4F9</Color>
@@ -228,6 +238,16 @@
 
     <SolidColorBrush x:Key="Brush.SaveDot"      Color="{StaticResource Color.SaveDot}" />
     <SolidColorBrush x:Key="Brush.AvatarBg"     Color="{StaticResource Color.AvatarBg}" />
+
+    <!-- ── WCAG AAA Financial Ratio Brushes ──────────────────────────────── -->
+    <SolidColorBrush x:Key="Brush.Finance.Direct"        Color="{StaticResource Color.Finance.Direct}" />
+    <SolidColorBrush x:Key="Brush.Finance.Indirect"      Color="{StaticResource Color.Finance.Indirect}" />
+    <SolidColorBrush x:Key="Brush.Finance.Margin"        Color="{StaticResource Color.Finance.Margin}" />
+    <SolidColorBrush x:Key="Brush.Finance.DirectSoft"    Color="{StaticResource Color.Finance.DirectSoft}" />
+    <SolidColorBrush x:Key="Brush.Finance.IndirectSoft"  Color="{StaticResource Color.Finance.IndirectSoft}" />
+    <SolidColorBrush x:Key="Brush.Finance.MarginSoft"    Color="{StaticResource Color.Finance.MarginSoft}" />
+    <SolidColorBrush x:Key="Brush.Finance.Track"         Color="{StaticResource Color.Finance.Track}" />
+    <SolidColorBrush x:Key="Brush.Finance.TrackBorder"   Color="{StaticResource Color.Finance.TrackBorder}" />
 
     <!-- Accent / warning aliases used across modules -->
     <SolidColorBrush x:Key="Brush.Accent"       Color="{StaticResource Color.Blue}" />
