@@ -63,22 +63,163 @@ public partial class CubicacionView : UserControl
         if (cell == null || cell.DataContext is not CubicacionRowVm row)
             return;
 
-        int slot = (Vm.IsSectorMatrixMode && cell.Column != null && _sectorColumns.Contains(cell.Column))
+        if (Vm != null && Vm.SelectedRow != row)
+        {
+            Vm.SelectedRow = row;
+        }
+
+        int slot = (Vm != null && Vm.IsSectorMatrixMode && cell.Column != null && _sectorColumns.Contains(cell.Column))
             ? _sectorColumns.IndexOf(cell.Column)
             : -1;
 
+        cell.ContextMenu = BuildResourceGridContextMenu(row, slot);
+    }
+
+    private ContextMenu BuildResourceGridContextMenu(CubicacionRowVm row, int slot)
+    {
+        var menu = new ContextMenu();
+
+        // 1. Acción contextual específica de celda / sector
         if (slot >= 0)
         {
-            var menuItem = new MenuItem { Header = "Traer sector desde Hoja de Cubicación", Tag = (row, slot) };
-            menuItem.Click += OnGoToHojaCubicacionClick;
-            cell.ContextMenu = new ContextMenu { ItemsSource = new object[] { menuItem } };
+            var item = new MenuItem
+            {
+                Header = "Traer sector desde Hoja de Cubicación",
+                InputGestureText = "Alt+Clic",
+                Tag = (row, slot),
+                Icon = new TextBlock { Text = "📐", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+            };
+            item.Click += OnGoToHojaCubicacionClick;
+            menu.Items.Add(item);
+            menu.Items.Add(new Separator());
         }
         else
         {
-            var menuItem = new MenuItem { Header = "Traer cantidad desde Hoja de Cubicación", Tag = row };
-            menuItem.Click += OnPickQuantityFromHojaCubicacionClick;
-            cell.ContextMenu = new ContextMenu { ItemsSource = new object[] { menuItem } };
+            var item = new MenuItem
+            {
+                Header = "Traer cantidad desde Hoja de Cubicación",
+                InputGestureText = "Alt+T",
+                Tag = row,
+                Icon = new TextBlock { Text = "📐", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+            };
+            item.Click += OnPickQuantityFromHojaCubicacionClick;
+            menu.Items.Add(item);
+            menu.Items.Add(new Separator());
         }
+
+        // 2. Edición de Fila y Materiales (Excel)
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Duplicar fila",
+            InputGestureText = "Ctrl+D",
+            Command = Vm?.DuplicateRowCommand,
+            Icon = new TextBlock { Text = "📋", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Eliminar fila",
+            InputGestureText = "Supr",
+            Command = Vm?.DeleteRowCommand,
+            Foreground = Application.Current?.TryFindResource("Brush.Danger") as System.Windows.Media.Brush,
+            Icon = new TextBlock { Text = "🗑️", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Subir fila",
+            InputGestureText = "Alt+↑",
+            Command = Vm?.MoveRowUpCommand,
+            Icon = new TextBlock { Text = "⬆️", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Bajar fila",
+            InputGestureText = "Alt+↓",
+            Command = Vm?.MoveRowDownCommand,
+            Icon = new TextBlock { Text = "⬇️", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new Separator());
+
+        // 3. Reemplazos masivos
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Buscar y Reemplazar Material...",
+            InputGestureText = "Ctrl+H",
+            Command = Vm?.OpenBatchReplaceCommand,
+            Icon = new TextBlock { Text = "🔍", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Cambio de Línea o Familia Masivo...",
+            InputGestureText = "Ctrl+Shift+H",
+            Command = Vm?.OpenFamilyBatchReplaceCommand,
+            Icon = new TextBlock { Text = "🔄", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new Separator());
+
+        // 4. Cantidades y Automatización
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Autocompletar unidad y cantidad",
+            Command = Vm?.AutocompletarUnidadYCantidadCommand,
+            Icon = new TextBlock { Text = "⚡", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Aplicar cantidad a la partida",
+            Command = Vm?.AplicarCantidadALaPartidaCommand,
+            Icon = new TextBlock { Text = "🎯", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Autocompletar unidad y cantidad en todo el proyecto...",
+            Command = Vm?.AutocompletarUnidadYCantidadTodasCommand,
+            Icon = new TextBlock { Text = "🌐", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new Separator());
+
+        // 5. Herramientas de Análisis y Medición
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Hoja de Cubicación",
+            InputGestureText = "Alt+T",
+            Command = Vm?.OpenHojaCubicacionCommand,
+            Icon = new TextBlock { Text = "📐", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Generar / Ver APU de esta partida",
+            Command = Vm?.NavigateToApuCommand,
+            Icon = new TextBlock { Text = "📦", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Tipologías de Departamentos...",
+            Command = Vm?.ManageTipologiasCommand,
+            Icon = new TextBlock { Text = "🏢", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Zonas del Proyecto...",
+            Command = Vm?.ManageZonasCommand,
+            Icon = new TextBlock { Text = "🗺️", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new Separator());
+
+        // 6. Plantillas
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Cargar Plantilla...",
+            Command = Vm?.AplicarConjuntoCommand,
+            Icon = new TextBlock { Text = "📥", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+        menu.Items.Add(new MenuItem
+        {
+            Header = "Guardar como Plantilla...",
+            Command = Vm?.CrearConjuntoDesdePartidaCommand,
+            Icon = new TextBlock { Text = "💾", FontSize = 12, VerticalAlignment = VerticalAlignment.Center }
+        });
+
+        return menu;
     }
 
     private void OnPickQuantityFromHojaCubicacionClick(object sender, RoutedEventArgs e)

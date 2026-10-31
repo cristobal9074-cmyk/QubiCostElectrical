@@ -453,25 +453,85 @@
                                     <Path Data="{StaticResource Geo.Search}" Style="{StaticResource Icon.Vector.Md}" />
                                 </Button>
 
-                                <!-- Mas Acciones (...) -->
-                                <Button Style="{StaticResource Button.ToolbarIcon}" Margin="0" ToolTip="M&#225;s opciones de partida&#x0a;Duplicar, reemplazar, autocompletar y zonas" Click="OnMoreActionsClick">
-                                    <Path Data="{StaticResource Geo.MoreHorizontal}" Style="{StaticResource Icon.Vector.Md}" />
+                                <!-- Menú Acciones ▾ (Estilo Excel) -->
+                                <Button Style="{StaticResource Button.Toolbar}" Height="28" Padding="9,0" Margin="0"
+                                        ToolTip="Operaciones avanzadas de partida: duplicar, reemplazar, autocompletar, plantillas y zonas"
+                                        Click="OnMoreActionsClick">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Acciones" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,5,0" />
+                                        <TextBlock Text="▾" FontSize="9.5" VerticalAlignment="Center" Opacity="0.7" />
+                                    </StackPanel>
                                     <Button.ContextMenu>
                                         <ContextMenu>
-                                            <MenuItem Header="Duplicar fila (Ctrl+D)" Command="{Binding DuplicateRowCommand}" ToolTip="Duplicar la fila seleccionada con todas sus mediciones y f&#243;rmulas" />
-                                            <MenuItem Header="Buscar y Reemplazar Material... (Ctrl+H)" Command="{Binding OpenBatchReplaceCommand}" ToolTip="Reemplazar un material en todas las partidas manteniendo intactas las mediciones y f&#243;rmulas" />
-                                            <MenuItem Header="Cambio de L&#237;nea o Familia Masivo... (Ctrl+Shift+H)" Command="{Binding OpenFamilyBatchReplaceCommand}" ToolTip="Ingenier&#237;a de valor: reemplazar familias completas de materiales con auto-mapeo del banco de precios" />
+                                            <MenuItem Header="Duplicar fila" InputGestureText="Ctrl+D" Command="{Binding DuplicateRowCommand}" ToolTip="Duplicar la fila seleccionada con todas sus mediciones y fórmulas">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="📋" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Eliminar fila" InputGestureText="Supr" Command="{Binding DeleteRowCommand}" ToolTip="Eliminar la fila de material seleccionada" Foreground="{DynamicResource Brush.Danger}">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🗑️" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
                                             <Separator />
-                                            <MenuItem Header="Autocompletar unidad y cantidad" Command="{Binding AutocompletarUnidadYCantidadCommand}" ToolTip="Asignar a esta partida la unidad y cantidad del primer material cubicado" />
-                                            <MenuItem Header="Aplicar cantidad a la partida" Command="{Binding AplicarCantidadALaPartidaCommand}" ToolTip="Copia la cantidad global al recurso maestro cuando la partida tiene componentes. No toca el resto de los materiales." />
-                                            <MenuItem Header="Autocompletar unidad y cantidad en todo el proyecto..." Command="{Binding AutocompletarUnidadYCantidadTodasCommand}" ToolTip="Asignar la unidad y cantidad del primer material a todas las partidas del proyecto que no tengan valorizaci&#243;n global" />
+                                            <MenuItem Header="Buscar y Reemplazar Material..." InputGestureText="Ctrl+H" Command="{Binding OpenBatchReplaceCommand}" ToolTip="Reemplazar un material en todas las partidas manteniendo intactas las mediciones y fórmulas">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🔍" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Cambio de Línea o Familia Masivo..." InputGestureText="Ctrl+Shift+H" Command="{Binding OpenFamilyBatchReplaceCommand}" ToolTip="Ingeniería de valor: reemplazar familias completas de materiales con auto-mapeo del banco de precios">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🔄" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
                                             <Separator />
-                                            <MenuItem Header="Generar / Ver APU de esta partida" Command="{Binding NavigateToApuCommand}" ToolTip="Abrir herramienta auxiliar de an&#225;lisis de precios unitarios para la partida activa" />
-                                            <MenuItem Header="Hoja de Cubicaci&#243;n (Alt+T)" Command="{Binding OpenHojaCubicacionCommand}" ToolTip="Herramienta de apoyo para cubicar: agregue &#237;tems y sume sus mediciones antes de trasladarlas a la partida" />
-                                            <MenuItem Header="Cargar Plantilla..." Command="{Binding AplicarConjuntoCommand}" ToolTip="Cargar una plantilla creada en la pesta&#241;a Plantillas sobre la partida seleccionada" />
-                                            <MenuItem Header="Guardar como Plantilla..." Command="{Binding CrearConjuntoDesdePartidaCommand}" ToolTip="Crear una plantilla reutilizable en tu biblioteca global a partir de los materiales y f&#243;rmulas de esta partida" />
-                                            <MenuItem Header="Zonas..." Command="{Binding ManageZonasCommand}" ToolTip="Definir las zonas del proyecto (nombres, orden y estado de los sectores)" />
-                                            <MenuItem Header="🏢 Tipologías de Departamentos..." Command="{Binding ManageTipologiasCommand}" ToolTip="Configurar departamentos tipo y matriz de distribución en el edificio (reemplaza matrices masivas)" />
+                                            <MenuItem Header="Autocompletar unidad y cantidad" Command="{Binding AutocompletarUnidadYCantidadCommand}" ToolTip="Asignar a esta partida la unidad y cantidad del primer material cubicado">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="⚡" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Aplicar cantidad a la partida" Command="{Binding AplicarCantidadALaPartidaCommand}" ToolTip="Copia la cantidad global al recurso maestro cuando la partida tiene componentes">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🎯" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Autocompletar unidad y cantidad en todo el proyecto..." Command="{Binding AutocompletarUnidadYCantidadTodasCommand}" ToolTip="Asignar la unidad y cantidad del primer material a todas las partidas del proyecto que no tengan valorización global">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🌐" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <Separator />
+                                            <MenuItem Header="Hoja de Cubicación" InputGestureText="Alt+T" Command="{Binding OpenHojaCubicacionCommand}" ToolTip="Herramienta de apoyo para cubicar: agregue ítems y sume sus mediciones antes de trasladarlas a la partida">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="📐" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Generar / Ver APU de esta partida" Command="{Binding NavigateToApuCommand}" ToolTip="Abrir herramienta auxiliar de análisis de precios unitarios para la partida activa">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="📦" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Tipologías de Departamentos..." Command="{Binding ManageTipologiasCommand}" ToolTip="Configurar departamentos tipo y matriz de distribución en el edificio (reemplaza matrices masivas)">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🏢" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Zonas del Proyecto..." Command="{Binding ManageZonasCommand}" ToolTip="Definir las zonas del proyecto (nombres, orden y estado de los sectores)">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🗺️" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <Separator />
+                                            <MenuItem Header="Cargar Plantilla..." Command="{Binding AplicarConjuntoCommand}" ToolTip="Cargar una plantilla creada en la pestaña Plantillas sobre la partida seleccionada">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="📥" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Guardar como Plantilla..." Command="{Binding CrearConjuntoDesdePartidaCommand}" ToolTip="Crear una plantilla reutilizable en tu biblioteca global a partir de los materiales y fórmulas de esta partida">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="💾" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
                                         </ContextMenu>
                                     </Button.ContextMenu>
                                 </Button>
