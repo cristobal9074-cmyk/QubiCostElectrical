@@ -534,8 +534,9 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                 CostOtherDirect = FormatDual(otherDirect);
                 CostDirect = FormatDual(costDirect);
                 CostTotal = FormatDual(state.Cost.TotalVentaUf);
-                CostGo = FormatDual(state.Cost.GastosOperacionalesUf);
-                decimal marginClp = Math.Max(0m, state.Cost.TotalVentaUf - state.Cost.CostoProyectoUf);
+                decimal goAndOther = otherDirect + state.Cost.GastosOperacionalesUf;
+                CostGo = FormatDual(goAndOther);
+                decimal marginClp = Math.Max(0m, state.Cost.TotalVentaNetoUf - (costDirect + state.Cost.GastosOperacionalesUf));
                 CostMargin = FormatDual(marginClp);
                 MargenRealPctLabel = $"{state.Cost.MargenRealPct:N1}%";
 
@@ -547,7 +548,7 @@ public sealed partial class DashboardViewModel : ViewModelBase, IRefreshablePage
                     : "Configure m² en datos del proyecto";
 
                 var costDistribution = readinessCoordinator.BuildCostDistribution(
-                    state.Cost.TotalVentaUf, state.Cost.MaterialesUf, state.Cost.ManoObraUf, state.Cost.GastosOperacionalesUf, marginClp,
+                    state.Cost.TotalVentaNetoUf, state.Cost.MaterialesUf, state.Cost.ManoObraUf, goAndOther, marginClp,
                     CostMaterials, CostLabor, CostGo, CostMargin);
                 MaterialShareWidth = costDistribution.MaterialShareWidth;
                 LaborShareWidth = costDistribution.LaborShareWidth;

@@ -255,6 +255,10 @@ public sealed class CostoViewTabsVm : ViewModelBase
     }
 
     private string ventaNetaSub = "";
+    private string totalOfertaConIvaLabel = "";
+    public string TotalOfertaConIvaLabel { get => totalOfertaConIvaLabel; private set => SetProperty(ref totalOfertaConIvaLabel, value); }
+    private bool hasTotalOfertaConIva;
+    public bool HasTotalOfertaConIva { get => hasTotalOfertaConIva; private set => SetProperty(ref hasTotalOfertaConIva, value); }
     public string VentaNetaSub
     {
         get => ventaNetaSub;
@@ -353,6 +357,16 @@ public sealed class CostoViewTabsVm : ViewModelBase
         CostoProyectoSub = moneySecondary(cost.CostoProyectoUf);
         VentaNetaLabel = money(cost.TotalVentaNetoUf);
         VentaNetaSub = moneySecondary(cost.TotalVentaNetoUf);
+        if (project.IncluirIvaEnTotal && cost.TotalVentaConIvaUf > 0m && cost.TotalVentaConIvaUf != cost.TotalVentaNetoUf)
+        {
+            HasTotalOfertaConIva = true;
+            TotalOfertaConIvaLabel = $"Total c/IVA: {money(cost.TotalVentaConIvaUf)}";
+        }
+        else
+        {
+            HasTotalOfertaConIva = false;
+            TotalOfertaConIvaLabel = "";
+        }
         DiferenciaFactoresLabel = money(cost.DiferenciaFactoresUf);
         DiferenciaFactoresSub = moneySecondary(cost.DiferenciaFactoresUf);
 

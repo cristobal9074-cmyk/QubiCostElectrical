@@ -182,6 +182,9 @@
             </StackPanel>
             <TextBlock Text="{Binding Tabs.VentaNetaLabel}" Style="{StaticResource CostoKpiValue}" Foreground="{DynamicResource Brush.Blue}" />
             <TextBlock Text="{Binding Tabs.VentaNetaSub}" Style="{StaticResource CostoKpiHint}" />
+            <TextBlock Text="{Binding Tabs.TotalOfertaConIvaLabel}" FontSize="10.5" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.Ink3}" Margin="0,2,0,0"
+                       Visibility="{Binding Tabs.HasTotalOfertaConIva, Converter={StaticResource BoolToVisibility}}" />
           </StackPanel>
         </Border>
 

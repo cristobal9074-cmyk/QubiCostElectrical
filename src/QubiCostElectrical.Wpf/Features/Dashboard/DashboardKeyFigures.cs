@@ -86,7 +86,8 @@ public sealed record DashboardKeyFiguresInput(
     double ConcentracionPct,
     int ConcentracionCount,
     string ConcentracionCaption,
-    IReadOnlyList<double>? CostTrendPoints = null);
+    IReadOnlyList<double>? CostTrendPoints = null,
+    string? TotalTitle = null);
 
 /// <summary>
 /// Compone las cinco celdas del panel "Cifras clave". Siempre devuelve cinco celdas para que
@@ -151,7 +152,7 @@ public static class DashboardKeyFiguresComposer
         {
             new DashboardKeyFigureVm
             {
-                Label = "Valor oficial de la oferta",
+                Label = string.IsNullOrWhiteSpace(input.TotalTitle) ? "Valor oficial de la oferta" : input.TotalTitle,
                 Value = input.TotalLabel,
                 DeltaText = input.TotalDeltaText,
                 DeltaKind = input.TotalDeltaKind,

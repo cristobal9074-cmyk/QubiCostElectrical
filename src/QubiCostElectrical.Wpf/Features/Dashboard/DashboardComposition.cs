@@ -71,11 +71,12 @@ public static class DashboardCompositionComposer
     public static DashboardCompositionVm Build(
         IReadOnlyList<DashboardCostShareVm> shares,
         string totalLabel,
-        string insight)
+        string insight,
+        string totalCaption = "Total venta")
     {
         shares ??= Array.Empty<DashboardCostShareVm>();
         if (shares.Count == 0)
-            return new DashboardCompositionVm { TotalLabel = totalLabel };
+            return new DashboardCompositionVm { TotalLabel = totalLabel, TotalCaption = totalCaption };
 
         double circumference = 2 * Math.PI * Radius;
         double total = 0;
@@ -110,7 +111,7 @@ public static class DashboardCompositionComposer
                 PercentageLabel = share.PercentageLabel,
                 PercentageValue = share.PercentageValue,
                 ShareLabel = $"{shareOfCircle * 100:N1}%",
-                AccentBrush = BrushFor(i),
+                AccentBrush = share.AccentBrush ?? BrushFor(i),
                 ArcGeometry = geometry
             });
             accumulated += sweep;
@@ -120,6 +121,7 @@ public static class DashboardCompositionComposer
         {
             Segments = segments,
             TotalLabel = totalLabel,
+            TotalCaption = totalCaption,
             Insight = insight,
             Circumference = circumference
         };

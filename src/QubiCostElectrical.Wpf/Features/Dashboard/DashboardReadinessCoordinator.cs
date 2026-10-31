@@ -325,27 +325,27 @@ public sealed class DashboardReadinessCoordinator
         {
             Label = "Materiales",
             AmountLabel = costMaterials,
-            PercentageLabel = $"{matPct:N0}%",
+            PercentageLabel = $"{matPct:N1}%",
             PercentageValue = (double)matPct,
             Accent = DashboardExecutiveKpiAccent.Blue,
-            AccentBrush = DashboardKpiBrushes.Blue,
+            AccentBrush = DashboardKpiBrushes.BlueDark,
             AccentSoftBrush = DashboardKpiBrushes.BlueSoft
         });
         list.Add(new DashboardCostShareVm
         {
             Label = "Mano de obra",
             AmountLabel = costLabor,
-            PercentageLabel = $"{moPct:N0}%",
+            PercentageLabel = $"{moPct:N1}%",
             PercentageValue = (double)moPct,
             Accent = DashboardExecutiveKpiAccent.RiskLow,
-            AccentBrush = DashboardKpiBrushes.Green,
+            AccentBrush = DashboardKpiBrushes.Cyan,
             AccentSoftBrush = DashboardKpiBrushes.GreenSoft
         });
         list.Add(new DashboardCostShareVm
         {
-            Label = "Gastos Op. (Faena)",
+            Label = "Gastos Op. y otros",
             AmountLabel = costGo,
-            PercentageLabel = $"{goPct:N0}%",
+            PercentageLabel = $"{goPct:N1}%",
             PercentageValue = (double)goPct,
             Accent = DashboardExecutiveKpiAccent.Orange,
             AccentBrush = DashboardKpiBrushes.Amber,
@@ -355,11 +355,11 @@ public sealed class DashboardReadinessCoordinator
         {
             Label = "Margen Bruto",
             AmountLabel = costMargin,
-            PercentageLabel = $"{mgPct:N0}%",
+            PercentageLabel = $"{mgPct:N1}%",
             PercentageValue = (double)mgPct,
-            Accent = DashboardExecutiveKpiAccent.Primary,
-            AccentBrush = DashboardKpiBrushes.BlueDark,
-            AccentSoftBrush = DashboardKpiBrushes.BlueSoft
+            Accent = DashboardExecutiveKpiAccent.RiskLow,
+            AccentBrush = DashboardKpiBrushes.Green,
+            AccentSoftBrush = DashboardKpiBrushes.GreenSoft
         });
 
         return new DashboardCostDistributionResult(materialWidth, laborWidth, goWidth, marginWidth, list);

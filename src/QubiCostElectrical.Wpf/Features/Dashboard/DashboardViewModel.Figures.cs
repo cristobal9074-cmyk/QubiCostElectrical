@@ -54,8 +54,10 @@ public sealed partial class DashboardViewModel
             ? ""
             : totalDeltaText.StartsWith("-", StringComparison.Ordinal) ? "neg" : "up";
 
+        string totalTitle = project.IncluirIvaEnTotal ? "Valor oficial de la oferta (con IVA)" : "Valor oficial de la oferta (Neto)";
         string totalCaption = string.Join(" · ", new[]
         {
+            (project.IncluirIvaEnTotal ? $"Neto: {formatMoney(state.Cost.TotalVentaNetoUf)}" : ""),
             $"{totalVentaUf:N1} UF",
             CostUfM2,
             project.MetrosCuadrados > 0 ? $"{project.MetrosCuadrados:N0} m²" : ""
@@ -114,18 +116,20 @@ public sealed partial class DashboardViewModel
             ParetoSummary.PctA,
             ParetoSummary.CountA,
             concentracionCaption,
-            trendPoints)))
+            trendPoints,
+            totalTitle)))
         {
             KeyFigures.Add(figure);
         }
 
         // Composición del precio: el mismo reparto que usa el cierre, en donut.
-        double directosPct = CostShares.Count >= 2
-            ? CostShares[0].PercentageValue + CostShares[1].PercentageValue
-            : 0;
+        double directosPct = CostShares.Count >= 2 ? CostShares[0].PercentageValue + CostShares[1].PercentageValue : 0;
+
+
         Composition = DashboardCompositionComposer.Build(
             CostShares,
-            enClpResumen ? DashboardMoneyShort.Format(totalVentaClp) : DashboardMoneyShort.FormatUf(totalVentaUf),
-            $"El {directosPct:N0}% del total son materiales y mano de obra directos.");
+            enClpResumen ? DashboardMoneyShort.Format(state.Cost.TotalVentaNetoUf) : DashboardMoneyShort.FormatUf(PriceConversion.ClpToUf(state.Cost.TotalVentaNetoUf, valorUf)),
+            $"El {directosPct:N0}% del total son materiales y mano de obra directos.",
+            "Venta neta");
     }
 }
