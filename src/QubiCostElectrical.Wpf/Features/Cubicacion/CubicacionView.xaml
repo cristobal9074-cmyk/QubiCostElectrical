@@ -160,15 +160,243 @@
                                 </Border>
                             </StackPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Style="{StaticResource Button.Ghost}" Content="+" FontSize="14" FontWeight="Bold" Padding="6,1" Margin="0,0,2,0"
-                                        Command="{Binding AddPartidaCommand}" ToolTip="Agregar nueva partida debajo de la seleccionada (Ctrl++)" />
-                                <Button Style="{StaticResource Button.Ghost}" Content="−" FontSize="14" FontWeight="Bold" Padding="6,1" Margin="0,0,4,0"
-                                        Command="{Binding DeletePartidaCommand}" ToolTip="Eliminar la partida activa (Ctrl+-)" />
-                                <Button Style="{StaticResource Button.Secondary}" Content="Ir (Ctrl+G)" FontSize="10" Padding="6,2" Margin="0,0,4,0"
-                                        Command="{Binding OpenQuickJumpCommand}" ToolTip="Buscador Spotlight para saltar rápido a cualquier partida (Ctrl+G)" />
-                                <Button Style="{StaticResource Button.Ghost}" Content="‹" FontSize="14" Padding="4,0"
-                                        Command="{Binding CollapseLeftPanelCommand}" ToolTip="Contraer panel" />
-                            </StackPanel>
+                                <!-- GRUPO 1: Vistas y Modos (Matriz/Detalle y Libre/Zonas) -->
+                                <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="1" Margin="0,0,4,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Width="26" Height="24" Command="{Binding ShowSectorMatrixCommand}" ToolTip="Vista Cubicación por Matriz (Alt+A)&#x0a;Planilla de casillas y sectores (S1, S2, TA-P2...)">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                    <Setter Property="Padding" Value="0" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSectorMatrixMode}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <Path Data="{StaticResource Geo.Grid}" Style="{StaticResource Icon.Vector.Md}" />
+                                        </Button>
+                                        <Button Width="26" Height="24" Command="{Binding ShowResourceDetailCommand}" ToolTip="Vista Detalle de Recursos (Alt+D)&#x0a;Desglose completo con precios unitarios y subtotales">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                    <Setter Property="Padding" Value="0" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSectorMatrixMode}" Value="False">
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <Path Data="{StaticResource Geo.List}" Style="{StaticResource Icon.Vector.Md}" />
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="{DynamicResource Brush.ChipBg}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1" CornerRadius="6" Padding="1" Margin="0,0,5,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Width="26" Height="24" Command="{Binding SetZonaLibreModeCommand}" ToolTip="Modo Zona Libre&#x0a;Cubicación directa continua sin desglose por pisos">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                    <Setter Property="Padding" Value="0" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsZonaLibreMode}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <Path Data="{StaticResource Geo.Globe}" Style="{StaticResource Icon.Vector.Md}" />
+                                        </Button>
+                                        <Button Width="26" Height="24" Command="{Binding SetPorZonasModeCommand}" ToolTip="Modo Por Zonas&#x0a;Matriz desglosada por pisos, subterráneos y sectores">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                                    <Setter Property="Padding" Value="0" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsPorZonasMode}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Blue}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <Path Data="{StaticResource Geo.Building}" Style="{StaticResource Icon.Vector.Md}" />
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Separador CAD -->
+                                <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Line}" Margin="2,0,5,0" VerticalAlignment="Center" />
+
+                                <!-- GRUPO 2: Operaciones de Material / Fila (Excel) -->
+                                <!-- + Material -->
+                                <Button Style="{StaticResource Button.ToolbarPrimary}" Height="28" Padding="9,0" Margin="0,0,4,0"
+                                        Command="{Binding AddRowCommand}" ToolTip="Agregar nuevo material a la partida (Ins)">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="＋" FontSize="11" FontWeight="Bold" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="Material" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Duplicar -->
+                                <Button Style="{StaticResource Button.Toolbar}" Height="28" Padding="7,0" Margin="0,0,4,0"
+                                        Command="{Binding DuplicateRowCommand}" ToolTip="Duplicar la fila seleccionada (Ctrl+D)">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="📋" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="Duplicar" FontSize="11" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Eliminar -->
+                                <Button Style="{StaticResource Button.Toolbar}" Height="28" Padding="7,0" Margin="0,0,5,0"
+                                        Command="{Binding DeleteRowCommand}" ToolTip="Eliminar la fila de material seleccionada (Supr)">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="🗑️" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="Eliminar" FontSize="11" Foreground="{DynamicResource Brush.Danger}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Separador CAD -->
+                                <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Line}" Margin="2,0,5,0" VerticalAlignment="Center" />
+
+                                <!-- GRUPO 3: Herramientas de Cálculo -->
+                                <!-- Hoja Cubicación -->
+                                <Button Style="{StaticResource Button.Toolbar}" Height="28" Padding="7,0" Margin="0,0,4,0"
+                                        Command="{Binding OpenHojaCubicacionCommand}" ToolTip="Hoja de Cubicación (Alt+T)&#x0a;Herramienta de apoyo para cubicar: agregue ítems y sume mediciones">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="📐" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="Hoja Cub." FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Tomar SC -->
+                                <Button Style="{StaticResource Button.Toolbar}" Height="28" Padding="7,0" Margin="0,0,4,0"
+                                        Command="{Binding OpenScTomarCommand}" ToolTip="Tomar de Cubicación SC (Alt+L)&#x0a;Importar alimentadores, circuitos y tableros calculados">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="⚡" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="Tomar SC" FontSize="11" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- APU -->
+                                <Button Style="{StaticResource Button.Toolbar}" Height="28" Padding="7,0" Margin="0,0,4,0"
+                                        Command="{Binding NavigateToApuCommand}" ToolTip="Análisis de Precio Unitario (APU)&#x0a;Abrir herramienta auxiliar de APU para esta partida">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="📦" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="APU" FontSize="11" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Tipologías -->
+                                <Button Style="{StaticResource Button.Toolbar}" Height="28" Padding="7,0" Margin="0,0,5,0"
+                                        Command="{Binding ManageTipologiasCommand}" ToolTip="Tipologías de Departamentos&#x0a;Cubicación paramétrica masiva por tipologías y pisos del edificio">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="🏢" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="Tipologías" FontSize="11" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Separador CAD -->
+                                <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Line}" Margin="2,0,5,0" VerticalAlignment="Center" />
+
+                                <!-- GRUPO 4: Automatización y Edición Avanzada (Dropdowns tipo Excel) -->
+                                <!-- Reemplazar ▾ -->
+                                <Button Style="{StaticResource Button.Toolbar}" Height="28" Padding="7,0" Margin="0,0,4,0"
+                                        ToolTip="Operaciones de reemplazo masivo de materiales y familias" Click="OnMoreActionsClick">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="🔍" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="Reemplazar" FontSize="11" VerticalAlignment="Center" Margin="0,0,3,0" />
+                                        <TextBlock Text="▾" FontSize="9" VerticalAlignment="Center" Opacity="0.7" />
+                                    </StackPanel>
+                                    <Button.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Buscar y Reemplazar Material..." InputGestureText="Ctrl+H" Command="{Binding OpenBatchReplaceCommand}" ToolTip="Reemplazar un material en todas las partidas manteniendo intactas las mediciones y fórmulas">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🔍" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Cambio de Línea o Familia Masivo..." InputGestureText="Ctrl+Shift+H" Command="{Binding OpenFamilyBatchReplaceCommand}" ToolTip="Ingeniería de valor: reemplazar familias completas de materiales con auto-mapeo del banco de precios">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🔄" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
+                                </Button>
+
+                                <!-- Autocompletar ▾ -->
+                                <Button Style="{StaticResource Button.Toolbar}" Height="28" Padding="7,0" Margin="0,0,4,0"
+                                        ToolTip="Autocompletar unidad y cantidad según el primer material cubicado" Click="OnMoreActionsClick">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="⚡" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="Autocompletar" FontSize="11" VerticalAlignment="Center" Margin="0,0,3,0" />
+                                        <TextBlock Text="▾" FontSize="9" VerticalAlignment="Center" Opacity="0.7" />
+                                    </StackPanel>
+                                    <Button.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Autocompletar unidad y cantidad (esta partida)" Command="{Binding AutocompletarUnidadYCantidadCommand}" ToolTip="Asignar a esta partida la unidad y cantidad del primer material cubicado">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="⚡" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Aplicar cantidad a la partida" Command="{Binding AplicarCantidadALaPartidaCommand}" ToolTip="Copia la cantidad global al recurso maestro cuando la partida tiene componentes">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🎯" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <Separator />
+                                            <MenuItem Header="Autocompletar unidad y cantidad en todo el proyecto..." Command="{Binding AutocompletarUnidadYCantidadTodasCommand}" ToolTip="Asignar la unidad y cantidad del primer material a todas las partidas sin valorización global">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🌐" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
+                                </Button>
+
+                                <!-- Plantillas ▾ -->
+                                <Button Style="{StaticResource Button.Toolbar}" Height="28" Padding="7,0" Margin="0,0,5,0"
+                                        ToolTip="Gestionar plantillas de materiales y zonas de cubicación" Click="OnMoreActionsClick">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="💾" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="Plantillas" FontSize="11" VerticalAlignment="Center" Margin="0,0,3,0" />
+                                        <TextBlock Text="▾" FontSize="9" VerticalAlignment="Center" Opacity="0.7" />
+                                    </StackPanel>
+                                    <Button.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Cargar Plantilla..." Command="{Binding AplicarConjuntoCommand}" ToolTip="Cargar una plantilla creada en la pestaña Plantillas sobre la partida seleccionada">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="📥" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Guardar como Plantilla..." Command="{Binding CrearConjuntoDesdePartidaCommand}" ToolTip="Crear una plantilla reutilizable a partir de los materiales y fórmulas de esta partida">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="💾" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <Separator />
+                                            <MenuItem Header="Zonas del Proyecto..." Command="{Binding ManageZonasCommand}" ToolTip="Definir las zonas del proyecto (nombres, orden y estado de los sectores)">
+                                                <MenuItem.Icon>
+                                                    <TextBlock Text="🗺️" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
+                                </Button>
+
+                                <!-- Separador CAD -->
+                                <Rectangle Width="1" Height="16" Fill="{DynamicResource Brush.Line}" Margin="2,0,5,0" VerticalAlignment="Center" />
+
+                                <!-- Buscar en tabla -->
+                                <Button Style="{StaticResource Button.ToolbarIcon}" Click="OnOpenSearchClick" ToolTip="Buscar en tabla (Ctrl+F)&#x0a;Filtrar y resaltar coincidencias en la partida activa">
+                                    <Path Data="{StaticResource Geo.Search}" Style="{StaticResource Icon.Vector.Md}" />
+                                </Button></StackPanel>
                         </DockPanel>
                     </Border>
 
@@ -325,7 +553,7 @@
                                 <TextBox x:Name="PartidaDescripcionBox" Text="{Binding PartidaDescripcion, UpdateSourceTrigger=LostFocus}"
                                          FontSize="14" FontWeight="Bold" Foreground="{DynamicResource Brush.Ink}"
                                          Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
-                                         Padding="8,3" MinWidth="250" MaxWidth="850"
+                                         Padding="8,3" MinWidth="180" MaxWidth="380"
                                          ToolTip="Editar nombre/descripción de la partida · Enter para guardar"
                                          PreviewKeyDown="OnPartidaHeaderBoxPreviewKeyDown" />
                                 <!-- Badge sutil integrado: Alerta de partida sin cantidad o sin unidad global -->
